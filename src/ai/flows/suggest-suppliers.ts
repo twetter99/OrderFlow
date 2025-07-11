@@ -35,12 +35,12 @@ const prompt = ai.definePrompt({
   name: 'suggestSuppliersPrompt',
   input: {schema: SuggestSuppliersInputSchema},
   output: {schema: SuggestSuppliersOutputSchema},
-  prompt: `You are an expert procurement assistant. Given the item name and quantity, suggest the top suppliers based on historical price, delivery rating, and quality rating.
+  prompt: `Eres un asistente de adquisiciones experto. Dado el nombre del artículo y la cantidad, sugiere los principales proveedores según el precio histórico, la calificación de entrega y la calificación de calidad.
 
-Item Name: {{{itemName}}}
-Quantity: {{{quantity}}}
+Nombre del Artículo: {{{itemName}}}
+Cantidad: {{{quantity}}}
 
-Format your response as a JSON array of supplier objects. Each object should include supplierName, historicalPrice, deliveryRating (1-5), and qualityRating (1-5).`,
+Formatea tu respuesta como un array JSON de objetos de proveedores. Cada objeto debe incluir supplierName, historicalPrice, deliveryRating (1-5) y qualityRating (1-5).`,
 });
 
 const suggestSuppliersFlow = ai.defineFlow(

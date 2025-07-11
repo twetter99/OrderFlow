@@ -6,20 +6,20 @@ import { checkItemPrice } from '@/ai/flows/check-item-price';
 import { z } from 'zod';
 
 const stockNeedsSchema = z.object({
-  projectForecasts: z.string().min(1, 'Project forecasts are required.'),
-  historicalData: z.string().min(1, 'Historical data is required.'),
-  currentStockLevels: z.string().min(1, 'Current stock levels are required.'),
+  projectForecasts: z.string().min(1, 'Los pronósticos de proyectos son obligatorios.'),
+  historicalData: z.string().min(1, 'Los datos históricos son obligatorios.'),
+  currentStockLevels: z.string().min(1, 'Los niveles de stock actuales son obligatorios.'),
 });
 
 const suggestSuppliersSchema = z.object({
-  itemName: z.string().min(1, 'Item name is required.'),
-  quantity: z.coerce.number().min(1, 'Quantity must be at least 1.'),
+  itemName: z.string().min(1, 'El nombre del artículo es obligatorio.'),
+  quantity: z.coerce.number().min(1, 'La cantidad debe ser al menos 1.'),
 });
 
 const checkPriceSchema = z.object({
-  itemName: z.string().min(1, 'Item name is required.'),
-  itemPrice: z.coerce.number().min(0.01, 'Price must be greater than 0.'),
-  supplierName: z.string().min(1, 'Supplier name is required.'),
+  itemName: z.string().min(1, 'El nombre del artículo es obligatorio.'),
+  itemPrice: z.coerce.number().min(0.01, 'El precio debe ser mayor que 0.'),
+  supplierName: z.string().min(1, 'El nombre del proveedor es obligatorio.'),
 });
 
 export type FormState = {
@@ -38,7 +38,7 @@ export async function handleSuggestStockNeeds(
 
   if (!parsed.success) {
     return {
-      message: 'Invalid form data.',
+      message: 'Datos del formulario no válidos.',
       fields: rawFormData as Record<string, string>,
       issues: parsed.error.issues.map((issue) => issue.message),
     };
@@ -46,9 +46,9 @@ export async function handleSuggestStockNeeds(
   
   try {
     const result = await suggestStockNeeds(parsed.data);
-    return { message: 'Suggestions generated successfully.', data: result };
+    return { message: 'Sugerencias generadas con éxito.', data: result };
   } catch (error) {
-    return { message: `An error occurred: ${error instanceof Error ? error.message : String(error)}` };
+    return { message: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
@@ -61,7 +61,7 @@ export async function handleSuggestSuppliers(
   
   if (!parsed.success) {
     return {
-      message: 'Invalid form data.',
+      message: 'Datos del formulario no válidos.',
       fields: rawFormData as Record<string, string>,
       issues: parsed.error.issues.map((issue) => issue.message),
     };
@@ -69,9 +69,9 @@ export async function handleSuggestSuppliers(
 
   try {
     const result = await suggestSuppliers(parsed.data);
-    return { message: 'Suppliers suggested successfully.', data: result };
+    return { message: 'Proveedores sugeridos con éxito.', data: result };
   } catch (error) {
-    return { message: `An error occurred: ${error instanceof Error ? error.message : String(error)}` };
+    return { message: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` };
   }
 }
 
@@ -84,7 +84,7 @@ export async function handleCheckItemPrice(
   
   if (!parsed.success) {
     return {
-      message: 'Invalid form data.',
+      message: 'Datos del formulario no válidos.',
       fields: rawFormData as Record<string, string>,
       issues: parsed.error.issues.map((issue) => issue.message),
     };
@@ -92,8 +92,8 @@ export async function handleCheckItemPrice(
 
   try {
     const result = await checkItemPrice(parsed.data);
-    return { message: 'Price check complete.', data: result };
+    return { message: 'Verificación de precio completada.', data: result };
   } catch (error) {
-    return { message: `An error occurred: ${error instanceof Error ? error.message : String(error)}` };
+    return { message: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` };
   }
 }

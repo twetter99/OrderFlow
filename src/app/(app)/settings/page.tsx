@@ -2,13 +2,13 @@ export default function SettingsPage() {
     return (
       <div className="flex flex-col gap-8">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Settings</h1>
+          <h1 className="text-3xl font-bold font-headline">Configuración</h1>
           <p className="text-muted-foreground">
-            Manage your account and application settings.
+            Gestiona la configuración de tu cuenta y de la aplicación.
           </p>
         </div>
         <div>
-          <p>Settings page is under construction.</p>
+          <p>La página de configuración está en construcción.</p>
         </div>
       </div>
     );

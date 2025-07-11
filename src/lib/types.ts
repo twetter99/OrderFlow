@@ -2,7 +2,7 @@ export type Project = {
   id: string;
   name: string;
   client: string;
-  status: 'Planned' | 'In Progress' | 'Completed';
+  status: 'Planificado' | 'En Progreso' | 'Completado';
   budget: number;
   spent: number;
   startDate: string;
@@ -23,7 +23,7 @@ export type PurchaseOrder = {
   id: string;
   project: string;
   supplier: string;
-  status: 'Pending' | 'Approved' | 'Sent' | 'Received' | 'Partial' | 'Rejected';
+  status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Parcial' | 'Rechazado';
   date: string;
   total: number;
   items: {

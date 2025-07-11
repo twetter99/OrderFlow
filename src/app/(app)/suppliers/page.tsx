@@ -19,14 +19,14 @@ export default function SuppliersPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Suppliers</h1>
+          <h1 className="text-3xl font-bold font-headline">Proveedores</h1>
           <p className="text-muted-foreground">
-            Manage your supplier information and performance.
+            Gestiona la información y el rendimiento de tus proveedores.
           </p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Supplier
+          Añadir Proveedor
         </Button>
       </div>
       <Card>
@@ -34,11 +34,11 @@ export default function SuppliersPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Name</TableHead>
-                <TableHead>Contact Person</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Delivery Rating</TableHead>
-                <TableHead>Quality Rating</TableHead>
+                <TableHead>Nombre</TableHead>
+                <TableHead>Persona de Contacto</TableHead>
+                <TableHead>Correo Electrónico</TableHead>
+                <TableHead>Calificación de Entrega</TableHead>
+                <TableHead>Calificación de Calidad</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

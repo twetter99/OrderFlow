@@ -38,18 +38,18 @@ const prompt = ai.definePrompt({
   name: 'suggestStockNeedsPrompt',
   input: {schema: SuggestStockNeedsInputSchema},
   output: {schema: SuggestStockNeedsOutputSchema},
-  prompt: `You are an AI assistant specialized in inventory management and supply chain optimization. Based on the provided project forecasts, historical data, and current stock levels, provide a list of stock suggestions to optimize inventory levels and reduce costs.
+  prompt: `Eres un asistente de IA especializado en gestión de inventario y optimización de la cadena de suministro. Basado en los pronósticos de proyectos, datos históricos y niveles de stock actuales proporcionados, proporciona una lista de sugerencias de stock para optimizar los niveles de inventario y reducir costos.
 
-Project Forecasts:
+Pronósticos de Proyectos:
 {{projectForecasts}}
 
-Historical Data:
+Datos Históricos:
 {{historicalData}}
 
-Current Stock Levels:
+Niveles de Stock Actuales:
 {{currentStockLevels}}
 
-Provide a clear explanation of your reasoning and the factors you considered when generating the stock suggestions. List out any assumptions you made, and caveats to your suggestions.
+Proporciona una explicación clara de tu razonamiento y los factores que consideraste al generar las sugerencias de stock. Enumera cualquier suposición que hiciste y las advertencias a tus sugerencias.
 `,
 });
 

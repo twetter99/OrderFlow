@@ -19,7 +19,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending}>
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Suggest Suppliers
+      Sugerir Proveedores
     </Button>
   );
 }
@@ -31,19 +31,19 @@ export function SuggestSuppliersForm() {
     <Card>
       <form action={formAction}>
         <CardHeader>
-          <CardTitle>Suggest Suppliers</CardTitle>
+          <CardTitle>Sugerir Proveedores</CardTitle>
           <CardDescription>
-            Enter an item and quantity to get supplier suggestions based on historical performance.
+            Ingrese un artículo y una cantidad para obtener sugerencias de proveedores basadas en el rendimiento histórico.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="itemName">Item Name</Label>
-            <Input id="itemName" name="itemName" placeholder="e.g., Small Mounting Bracket" />
+            <Label htmlFor="itemName">Nombre del Artículo</Label>
+            <Input id="itemName" name="itemName" placeholder="p. ej., Soporte de montaje pequeño" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="quantity">Quantity</Label>
-            <Input id="quantity" name="quantity" type="number" placeholder="e.g., 100" />
+            <Label htmlFor="quantity">Cantidad</Label>
+            <Input id="quantity" name="quantity" type="number" placeholder="p. ej., 100" />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
@@ -54,15 +54,15 @@ export function SuggestSuppliersForm() {
         <CardContent>
           <Alert>
             <Terminal className="h-4 w-4" />
-            <AlertTitle>Suggested Suppliers</AlertTitle>
+            <AlertTitle>Proveedores Sugeridos</AlertTitle>
             <AlertDescription className="mt-2">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Supplier</TableHead>
-                    <TableHead>Price</TableHead>
-                    <TableHead>Delivery</TableHead>
-                    <TableHead>Quality</TableHead>
+                    <TableHead>Proveedor</TableHead>
+                    <TableHead>Precio</TableHead>
+                    <TableHead>Entrega</TableHead>
+                    <TableHead>Calidad</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>

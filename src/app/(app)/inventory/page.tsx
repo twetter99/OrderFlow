@@ -23,14 +23,14 @@ export default function InventoryPage() {
     <div className="flex flex-col gap-8">
        <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Inventory</h1>
+          <h1 className="text-3xl font-bold font-headline">Inventario</h1>
           <p className="text-muted-foreground">
-            Track and manage your stock levels.
+            Rastrea y gestiona tus niveles de stock.
           </p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Add Item
+          Añadir Artículo
         </Button>
       </div>
       <Card>
@@ -39,11 +39,11 @@ export default function InventoryPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>SKU</TableHead>
-                <TableHead>Item Name</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Quantity</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead className="text-right">Unit Cost</TableHead>
+                <TableHead>Nombre del Artículo</TableHead>
+                <TableHead>Estado</TableHead>
+                <TableHead>Cantidad</TableHead>
+                <TableHead>Proveedor</TableHead>
+                <TableHead className="text-right">Costo Unitario</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -62,7 +62,7 @@ export default function InventoryPage() {
                             : "bg-green-100 text-green-800 border-green-200"
                         )}
                       >
-                        {isLowStock ? "Low Stock" : "In Stock"}
+                        {isLowStock ? "Stock Bajo" : "En Stock"}
                       </Badge>
                     </TableCell>
                     <TableCell>

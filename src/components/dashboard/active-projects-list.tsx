@@ -9,14 +9,14 @@ import { Progress } from "@/components/ui/progress"
 import { projects } from "@/lib/data"
 
 export function ActiveProjectsList() {
-  const activeProjects = projects.filter(p => p.status === 'In Progress');
+  const activeProjects = projects.filter(p => p.status === 'En Progreso');
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Active Projects</CardTitle>
+        <CardTitle className="font-headline">Proyectos Activos</CardTitle>
         <CardDescription>
-          A summary of projects currently underway.
+          Un resumen de los proyectos actualmente en marcha.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

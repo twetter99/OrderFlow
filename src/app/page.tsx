@@ -10,10 +10,10 @@ export default function LoginPage() {
                 <Bot className="h-8 w-8" />
             </div>
           <h1 className="text-3xl font-bold font-headline text-center">
-            Welcome to OrderFlow
+            Bienvenido a OrderFlow
           </h1>
           <p className="text-muted-foreground text-center">
-            Log in to manage your inventory and procurement.
+            Inicia sesión para gestionar tu inventario y adquisiciones.
           </p>
         </div>
         <LoginForm />

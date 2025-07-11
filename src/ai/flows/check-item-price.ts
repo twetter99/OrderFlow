@@ -50,19 +50,19 @@ const checkItemPricePrompt = ai.definePrompt({
   input: {schema: CheckItemPriceInputSchema},
   output: {schema: CheckItemPriceOutputSchema},
   tools: [getSuggestedSuppliers],
-  prompt: `You are an expert procurement analyst. Your task is to determine if the price of an item in a purchase request is significantly higher than the average price from other suppliers.
+  prompt: `Eres un analista de adquisiciones experto. Tu tarea es determinar si el precio de un artículo en una solicitud de compra es significativamente más alto que el precio promedio de otros proveedores.
 
-  Item Name: {{{itemName}}}
-  Item Price: {{{itemPrice}}}
-  Supplier Name: {{{supplierName}}}
+  Nombre del Artículo: {{{itemName}}}
+  Precio del Artículo: {{{itemPrice}}}
+  Nombre del Proveedor: {{{supplierName}}}
 
-  First, use your knowledge and available tools to research the average price of this item from other suppliers. If the item price is significantly higher (e.g., more than 20% higher than the average), then set isPriceTooHigh to true.
+  Primero, utiliza tus conocimientos y las herramientas disponibles para investigar el precio promedio de este artículo de otros proveedores. Si el precio del artículo es significativamente más alto (por ejemplo, más de un 20% más alto que el promedio), entonces establece isPriceTooHigh en verdadero.
 
-  Consider factors such as supplier reputation, item quality, and delivery times when evaluating the price difference.  Use the getSuggestedSuppliers tool to find alternative suppliers.
+  Considera factores como la reputación del proveedor, la calidad del artículo y los tiempos de entrega al evaluar la diferencia de precio. Usa la herramienta getSuggestedSuppliers para encontrar proveedores alternativos.
 
-  Based on your analysis, provide a list of suggested suppliers with lower prices for the item in the suggestedSuppliers field.  Include the average price of the item from other suppliers.
+  Según tu análisis, proporciona una lista de proveedores sugeridos con precios más bajos para el artículo en el campo suggestedSuppliers. Incluye el precio promedio del artículo de otros proveedores.
 
-  Return a JSON object with the following format:
+  Devuelve un objeto JSON con el siguiente formato:
   {
     "isPriceTooHigh": boolean,
     "suggestedSuppliers": string[],

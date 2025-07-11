@@ -21,19 +21,19 @@ export function RecentOrdersTable() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Recent Orders</CardTitle>
+        <CardTitle className="font-headline">Pedidos Recientes</CardTitle>
         <CardDescription>
-          A list of the most recent purchase orders.
+          Una lista de las órdenes de compra más recientes.
         </CardDescription>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Order ID</TableHead>
-              <TableHead>Project</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>ID de Orden</TableHead>
+              <TableHead>Proyecto</TableHead>
+              <TableHead>Estado</TableHead>
+              <TableHead className="text-right">Monto</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -45,11 +45,11 @@ export function RecentOrdersTable() {
                   <Badge
                     variant="outline"
                     className={cn(
-                      order.status === "Approved" && "bg-green-100 text-green-800 border-green-200",
-                      order.status === "Pending" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-                      order.status === "Sent" && "bg-blue-100 text-blue-800 border-blue-200",
-                      order.status === "Received" && "bg-primary/10 text-primary border-primary/20",
-                      order.status === "Rejected" && "bg-red-100 text-red-800 border-red-200",
+                      order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
+                      order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                      order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
+                      order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
+                      order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200",
                       "capitalize"
                     )}
                   >

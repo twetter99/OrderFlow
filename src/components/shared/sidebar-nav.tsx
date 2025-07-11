@@ -13,17 +13,17 @@ import {
 } from "@/components/ui/tooltip";
 
 const navItems = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/inventory", label: "Inventory", icon: Warehouse },
-  { href: "/purchasing", label: "Purchasing", icon: ShoppingCart },
-  { href: "/suppliers", label: "Suppliers", icon: Truck },
-  { href: "/ai-assistant", label: "AI Assistant", icon: Bot },
+  { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
+  { href: "/projects", label: "Proyectos", icon: FolderKanban },
+  { href: "/inventory", label: "Inventario", icon: Warehouse },
+  { href: "/purchasing", label: "Compras", icon: ShoppingCart },
+  { href: "/suppliers", label: "Proveedores", icon: Truck },
+  { href: "/ai-assistant", label: "Asistente IA", icon: Bot },
 ];
 
 const bottomNavItems = [
-  { href: "/users", label: "Users", icon: Users },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/users", label: "Usuarios", icon: Users },
+  { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
 export function SidebarNav() {

@@ -23,14 +23,14 @@ export default function PurchasingPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Purchasing</h1>
+          <h1 className="text-3xl font-bold font-headline">Compras</h1>
           <p className="text-muted-foreground">
-            Create and track all your purchase orders.
+            Crea y rastrea todas tus órdenes de compra.
           </p>
         </div>
         <Button>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Create Purchase Request
+          Crear Solicitud de Compra
         </Button>
       </div>
       <Card>
@@ -38,11 +38,11 @@ export default function PurchasingPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Order ID</TableHead>
-                <TableHead>Project</TableHead>
-                <TableHead>Supplier</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>ID de Orden</TableHead>
+                <TableHead>Proyecto</TableHead>
+                <TableHead>Proveedor</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Total</TableHead>
               </TableRow>
             </TableHeader>
@@ -57,11 +57,11 @@ export default function PurchasingPage() {
                     <Badge
                       variant="outline"
                       className={cn(
-                        order.status === "Approved" && "bg-green-100 text-green-800 border-green-200",
-                        order.status === "Pending" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-                        order.status === "Sent" && "bg-blue-100 text-blue-800 border-blue-200",
-                        order.status === "Received" && "bg-primary/10 text-primary border-primary/20",
-                        order.status === "Rejected" && "bg-red-100 text-red-800 border-red-200",
+                        order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
+                        order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                        order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
+                        order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
+                        order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200",
                         "capitalize"
                       )}
                     >

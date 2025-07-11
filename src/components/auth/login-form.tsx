@@ -19,10 +19,10 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 
 const formSchema = z.object({
   email: z.string().email({
-    message: "Please enter a valid email address.",
+    message: "Por favor, introduce una dirección de correo electrónico válida.",
   }),
   password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
+    message: "La contraseña debe tener al menos 6 caracteres.",
   }),
 });
 
@@ -53,9 +53,9 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Correo Electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="employee@example.com" {...field} />
+                    <Input placeholder="empleado@ejemplo.com" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -66,7 +66,7 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Password</FormLabel>
+                  <FormLabel>Contraseña</FormLabel>
                   <FormControl>
                     <Input type="password" placeholder="••••••••" {...field} />
                   </FormControl>
@@ -77,7 +77,7 @@ export function LoginForm() {
           </CardContent>
           <CardFooter>
             <Button type="submit" className="w-full">
-              Login
+              Iniciar Sesión
             </Button>
           </CardFooter>
         </form>

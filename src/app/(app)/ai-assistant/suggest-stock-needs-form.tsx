@@ -18,7 +18,7 @@ function SubmitButton() {
   return (
     <Button type="submit" disabled={pending}>
       {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Bot className="mr-2 h-4 w-4" />}
-      Generate Suggestions
+      Generar Sugerencias
     </Button>
   );
 }
@@ -30,36 +30,36 @@ export function SuggestStockNeedsForm() {
     <Card>
       <form action={formAction}>
         <CardHeader>
-          <CardTitle>Suggest Stock Needs</CardTitle>
+          <CardTitle>Sugerir Necesidades de Stock</CardTitle>
           <CardDescription>
-            Provide project forecasts, historical data, and current stock levels to get AI-powered inventory suggestions.
+            Proporcione pronósticos de proyectos, datos históricos y niveles de stock actuales para obtener sugerencias de inventario impulsadas por IA.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="projectForecasts">Project Forecasts</Label>
+            <Label htmlFor="projectForecasts">Pronósticos de Proyectos</Label>
             <Textarea
               id="projectForecasts"
               name="projectForecasts"
-              placeholder="e.g., Project X: 50 units of CPU-45, 200 units of SCRW-M5..."
+              placeholder="p. ej., Proyecto X: 50 unidades de CPU-45, 200 unidades de SCRW-M5..."
               rows={3}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="historicalData">Historical Data</Label>
+            <Label htmlFor="historicalData">Datos Históricos</Label>
             <Textarea
               id="historicalData"
               name="historicalData"
-              placeholder="e.g., Last 3 months usage for CPU-45: 15 units/month..."
+              placeholder="p. ej., Uso de los últimos 3 meses para CPU-45: 15 unidades/mes..."
               rows={3}
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="currentStockLevels">Current Stock Levels</Label>
+            <Label htmlFor="currentStockLevels">Niveles de Stock Actuales</Label>
             <Textarea
               id="currentStockLevels"
               name="currentStockLevels"
-              placeholder="e.g., CPU-45: 25 units, SCRW-M5: 200 packs..."
+              placeholder="p. ej., CPU-45: 25 unidades, SCRW-M5: 200 paquetes..."
               rows={3}
             />
           </div>
@@ -72,10 +72,10 @@ export function SuggestStockNeedsForm() {
             <CardContent>
             <Alert>
                 <Terminal className="h-4 w-4" />
-                <AlertTitle>AI Suggestions</AlertTitle>
+                <AlertTitle>Sugerencias de IA</AlertTitle>
                 <AlertDescription className="prose dark:prose-invert prose-sm mt-2">
-                    <p><strong>Suggestions:</strong> {state.data.stockSuggestions}</p>
-                    <p><strong>Explanation:</strong> {state.data.explanation}</p>
+                    <p><strong>Sugerencias:</strong> {state.data.stockSuggestions}</p>
+                    <p><strong>Explicación:</strong> {state.data.explanation}</p>
                 </AlertDescription>
             </Alert>
             </CardContent>
