@@ -42,3 +42,11 @@ export type Supplier = {
   deliveryRating: number;
   qualityRating: number;
 };
+
+export type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: 'Administrador' | 'Empleado' | 'Almacén';
+};

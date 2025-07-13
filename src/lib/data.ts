@@ -1,4 +1,4 @@
-import type { Project, InventoryItem, PurchaseOrder, Supplier } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -27,4 +27,10 @@ export const suppliers: Supplier[] = [
   { id: 'SUP-002', name: 'MetalWorks Ltd.', contactPerson: 'John Smith', email: 'contact@metalworks.com', phone: '987-654-3210', deliveryRating: 4.2, qualityRating: 4.5 },
   { id: 'SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
   { id: 'SUP-004', name: 'Global Nav', contactPerson: 'Susan Chen', email: 'support@globalnav.com', phone: '555-987-6543', deliveryRating: 4.0, qualityRating: 4.7 },
+];
+
+export const users: User[] = [
+  { id: 'USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
+  { id: 'USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
+  { id: 'USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Empleado' },
 ];
