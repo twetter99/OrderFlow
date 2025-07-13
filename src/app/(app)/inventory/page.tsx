@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { inventory as initialInventory } from "@/lib/data";
+import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -44,13 +45,16 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { InventoryForm } from "@/components/inventory/inventory-form";
-import type { InventoryItem } from "@/lib/types";
+import type { InventoryItem, Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { SupplierForm } from "@/components/suppliers/supplier-form";
 
 export default function InventoryPage() {
   const { toast } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
 
@@ -94,6 +98,19 @@ export default function InventoryPage() {
     }
     setIsDeleteDialogOpen(false);
     setSelectedItem(null);
+  };
+
+  const handleAddNewSupplier = () => {
+    setIsModalOpen(false); // Cierra el modal de inventario
+    setIsSupplierModalOpen(true); // Abre el modal de proveedor
+  };
+
+  const handleSaveSupplier = (values: any) => {
+    const newSupplier = { ...values, id: `SUP-00${suppliers.length + 1}` };
+    setSuppliers([...suppliers, newSupplier]);
+    toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
+    setIsSupplierModalOpen(false);
+    setIsModalOpen(true); // Vuelve a abrir el modal de inventario
   };
   
   return (
@@ -195,8 +212,28 @@ export default function InventoryPage() {
           </DialogHeader>
           <InventoryForm
             item={selectedItem}
+            suppliers={suppliers}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
+            onAddNewSupplier={handleAddNewSupplier}
+          />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isSupplierModalOpen} onOpenChange={setIsSupplierModalOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Añadir Nuevo Proveedor</DialogTitle>
+            <DialogDescription>
+              Rellena los detalles para crear un nuevo proveedor.
+            </DialogDescription>
+          </DialogHeader>
+          <SupplierForm
+            onSave={handleSaveSupplier}
+            onCancel={() => {
+              setIsSupplierModalOpen(false);
+              setIsModalOpen(true);
+            }}
           />
         </DialogContent>
       </Dialog>

@@ -1,3 +1,4 @@
+
 "use client";
 
 import { z } from "zod";
@@ -13,7 +14,8 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { InventoryItem } from "@/lib/types";
+import type { InventoryItem, Supplier } from "@/lib/types";
+import { SupplierCombobox } from "./supplier-combobox";
 
 const formSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio."),
@@ -28,11 +30,13 @@ type InventoryFormValues = z.infer<typeof formSchema>;
 
 interface InventoryFormProps {
   item?: InventoryItem | null;
+  suppliers: Supplier[];
   onSave: (values: InventoryFormValues) => void;
   onCancel: () => void;
+  onAddNewSupplier: () => void;
 }
 
-export function InventoryForm({ item, onSave, onCancel }: InventoryFormProps) {
+export function InventoryForm({ item, suppliers, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   const defaultValues = item
     ? { ...item }
     : {
@@ -130,10 +134,15 @@ export function InventoryForm({ item, onSave, onCancel }: InventoryFormProps) {
             control={form.control}
             name="supplier"
             render={({ field }) => (
-                <FormItem>
+                <FormItem className="flex flex-col pt-2">
                 <FormLabel>Proveedor</FormLabel>
                 <FormControl>
-                    <Input placeholder="p. ej., TechParts Inc." {...field} />
+                    <SupplierCombobox
+                      suppliers={suppliers}
+                      value={field.value}
+                      onChange={field.onChange}
+                      onAddNew={onAddNewSupplier}
+                    />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
