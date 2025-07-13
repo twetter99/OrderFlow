@@ -8,27 +8,22 @@ import { Card, CardContent, CardFooter, CardDescription } from "@/components/ui/
 export function LoginForm() {
   const router = useRouter();
 
-  function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    // In a real app, you'd handle authentication here.
-    console.log("Login submitted");
+  function handleClick() {
     router.push("/dashboard");
   }
 
   return (
     <Card>
-      <form onSubmit={onSubmit}>
-        <CardContent className="pt-6">
-            <CardDescription className="text-center">
-              Para este prototipo, puedes acceder directamente sin necesidad de credenciales.
-            </CardDescription>
-        </CardContent>
-        <CardFooter>
-          <Button type="submit" className="w-full">
-            Acceder al Panel de Control
-          </Button>
-        </CardFooter>
-      </form>
+      <CardContent className="pt-6">
+          <CardDescription className="text-center">
+            Para este prototipo, puedes acceder directamente sin necesidad de credenciales.
+          </CardDescription>
+      </CardContent>
+      <CardFooter>
+        <Button onClick={handleClick} className="w-full">
+          Acceder al Panel de Control
+        </Button>
+      </CardFooter>
     </Card>
   );
 }
