@@ -1,3 +1,6 @@
+"use client";
+
+import React, { useState } from "react";
 import {
   Table,
   TableBody,
@@ -5,20 +8,94 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@/components/ui/table"
+} from "@/components/ui/table";
 import {
   Card,
   CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { inventory } from "@/lib/data"
-import { cn } from "@/lib/utils"
-import { PlusCircle } from "lucide-react"
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { inventory as initialInventory } from "@/lib/data";
+import { cn } from "@/lib/utils";
+import { MoreHorizontal, PlusCircle } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { InventoryForm } from "@/components/inventory/inventory-form";
+import type { InventoryItem } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
 
 export default function InventoryPage() {
+  const { toast } = useToast();
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  const handleAddClick = () => {
+    setSelectedItem(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setIsModalOpen(true);
+  };
+
+  const handleDeleteClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleSave = (values: any) => {
+    if (selectedItem) {
+      setInventory(
+        inventory.map((p) =>
+          p.id === selectedItem.id ? { ...p, ...values, id: p.id } : p
+        )
+      );
+      toast({ title: "Artículo actualizado", description: "El artículo del inventario se ha actualizado correctamente." });
+    } else {
+      setInventory([
+        ...inventory,
+        { ...values, id: `ITEM-00${inventory.length + 1}` },
+      ]);
+      toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario." });
+    }
+    setIsModalOpen(false);
+  };
+
+  const confirmDelete = () => {
+    if (selectedItem) {
+      setInventory(inventory.filter((p) => p.id !== selectedItem.id));
+      toast({ variant: "destructive", title: "Artículo eliminado", description: "El artículo se ha eliminado del inventario." });
+    }
+    setIsDeleteDialogOpen(false);
+    setSelectedItem(null);
+  };
+  
   return (
     <div className="flex flex-col gap-8">
        <div className="flex items-center justify-between">
@@ -28,7 +105,7 @@ export default function InventoryPage() {
             Rastrea y gestiona tus niveles de stock.
           </p>
         </div>
-        <Button>
+        <Button onClick={handleAddClick}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Añadir Artículo
         </Button>
@@ -43,7 +120,8 @@ export default function InventoryPage() {
                 <TableHead>Estado</TableHead>
                 <TableHead>Cantidad</TableHead>
                 <TableHead>Proveedor</TableHead>
-                <TableHead className="text-right">Costo Unitario</TableHead>
+                <TableHead>Costo Unitario</TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -69,8 +147,31 @@ export default function InventoryPage() {
                       {item.quantity} / {item.minThreshold}
                     </TableCell>
                     <TableCell>{item.supplier}</TableCell>
-                    <TableCell className="text-right">
+                    <TableCell>
                       ${item.unitCost.toFixed(2)}
+                    </TableCell>
+                     <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" className="h-8 w-8 p-0">
+                            <span className="sr-only">Abrir menú</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleEditClick(item)}>
+                            Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600"
+                            onClick={() => handleDeleteClick(item)}
+                          >
+                            Eliminar
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </TableCell>
                   </TableRow>
                 );
@@ -79,6 +180,47 @@ export default function InventoryPage() {
           </Table>
         </CardContent>
       </Card>
+      
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>
+              {selectedItem ? "Editar Artículo" : "Añadir Nuevo Artículo"}
+            </DialogTitle>
+            <DialogDescription>
+              {selectedItem
+                ? "Edita la información del artículo."
+                : "Rellena los detalles para crear un nuevo artículo."}
+            </DialogDescription>
+          </DialogHeader>
+          <InventoryForm
+            item={selectedItem}
+            onSave={handleSave}
+            onCancel={() => setIsModalOpen(false)}
+          />
+        </DialogContent>
+      </Dialog>
+      
+      <AlertDialog
+        open={isDeleteDialogOpen}
+        onOpenChange={setIsDeleteDialogOpen}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta acción no se puede deshacer. Esto eliminará permanentemente
+              el artículo del inventario.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Continuar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
