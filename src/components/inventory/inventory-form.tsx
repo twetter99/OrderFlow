@@ -122,9 +122,9 @@ export function InventoryForm({ item, suppliers, onSave, onCancel, onAddNewSuppl
             name="unitCost"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Costo Unitario</FormLabel>
+                <FormLabel>Costo Unitario (€)</FormLabel>
                 <FormControl>
-                    <Input type="number" step="0.01" placeholder="350.00" {...field} />
+                    <Input type="number" step="0.01" placeholder="350,00" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>

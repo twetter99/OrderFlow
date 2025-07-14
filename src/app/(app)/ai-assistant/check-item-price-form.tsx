@@ -41,12 +41,12 @@ export function CheckItemPriceForm() {
             <Input id="itemName" name="itemName" placeholder="p. ej., Módulo GPS v2" />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="itemPrice">Precio del Artículo ($)</Label>
-            <Input id="itemPrice" name="itemPrice" type="number" step="0.01" placeholder="p. ej., 150.00" />
+            <Label htmlFor="itemPrice">Precio del Artículo (€)</Label>
+            <Input id="itemPrice" name="itemPrice" type="number" step="0.01" placeholder="p. ej., 150,00" />
           </div>
           <div className="space-y-2">
             <Label htmlFor="supplierName">Nombre del Proveedor</Label>
-            <Input id="supplierName" name="supplierName" placeholder="p. ej., Navegación Cara" />
+            <Input id="supplierName" name="supplierName" placeholder="p. ej., Navegación Global" />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">
@@ -59,7 +59,7 @@ export function CheckItemPriceForm() {
             {state.data.isPriceTooHigh ? <XCircle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
             <AlertTitle>{state.data.isPriceTooHigh ? 'El precio es probablemente demasiado alto' : 'El precio parece razonable'}</AlertTitle>
             <AlertDescription className="mt-2 space-y-2">
-              <p>El precio promedio para este artículo de otros proveedores es aproximadamente <strong>${state.data.averagePrice.toFixed(2)}</strong>.</p>
+              <p>El precio promedio para este artículo de otros proveedores es aproximadamente <strong>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(state.data.averagePrice)}</strong>.</p>
               {state.data.isPriceTooHigh && state.data.suggestedSuppliers.length > 0 && (
                 <div>
                     <p>Considere estos proveedores alternativos:</p>

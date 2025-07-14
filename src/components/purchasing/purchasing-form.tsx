@@ -91,9 +91,9 @@ export function PurchasingForm({ order, onSave, onCancel }: PurchasingFormProps)
             name="total"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Total del Pedido</FormLabel>
+                <FormLabel>Total del Pedido (€)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" placeholder="1200.00" {...field} />
+                  <Input type="number" step="0.01" placeholder="1200,00" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

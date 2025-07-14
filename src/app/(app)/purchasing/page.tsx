@@ -147,7 +147,7 @@ export default function PurchasingPage() {
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    ${order.total.toLocaleString()}
+                    {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
                   </TableCell>
                   <TableCell className="text-right">
                       <DropdownMenu>

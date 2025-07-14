@@ -165,7 +165,7 @@ export default function InventoryPage() {
                     </TableCell>
                     <TableCell>{item.supplier}</TableCell>
                     <TableCell>
-                      ${item.unitCost.toFixed(2)}
+                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
                     </TableCell>
                      <TableCell className="text-right">
                       <DropdownMenu>

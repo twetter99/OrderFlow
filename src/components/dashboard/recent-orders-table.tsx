@@ -57,7 +57,7 @@ export function RecentOrdersTable() {
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right">
-                  ${order.total.toLocaleString()}
+                  {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
                 </TableCell>
               </TableRow>
             ))}

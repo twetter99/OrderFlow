@@ -161,8 +161,8 @@ export default function ProjectsPage() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      ${project.spent.toLocaleString()} / $
-                      {project.budget.toLocaleString()}
+                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(project.spent)} / 
+                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(project.budget)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>

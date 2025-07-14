@@ -60,7 +60,7 @@ export function SuggestSuppliersForm() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Proveedor</TableHead>
-                    <TableHead>Precio</TableHead>
+                    <TableHead>Precio (€)</TableHead>
                     <TableHead>Entrega</TableHead>
                     <TableHead>Calidad</TableHead>
                   </TableRow>
@@ -69,7 +69,7 @@ export function SuggestSuppliersForm() {
                   {state.data.map((supplier: any, index: number) => (
                     <TableRow key={index}>
                       <TableCell>{supplier.supplierName}</TableCell>
-                      <TableCell>${supplier.historicalPrice.toFixed(2)}</TableCell>
+                      <TableCell>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(supplier.historicalPrice)}</TableCell>
                       <TableCell><div className="flex items-center gap-1">{supplier.deliveryRating}<Star className="w-3 h-3 text-yellow-500 fill-yellow-500"/></div></TableCell>
                       <TableCell><div className="flex items-center gap-1">{supplier.qualityRating}<Star className="w-3 h-3 text-yellow-500 fill-yellow-500"/></div></TableCell>
                     </TableRow>
