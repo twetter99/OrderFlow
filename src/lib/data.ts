@@ -13,6 +13,7 @@ export const inventory: InventoryItem[] = [
   { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', quantity: 55, minThreshold: 30, unitCost: 45, supplier: 'MetalWorks Ltd.' },
   { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, supplier: 'Soluciones de Ferretería' },
   { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, supplier: 'Global Nav' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, supplier: 'TechParts Inc.' },
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
@@ -20,6 +21,7 @@ export const purchaseOrders: PurchaseOrder[] = [
   { id: 'PO-2024-07-002', project: 'PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', quantity: 50, price: 15.50 }] },
   { id: 'PO-2024-07-003', project: 'PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', quantity: 10, price: 120 }] },
   { id: 'PO-2024-07-004', project: 'PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Aprobado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', quantity: 20, price: 8 }] },
+  { id: 'PO-2024-07-005', project: 'PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', quantity: 30, price: 85 }] },
 ];
 
 export const suppliers: Supplier[] = [

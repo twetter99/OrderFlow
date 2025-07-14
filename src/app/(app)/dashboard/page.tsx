@@ -1,12 +1,15 @@
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { ExpensesChart } from "@/components/dashboard/expenses-chart";
+import { InventoryValueChart } from "@/components/dashboard/inventory-value-chart";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { DollarSign, Package, FolderKanban, AlertTriangle } from "lucide-react";
-import { purchaseOrders } from "@/lib/data";
+import { purchaseOrders, inventory, projects } from "@/lib/data";
 
 export default function DashboardPage() {
     const pendingApprovals = purchaseOrders.filter(po => po.status === 'Pendiente').length;
+    const lowStockItems = inventory.filter(item => item.quantity < item.minThreshold).length;
+    const totalInventoryValue = inventory.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
+    const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
 
   return (
     <div className="flex flex-col gap-8">
@@ -18,35 +21,35 @@ export default function DashboardPage() {
       </div>
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatsCard 
-          title="Gasto Total (Mes)"
-          value="42.350 €"
+          title="Valor de Inventario"
+          value={new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalInventoryValue)}
           icon={DollarSign}
-          description="+15.2% desde el mes pasado"
+          description="Valor total de los artículos en stock"
         />
         <StatsCard 
           title="Proyectos Activos"
-          value="3"
+          value={activeProjectsCount.toString()}
           icon={FolderKanban}
-          description="1 nuevo proyecto esta semana"
+          description="Proyectos actualmente en marcha"
         />
         <StatsCard 
           title="Aprobaciones Pendientes"
           value={pendingApprovals.toString()}
           icon={Package}
-          description="Necesita tu revisión"
+          description="Necesitan tu revisión"
           isAlert={pendingApprovals > 0}
         />
         <StatsCard 
           title="Artículos con Stock Bajo"
-          value="2"
+          value={lowStockItems.toString()}
           icon={AlertTriangle}
           description="Acción requerida"
-          isAlert
+          isAlert={lowStockItems > 0}
         />
       </div>
       <div className="grid gap-6 lg:grid-cols-5">
         <div className="lg:col-span-3">
-            <ExpensesChart />
+            <InventoryValueChart />
         </div>
         <div className="lg:col-span-2">
             <ActiveProjectsList />

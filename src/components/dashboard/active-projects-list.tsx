@@ -32,6 +32,11 @@ export function ActiveProjectsList() {
             </div>
           )
         })}
+         {activeProjects.length === 0 && (
+            <p className="text-sm text-muted-foreground text-center py-4">
+                No hay proyectos activos en este momento.
+            </p>
+         )}
       </CardContent>
     </Card>
   )
