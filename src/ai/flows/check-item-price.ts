@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -39,29 +40,33 @@ const getSuggestedSuppliers = ai.defineTool({
     currentSupplier: z.string().describe('The name of the current supplier.'),
     currentPrice: z.number().describe('The current price of the item.'),
   }),
-  outputSchema: z.array(z.string()).describe('A list of supplier names offering the item at a lower price.'),
+  outputSchema: z.object({
+    alternativeSuppliers: z.array(z.string()).describe('A list of supplier names offering the item at a lower price.'),
+    averagePrice: z.number().describe('The average price of the item across all suppliers.'),
+  }),
 },
 async ({ itemName, currentSupplier, currentPrice }) => {
     const alternativeSuppliers = new Set<string>();
+    const prices: number[] = [];
 
     // Find purchase orders containing the item from different suppliers
     for (const order of purchaseOrders) {
-      if (order.supplier === currentSupplier) continue;
-
       for (const item of order.items) {
-          // This is a simplified lookup. In a real app, you'd match by SKU or item ID.
-          // We'll use a case-insensitive name match for this prototype.
-          const poItem = purchaseOrders.flatMap(po => po.items).find(i => i.itemId === item.itemId);
-          if (poItem) { // A more robust check might be needed here
-              const historicalItemName = 'itemName' in item ? (item as any).itemName : undefined;
-              if (historicalItemName && historicalItemName.toLowerCase() === itemName.toLowerCase() && item.price < currentPrice) {
-                  alternativeSuppliers.add(order.supplier);
-              }
+          if (item.itemName.toLowerCase() === itemName.toLowerCase()) {
+            prices.push(item.price);
+            if (order.supplier !== currentSupplier && item.price < currentPrice) {
+              alternativeSuppliers.add(order.supplier);
+            }
           }
       }
     }
     
-    return Array.from(alternativeSuppliers);
+    const averagePrice = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 0;
+
+    return {
+      alternativeSuppliers: Array.from(alternativeSuppliers),
+      averagePrice
+    };
 });
 
 const checkItemPricePrompt = ai.definePrompt({
@@ -75,11 +80,11 @@ const checkItemPricePrompt = ai.definePrompt({
   Precio del Artículo: {{{itemPrice}}}
   Nombre del Proveedor: {{{supplierName}}}
 
-  Primero, utiliza tus conocimientos y las herramientas disponibles para investigar el precio promedio de este artículo de otros proveedores. Si el precio del artículo es significativamente más alto (por ejemplo, más de un 20% más alto que el promedio), entonces establece isPriceTooHigh en verdadero.
+  Primero, utiliza tus conocimientos y las herramientas disponibles para investigar el precio promedio de este artículo de otros proveedores. Llama a la herramienta 'getSuggestedSuppliers' para obtener los precios históricos y proveedores alternativos.
 
-  Considera factores como la reputación del proveedor, la calidad del artículo y los tiempos de entrega al evaluar la diferencia de precio. Usa la herramienta getSuggestedSuppliers para encontrar proveedores alternativos con un precio inferior al actual.
+  Compara el precio actual del artículo ({{{itemPrice}}}) con el precio promedio devuelto por la herramienta. Si el precio del artículo es significativamente más alto (por ejemplo, más de un 20% más alto que el promedio), entonces establece isPriceTooHigh en verdadero. Si no hay datos históricos, asume que el precio no es demasiado alto a menos que parezca obviamente incorrecto.
 
-  Según tu análisis, proporciona una lista de proveedores sugeridos con precios más bajos para el artículo en el campo suggestedSuppliers. Incluye el precio promedio del artículo de otros proveedores.
+  Usa la lista de 'alternativeSuppliers' devuelta por la herramienta para rellenar el campo 'suggestedSuppliers'.
 
   Devuelve un objeto JSON con el siguiente formato:
   {

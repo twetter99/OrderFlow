@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders, users } from "@/lib/data";
+import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning } from "lucide-react";
 import {
@@ -202,7 +202,7 @@ export default function PurchasingPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
@@ -218,6 +218,8 @@ export default function PurchasingPage() {
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
             canApprove={canApprove}
+            suppliers={suppliers}
+            inventoryItems={inventory}
           />
         </DialogContent>
       </Dialog>

@@ -1,4 +1,5 @@
 
+
 export type Project = {
   id: string;
   name: string;
@@ -26,7 +27,7 @@ export type InventoryItem = {
 };
 
 export type PurchaseOrderItem = {
-  itemId: string;
+  itemId?: string;
   itemName: string;
   quantity: number;
   price: number;

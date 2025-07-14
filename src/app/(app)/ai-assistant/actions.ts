@@ -1,8 +1,9 @@
+
 'use server';
 
 import { suggestStockNeeds } from '@/ai/flows/suggest-stock-needs';
 import { suggestSuppliers } from '@/ai/flows/suggest-suppliers';
-import { checkItemPrice } from '@/ai/flows/check-item-price';
+import { checkItemPrice, type CheckItemPriceOutput } from '@/ai/flows/check-item-price';
 import { z } from 'zod';
 import { projects, inventory, inventoryLocations } from '@/lib/data';
 
@@ -110,5 +111,23 @@ export async function handleCheckItemPrice(
     return { message: 'Verificación de precio completada.', data: result };
   } catch (error) {
     return { message: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` };
+  }
+}
+
+// Nueva acción para la verificación de precios en línea
+export async function getPriceInsight(
+  itemName: string,
+  itemPrice: number,
+  supplierName: string
+): Promise<{ insight: CheckItemPriceOutput | null, error?: string }> {
+  if (!itemName || !itemPrice || !supplierName) {
+    return { insight: null };
+  }
+  try {
+    const result = await checkItemPrice({ itemName, itemPrice, supplierName });
+    return { insight: result };
+  } catch (error) {
+    console.error('Error getting price insight:', error);
+    return { insight: null, error: 'No se pudo obtener el análisis de precios.' };
   }
 }
