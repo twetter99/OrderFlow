@@ -40,6 +40,7 @@ export type PurchaseOrder = {
   supplier: string;
   status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Rechazado';
   date: string;
+  estimatedDeliveryDate: string;
   total: number;
   items: PurchaseOrderItem[];
   rejectionReason?: string;

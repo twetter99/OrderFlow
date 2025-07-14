@@ -24,14 +24,20 @@ import { Input } from "@/components/ui/input";
 import type { PurchaseOrder, Supplier, InventoryItem, Project } from "@/lib/types";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
 import { ItemPriceInsight } from "./item-price-insight";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
+import { Calendar } from "../ui/calendar";
 
 const formSchema = z.object({
   project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
+  estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
   status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Rechazado"]),
   rejectionReason: z.string().optional(),
   items: z.array(z.object({
@@ -60,10 +66,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const isReadOnly = order && !canApprove;
   
   const defaultValues = order
-    ? { ...order, total: order.total || 0 }
+    ? { ...order, estimatedDeliveryDate: new Date(order.estimatedDeliveryDate), total: order.total || 0 }
     : {
         project: "",
         supplier: "",
+        estimatedDeliveryDate: new Date(),
         status: "Pendiente" as const,
         rejectionReason: "",
         items: [{ itemName: "", quantity: 1, price: 0, type: 'Material' as const }],
@@ -94,7 +101,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <FormField
             control={form.control}
             name="supplier"
@@ -134,6 +141,45 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 </FormItem>
             )}
            />
+            <FormField
+              control={form.control}
+              name="estimatedDeliveryDate"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Fecha Entrega Estimada</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                           disabled={isReadOnly}
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: es })
+                          ) : (
+                            <span>Elige una fecha</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={field.value}
+                        onSelect={field.onChange}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
         </div>
 
         <Card>

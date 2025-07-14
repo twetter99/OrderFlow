@@ -54,6 +54,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { differenceInDays, isPast, isToday } from "date-fns";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
@@ -137,6 +138,21 @@ export default function PurchasingPage() {
     setIsDeleteDialogOpen(false);
     setSelectedOrder(null);
   };
+
+  const getDeliveryStatus = (order: PurchaseOrder) => {
+    if (order.status === 'Recibido') {
+        return { text: 'Entregado', color: 'bg-primary/10 text-primary border-primary/20' };
+    }
+    const deliveryDate = new Date(order.estimatedDeliveryDate);
+    if (isPast(deliveryDate) && !isToday(deliveryDate)) {
+        return { text: 'Retrasado', color: 'bg-red-100 text-red-800 border-red-200' };
+    }
+    const daysUntilDelivery = differenceInDays(deliveryDate, new Date());
+    if (daysUntilDelivery <= 5) {
+        return { text: `Vence en ${daysUntilDelivery + 1} días`, color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+    }
+    return { text: 'En Plazo', color: 'bg-green-100 text-green-800 border-green-200' };
+};
   
   return (
     <div className="flex flex-col gap-8">
@@ -194,21 +210,20 @@ export default function PurchasingPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>ID de Orden</TableHead>
-                <TableHead>Proyecto</TableHead>
                 <TableHead>Proveedor</TableHead>
-                <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
+                <TableHead>Entrega Estimada</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {purchaseOrders.map((order) => (
+              {purchaseOrders.map((order) => {
+                const deliveryStatus = getDeliveryStatus(order);
+                return (
                 <TableRow key={order.id} className={cn(order.status === "Pendiente" && "bg-yellow-50 dark:bg-yellow-900/20")}>
                   <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{order.project}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge
@@ -234,6 +249,14 @@ export default function PurchasingPage() {
                             </TooltipContent>
                         </Tooltip>
                       )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                        <span>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</span>
+                        <Badge variant="outline" className={cn("capitalize w-fit", deliveryStatus.color)}>
+                            {deliveryStatus.text}
+                        </Badge>
                     </div>
                   </TableCell>
                   <TableCell>
@@ -263,7 +286,7 @@ export default function PurchasingPage() {
                       </DropdownMenu>
                     </TableCell>
                 </TableRow>
-              ))}
+              )})}
             </TableBody>
           </Table>
           </TooltipProvider>
