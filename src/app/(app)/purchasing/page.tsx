@@ -103,7 +103,7 @@ export default function PurchasingPage() {
       } else {
         toast({ variant: "destructive", title: "Error de IA", description: "No se pudo generar el pedido. Revisa el prompt o los datos del proveedor/artículo." });
       }
-    } catch (error) => {
+    } catch (error) {
       toast({ variant: "destructive", title: "Error de IA", description: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       setIsGenerating(false);
