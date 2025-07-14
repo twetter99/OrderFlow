@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -78,7 +79,7 @@ export default function SuppliersPage() {
     } else {
       setSuppliers([
         ...suppliers,
-        { ...values, id: `SUP-00${suppliers.length + 1}` },
+        { ...values, id: `WF-SUP-${String(suppliers.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
     }

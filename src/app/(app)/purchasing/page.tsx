@@ -55,8 +55,8 @@ import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const LOGGED_IN_USER_ID = 'USER-001'; // Simula el Admin
-// Para probar como otro rol, cambia a 'USER-002' (Almacén) o 'USER-003' (Empleado)
+const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
+// Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
 
 export default function PurchasingPage() {
   const { toast } = useToast();
@@ -121,7 +121,7 @@ export default function PurchasingPage() {
     } else {
       setPurchaseOrders([
         ...purchaseOrders,
-        { ...values, id: `PO-2024-07-${String(purchaseOrders.length + 1).padStart(3, '0')}`, date: new Date().toISOString() },
+        { ...values, id: `WF-PO-2024-${String(purchaseOrders.length + 1).padStart(3, '0')}`, date: new Date().toISOString() },
       ]);
       toast({ title: "Pedido creado", description: "El nuevo pedido de compra se ha creado correctamente." });
     }

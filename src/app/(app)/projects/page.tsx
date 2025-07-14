@@ -83,7 +83,7 @@ export default function ProjectsPage() {
     } else {
       setProjects([
         ...projects,
-        { ...values, id: `PROJ-00${projects.length + 1}` },
+        { ...values, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Proyecto creado", description: "El nuevo proyecto se ha creado correctamente." });
     }

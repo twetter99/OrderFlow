@@ -62,7 +62,7 @@ export default function DespatchesPage() {
     } else {
         const newNote: DeliveryNote = {
             ...values,
-            id: `DN-2024-${String(deliveryNotes.length + 1).padStart(4, '0')}`,
+            id: `WF-DN-2024-${String(deliveryNotes.length + 1).padStart(4, '0')}`,
             date: new Date().toISOString(),
             status: 'Completado'
         };

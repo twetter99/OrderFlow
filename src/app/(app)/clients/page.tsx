@@ -79,7 +79,7 @@ export default function ClientsPage() {
     } else {
       setClients([
         ...clients,
-        { ...values, id: `CLI-00${clients.length + 1}` },
+        { ...values, id: `WF-CLI-${String(clients.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Cliente creado", description: "El nuevo cliente se ha creado correctamente." });
     }

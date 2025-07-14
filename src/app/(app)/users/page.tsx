@@ -81,7 +81,7 @@ export default function UsersPage() {
     } else {
       setUsers([
         ...users,
-        { ...values, id: `USER-00${users.length + 1}` },
+        { ...values, id: `WF-USER-${String(users.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Usuario creado", description: "El nuevo usuario se ha creado correctamente." });
     }
