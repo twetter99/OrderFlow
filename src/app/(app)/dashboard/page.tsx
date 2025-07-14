@@ -7,8 +7,24 @@ import { purchaseOrders, inventory, projects } from "@/lib/data";
 
 export default function DashboardPage() {
     const pendingApprovals = purchaseOrders.filter(po => po.status === 'Pendiente').length;
-    const lowStockItems = inventory.filter(item => item.quantity < item.minThreshold).length;
-    const totalInventoryValue = inventory.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
+    const lowStockItems = inventory.filter(item => {
+        if (item.type === 'composite') {
+            const buildableQuantity = Math.min(
+                ...(item.components?.map(c => {
+                    const componentItem = inventory.find(i => i.id === c.itemId);
+                    return componentItem ? Math.floor(componentItem.quantity / c.quantity) : 0;
+                }) || [0])
+            );
+            return buildableQuantity < item.minThreshold;
+        }
+        return item.quantity < item.minThreshold;
+    }).length;
+    const totalInventoryValue = inventory.reduce((acc, item) => {
+        if (item.type === 'simple') {
+            return acc + (item.quantity * item.unitCost)
+        }
+        return acc;
+    }, 0);
     const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
 
   return (

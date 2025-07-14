@@ -18,7 +18,7 @@ export function StatsCard({ title, value, icon: Icon, description, isAlert = fal
         <Icon className={cn("h-4 w-4 text-muted-foreground", isAlert && "text-destructive")} />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{value}</div>
+        <div className={cn("text-2xl font-bold", isAlert && "text-destructive")}>{value}</div>
         {description && (
           <p className="text-xs text-muted-foreground">{description}</p>
         )}

@@ -21,7 +21,7 @@ export function ActiveProjectsList() {
       </CardHeader>
       <CardContent className="space-y-4">
         {activeProjects.map((project) => {
-          const progress = Math.round((project.spent / project.budget) * 100);
+          const progress = project.budget > 0 ? Math.round((project.spent / project.budget) * 100) : 0;
           return (
             <div key={project.id}>
               <div className="flex justify-between items-center mb-1">
