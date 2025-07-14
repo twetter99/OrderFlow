@@ -10,23 +10,24 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { inventory, projects } from '@/lib/data';
 
 const SuggestStockNeedsInputSchema = z.object({
-  projectForecasts: z.string().describe('Project forecasts data.'),
-  historicalData: z.string().describe('Historical stock level and usage data.'),
-  currentStockLevels: z.string().describe('Current stock levels for each item.'),
+  projects: z.string().describe('A JSON string representing the list of planned projects.'),
+  inventory: z.string().describe('A JSON string representing the current inventory levels.'),
 });
 export type SuggestStockNeedsInput = z.infer<typeof SuggestStockNeedsInputSchema>;
 
 const SuggestStockNeedsOutputSchema = z.object({
-  stockSuggestions: z
-    .string()
-    .describe(
-      'A list of suggested stock adjustments, including items to order, quantities, and recommended suppliers.'
-    ),
+  stockSuggestions: z.array(z.object({
+      itemName: z.string().describe('The name of the item that needs to be ordered.'),
+      sku: z.string().describe('The SKU of the item.'),
+      quantityToOrder: z.number().describe('The suggested quantity to order.'),
+      reason: z.string().describe('The reason for the suggestion (e.g., which projects require it).')
+  })).describe('A list of suggested stock adjustments, including items to order, quantities, and reasoning.'),
   explanation: z
     .string()
-    .describe('An explanation of the reasoning behind the stock suggestions.'),
+    .describe('A general explanation of the reasoning behind the stock suggestions.'),
 });
 export type SuggestStockNeedsOutput = z.infer<typeof SuggestStockNeedsOutputSchema>;
 
@@ -38,18 +39,21 @@ const prompt = ai.definePrompt({
   name: 'suggestStockNeedsPrompt',
   input: {schema: SuggestStockNeedsInputSchema},
   output: {schema: SuggestStockNeedsOutputSchema},
-  prompt: `Eres un asistente de IA especializado en gestión de inventario y optimización de la cadena de suministro. Basado en los pronósticos de proyectos, datos históricos y niveles de stock actuales proporcionados, proporciona una lista de sugerencias de stock para optimizar los niveles de inventario y reducir costos.
+  prompt: `Eres un asistente de IA especializado en gestión de inventario y optimización de la cadena de suministro para una empresa que instala sistemas en vehículos. Tu tarea es analizar los proyectos futuros y los niveles de stock actuales para prever las necesidades de material.
 
-Pronósticos de Proyectos:
-{{projectForecasts}}
+Proyectos Planificados (JSON):
+{{{projects}}}
 
-Datos Históricos:
-{{historicalData}}
+Inventario Actual (JSON):
+{{{inventory}}}
 
-Niveles de Stock Actuales:
-{{currentStockLevels}}
+Analiza los materiales necesarios para cada proyecto planificado. Compara estas necesidades con el inventario actual para identificar posibles déficits.
+Calcula la cantidad de cada artículo que se necesita comprar.
 
-Proporciona una explicación clara de tu razonamiento y los factores que consideraste al generar las sugerencias de stock. Enumera cualquier suposición que hiciste y las advertencias a tus sugerencias.
+Devuelve una lista de sugerencias en el campo 'stockSuggestions'. Para cada sugerencia, incluye el nombre del artículo, su SKU, la cantidad a pedir y una breve razón (por ejemplo, "Requerido para Proyecto X e Y").
+En el campo 'explanation', proporciona un resumen de tu análisis, explicando por qué son necesarias estas compras.
+
+Si el stock actual es suficiente para todos los proyectos planificados, devuelve una lista de sugerencias vacía y explica en el campo 'explanation' que no se requieren compras por el momento.
 `,
 });
 
