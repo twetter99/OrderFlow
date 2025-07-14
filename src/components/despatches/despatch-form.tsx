@@ -21,13 +21,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { DeliveryNote, Project, InventoryItem, Location, InventoryLocation } from "@/lib/types";
+import type { DeliveryNote, Project, InventoryItem, Location, InventoryLocation, Client } from "@/lib/types";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useMemo } from "react";
 
 const formSchema = z.object({
+  clientId: z.string().min(1, "Debes seleccionar un cliente."),
   projectId: z.string().min(1, "Debes seleccionar un proyecto."),
   locationId: z.string().min(1, "Debes seleccionar un almacén de origen."),
   items: z.array(z.object({
@@ -40,6 +41,7 @@ type DespatchFormValues = z.infer<typeof formSchema>;
 
 interface DespatchFormProps {
   note?: DeliveryNote | null;
+  clients: Client[];
   projects: Project[];
   inventoryItems: InventoryItem[];
   locations: Location[];
@@ -48,14 +50,14 @@ interface DespatchFormProps {
   onCancel: () => void;
 }
 
-export function DespatchForm({ note, projects, inventoryItems, locations, inventoryLocations, onSave, onCancel }: DespatchFormProps) {
+export function DespatchForm({ note, clients, projects, inventoryItems, locations, inventoryLocations, onSave, onCancel }: DespatchFormProps) {
   const isReadOnly = !!note;
 
   const form = useForm<DespatchFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: note
-      ? { projectId: note.projectId, items: note.items, locationId: note.locationId }
-      : { projectId: "", locationId: "", items: [{ itemId: "", quantity: 1 }] },
+      ? { clientId: note.clientId, projectId: note.projectId, items: note.items, locationId: note.locationId }
+      : { clientId: "", projectId: "", locationId: "", items: [{ itemId: "", quantity: 1 }] },
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -64,7 +66,14 @@ export function DespatchForm({ note, projects, inventoryItems, locations, invent
   });
 
   const watchedLocationId = useWatch({ control: form.control, name: 'locationId' });
+  const watchedClientId = useWatch({ control: form.control, name: 'clientId' });
   const watchedItems = form.watch('items');
+
+  const filteredProjects = useMemo(() => {
+    if (!watchedClientId) return [];
+    return projects.filter(p => p.clientId === watchedClientId);
+  }, [watchedClientId, projects]);
+
 
   const getStockInLocation = (itemId: string, locationId: string) => {
     return inventoryLocations.find(l => l.itemId === itemId && l.locationId === locationId)?.quantity || 0;
@@ -126,18 +135,21 @@ export function DespatchForm({ note, projects, inventoryItems, locations, invent
         <div className="grid md:grid-cols-2 gap-4">
             <FormField
             control={form.control}
-            name="projectId"
+            name="clientId"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Proyecto de Destino</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                <FormLabel>Cliente</FormLabel>
+                <Select onValueChange={(value) => {
+                    field.onChange(value);
+                    form.setValue('projectId', ''); // Reset project on client change
+                }} defaultValue={field.value} disabled={isReadOnly}>
                     <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un proyecto" />
+                        <SelectValue placeholder="Selecciona un cliente" />
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -145,6 +157,27 @@ export function DespatchForm({ note, projects, inventoryItems, locations, invent
             )}
             />
             <FormField
+            control={form.control}
+            name="projectId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Proyecto de Destino</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly || !watchedClientId}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un proyecto" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {filteredProjects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
+        <FormField
             control={form.control}
             name="locationId"
             render={({ field }) => (
@@ -164,7 +197,6 @@ export function DespatchForm({ note, projects, inventoryItems, locations, invent
                 </FormItem>
             )}
             />
-        </div>
         
         <Card>
             <CardHeader>

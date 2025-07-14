@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deliveryNotes as initialDeliveryNotes, projects, inventory as initialInventory, locations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
+import { deliveryNotes as initialDeliveryNotes, projects as initialProjects, inventory as initialInventory, locations, inventoryLocations as initialInventoryLocations, clients as initialClients } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -34,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { DeliveryNote, InventoryItem, Location as LocationType, InventoryLocation } from "@/lib/types";
+import type { DeliveryNote, InventoryItem, Location as LocationType, InventoryLocation, Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { DespatchForm } from "@/components/despatches/despatch-form";
 
@@ -121,6 +121,7 @@ export default function DespatchesPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Albarán ID</TableHead>
+                <TableHead>Cliente</TableHead>
                 <TableHead>Proyecto</TableHead>
                 <TableHead>Almacén Origen</TableHead>
                 <TableHead>Fecha</TableHead>
@@ -130,11 +131,13 @@ export default function DespatchesPage() {
             </TableHeader>
             <TableBody>
               {deliveryNotes.map((note) => {
-                const project = projects.find(p => p.id === note.projectId);
+                const project = initialProjects.find(p => p.id === note.projectId);
+                const client = initialClients.find(c => c.id === note.clientId);
                 const location = locations.find(l => l.id === note.locationId);
                 return (
                     <TableRow key={note.id}>
                     <TableCell className="font-medium">{note.id}</TableCell>
+                    <TableCell>{client?.name || 'Desconocido'}</TableCell>
                     <TableCell>{project?.name || note.projectId}</TableCell>
                     <TableCell>{location?.name || 'Desconocido'}</TableCell>
                     <TableCell>{new Date(note.date).toLocaleDateString()}</TableCell>
@@ -160,7 +163,7 @@ export default function DespatchesPage() {
             })}
              {deliveryNotes.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No se ha creado ningún despacho.
                     </TableCell>
                 </TableRow>
@@ -179,13 +182,14 @@ export default function DespatchesPage() {
             <DialogDescription>
               {selectedNote
                 ? "Visualiza los artículos incluidos en este despacho."
-                : "Selecciona un proyecto, un almacén y añade los artículos a enviar."
+                : "Selecciona un cliente, proyecto, almacén y añade los artículos a enviar."
               }
             </DialogDescription>
           </DialogHeader>
           <DespatchForm
             note={selectedNote}
-            projects={projects}
+            clients={initialClients}
+            projects={initialProjects}
             inventoryItems={inventory}
             locations={locations}
             inventoryLocations={inventoryLocations}

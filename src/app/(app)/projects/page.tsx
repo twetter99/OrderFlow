@@ -73,17 +73,20 @@ export default function ProjectsPage() {
   };
 
   const handleSave = (values: any) => {
+    const clientName = clients.find(c => c.id === values.clientId)?.name || 'Desconocido';
+    const valuesToSave = { ...values, client: clientName };
+
     if (selectedProject) {
       setProjects(
         projects.map((p) =>
-          p.id === selectedProject.id ? { ...p, ...values, id: p.id } : p
+          p.id === selectedProject.id ? { ...p, ...valuesToSave, id: p.id } : p
         )
       );
       toast({ title: "Proyecto actualizado", description: "El proyecto se ha actualizado correctamente." });
     } else {
       setProjects([
         ...projects,
-        { ...values, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}` },
+        { ...valuesToSave, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Proyecto creado", description: "El nuevo proyecto se ha creado correctamente." });
     }

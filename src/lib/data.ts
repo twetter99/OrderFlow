@@ -6,10 +6,10 @@ import { add, sub } from 'date-fns';
 const today = new Date();
 
 export const projects: Project[] = [
-  { id: 'WF-PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
-  { id: 'WF-PROJ-002', name: 'Instalación Nuevo Autobús Turístico', client: 'Compañía de Turismo', status: 'En Progreso', budget: 25000, spent: 18500, startDate: '2024-06-15', endDate: '2024-09-15' },
-  { id: 'WF-PROJ-003', name: 'Sistema de Seguridad para Autobús Escolar', client: 'Junta Escolar del Distrito', status: 'Planificado', budget: 75000, spent: 0, startDate: '2024-09-01', endDate: '2024-12-31' },
-  { id: 'WF-PROJ-004', name: 'Mantenimiento de Rutina', client: 'Tránsito de la Ciudad', status: 'Completado', budget: 10000, spent: 9800, startDate: '2024-04-01', endDate: '2024-04-30' },
+  { id: 'WF-PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', clientId: 'WF-CLI-001', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
+  { id: 'WF-PROJ-002', name: 'Instalación Nuevo Autobús Turístico', client: 'Compañía de Turismo', clientId: 'WF-CLI-002', status: 'En Progreso', budget: 25000, spent: 18500, startDate: '2024-06-15', endDate: '2024-09-15' },
+  { id: 'WF-PROJ-003', name: 'Sistema de Seguridad para Autobús Escolar', client: 'Junta Escolar del Distrito', clientId: 'WF-CLI-003', status: 'Planificado', budget: 75000, spent: 0, startDate: '2024-09-01', endDate: '2024-12-31' },
+  { id: 'WF-PROJ-004', name: 'Mantenimiento de Rutina', client: 'Tránsito de la Ciudad', clientId: 'WF-CLI-001', status: 'Completado', budget: 10000, spent: 9800, startDate: '2024-04-01', endDate: '2024-04-30' },
 ];
 
 export const inventory: InventoryItem[] = [
@@ -88,8 +88,8 @@ export const inventoryLocations: InventoryLocation[] = [
 ];
 
 export const deliveryNotes: DeliveryNote[] = [
-    { id: 'WF-DN-2024-0001', projectId: 'WF-PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
-    { id: 'WF-DN-2024-0002', projectId: 'WF-PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
+    { id: 'WF-DN-2024-0001', clientId: 'WF-CLI-001', projectId: 'WF-PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
+    { id: 'WF-DN-2024-0002', clientId: 'WF-CLI-002', projectId: 'WF-PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]
 
 

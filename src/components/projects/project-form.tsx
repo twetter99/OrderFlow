@@ -33,7 +33,7 @@ import { es } from "date-fns/locale";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
-  client: z.string().min(1, "El cliente es obligatorio."),
+  clientId: z.string().min(1, "El cliente es obligatorio."),
   status: z.enum(["Planificado", "En Progreso", "Completado"]),
   budget: z.coerce.number().positive("El presupuesto debe ser un número positivo."),
   spent: z.coerce.number().nonnegative("El gasto no puede ser negativo."),
@@ -59,7 +59,7 @@ export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormP
       }
     : {
         name: "",
-        client: "",
+        clientId: "",
         status: "Planificado",
         budget: 0,
         spent: 0,
@@ -95,7 +95,7 @@ export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormP
         <div className="grid grid-cols-2 gap-4">
             <FormField
             control={form.control}
-            name="client"
+            name="clientId"
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Cliente</FormLabel>
@@ -106,7 +106,7 @@ export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormP
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                        {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                        {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />
@@ -142,7 +142,7 @@ export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormP
             name="budget"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Presupuesto</FormLabel>
+                <FormLabel>Presupuesto (€)</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="50000" {...field} />
                 </FormControl>
@@ -155,7 +155,7 @@ export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormP
             name="spent"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Gasto</FormLabel>
+                <FormLabel>Gasto (€)</FormLabel>
                 <FormControl>
                   <Input type="number" placeholder="23000" {...field} />
                 </FormControl>

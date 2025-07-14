@@ -4,6 +4,7 @@ export type Project = {
   id: string;
   name: string;
   client: string;
+  clientId: string;
   status: 'Planificado' | 'En Progreso' | 'Completado';
   budget: number;
   spent: number;
@@ -80,6 +81,7 @@ export type Location = {
 
 export type DeliveryNote = {
   id: string;
+  clientId: string;
   projectId: string;
   locationId: string;
   date: string;
