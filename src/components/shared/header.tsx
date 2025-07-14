@@ -12,6 +12,7 @@ import {
   Search,
   ShoppingCart,
   Users,
+  Building2,
 } from "lucide-react"
 
 import { Badge } from "@/components/ui/badge"
@@ -80,6 +81,13 @@ export function Header() {
             >
               <Package2 className="h-5 w-5" />
               Productos
+            </Link>
+            <Link
+              href="/clients"
+              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
+            >
+              <Building2 className="h-5 w-5" />
+              Clientes
             </Link>
             <Link
               href="/users"

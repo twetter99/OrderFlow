@@ -1,4 +1,4 @@
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -27,6 +27,12 @@ export const suppliers: Supplier[] = [
   { id: 'SUP-002', name: 'MetalWorks Ltd.', contactPerson: 'John Smith', email: 'contact@metalworks.com', phone: '987-654-3210', deliveryRating: 4.2, qualityRating: 4.5 },
   { id: 'SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
   { id: 'SUP-004', name: 'Global Nav', contactPerson: 'Susan Chen', email: 'support@globalnav.com', phone: '555-987-6543', deliveryRating: 4.0, qualityRating: 4.7 },
+];
+
+export const clients: Client[] = [
+    { id: 'CLI-001', name: 'Tránsito de la Ciudad', contactPerson: 'Carlos Ruiz', email: 'c.ruiz@transitociudad.gov', phone: '611-222-3333' },
+    { id: 'CLI-002', name: 'Compañía de Turismo', contactPerson: 'Ana Torres', email: 'ana.torres@turismo.com', phone: '622-333-4444' },
+    { id: 'CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 
 export const users: User[] = [

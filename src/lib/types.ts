@@ -43,6 +43,14 @@ export type Supplier = {
   qualityRating: number;
 };
 
+export type Client = {
+  id: string;
+  name: string;
+  contactPerson: string;
+  email: string;
+  phone: string;
+};
+
 export type User = {
   id: string;
   name: string;
