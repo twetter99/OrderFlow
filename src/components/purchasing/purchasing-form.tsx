@@ -33,6 +33,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "../ui/calendar";
+import { ItemCombobox } from "./item-combobox";
 
 const formSchema = z.object({
   project: z.string().min(1, "El proyecto es obligatorio."),
@@ -230,7 +231,20 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="p. ej., Módulo GPS v2 / Vuelo Madrid-BCN" {...field} disabled={isReadOnly} />
+                                                   <ItemCombobox 
+                                                        inventoryItems={inventoryItems}
+                                                        value={field.value}
+                                                        onChange={(selectedItem) => {
+                                                            field.onChange(selectedItem.name);
+                                                            form.setValue(`items.${index}.price`, selectedItem.unitCost);
+                                                            form.setValue(`items.${index}.itemId`, selectedItem.id);
+                                                        }}
+                                                        onTextChange={(text) => {
+                                                            field.onChange(text);
+                                                            form.setValue(`items.${index}.itemId`, undefined);
+                                                        }}
+                                                        disabled={isReadOnly}
+                                                   />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
