@@ -1,4 +1,4 @@
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -46,3 +46,8 @@ export const locations: Location[] = [
     { id: 'LOC-002', name: 'Estantería A-2', description: 'Componentes electrónicos' },
     { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar' },
 ];
+
+export const deliveryNotes: DeliveryNote[] = [
+    { id: 'DN-2024-0001', projectId: 'PROJ-001', date: '2024-07-20', status: 'Completado', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
+    { id: 'DN-2024-0002', projectId: 'PROJ-002', date: '2024-07-22', status: 'Completado', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
+]

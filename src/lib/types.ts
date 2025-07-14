@@ -66,4 +66,14 @@ export type Location = {
   description: string;
 };
 
+export type DeliveryNote = {
+  id: string;
+  projectId: string;
+  date: string;
+  items: {
+    itemId: string;
+    quantity: number;
+  }[];
+  status: 'Pendiente' | 'Completado';
+};
     

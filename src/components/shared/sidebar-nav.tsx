@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, PackageOutput } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -14,6 +14,7 @@ const navItems = [
   { href: "/locations", label: "Almacenes", icon: Warehouse },
   { href: "/purchasing", label: "Compras", icon: ShoppingCart },
   { href: "/receptions", label: "Recepciones", icon: Archive },
+  { href: "/despatches", label: "Despachos", icon: PackageOutput },
   { href: "/suppliers", label: "Proveedores", icon: Truck },
   { href: "/clients", label: "Clientes", icon: Building2 },
   { href: "/ai-assistant", label: "Asistente IA", icon: Bot },
