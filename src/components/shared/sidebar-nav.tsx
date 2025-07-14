@@ -23,7 +23,7 @@ const navGroups = [
       { href: "/transfers", label: "Transferencias", icon: ArrowRightLeft },
       { href: "/receptions", label: "Recepciones", icon: Archive },
       { href: "/despatches", label: "Despachos", icon: Send },
-      { href: "/locations", label: "Gestionar Almacenes", icon: Settings },
+      { href: "/locations", label: "Almacenes", icon: Building2 },
     ],
   },
   {
