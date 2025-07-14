@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory, projects } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,6 +84,23 @@ export default function PurchasingPage() {
   const handleDeleteClick = (order: PurchaseOrder) => {
     setSelectedOrder(order);
     setIsDeleteDialogOpen(true);
+  };
+
+  const handlePrintClick = (orderId: string) => {
+    window.open(`/purchasing/${orderId}/print`, '_blank');
+  };
+
+  const handleEmailClick = (order: PurchaseOrder) => {
+    const supplierInfo = suppliers.find(s => s.name === order.supplier);
+    if (!supplierInfo) {
+      toast({ variant: 'destructive', title: 'Error', description: 'No se encontró la información del proveedor.' });
+      return;
+    }
+
+    const subject = `Orden de Compra #${order.id} de WINFIN`;
+    const body = `Hola ${supplierInfo.contactPerson},\n\nAdjuntamos la orden de compra #${order.id}.\n\nPor favor, confirma la recepción y la fecha de entrega estimada.\n\nGracias,\nEl equipo de WINFIN`;
+    
+    window.location.href = `mailto:${supplierInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
 
   const handleGenerateWithAI = async () => {
@@ -274,8 +291,18 @@ export default function PurchasingPage() {
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(order)}>
+                            <Eye className="mr-2 h-4 w-4"/>
                             {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handlePrintClick(order.id)}>
+                            <Printer className="mr-2 h-4 w-4"/>
+                            Imprimir Orden
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEmailClick(order)}>
+                            <Mail className="mr-2 h-4 w-4"/>
+                            Enviar por Email
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => handleDeleteClick(order)}

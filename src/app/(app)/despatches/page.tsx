@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { deliveryNotes as initialDeliveryNotes, projects as initialProjects, inventory as initialInventory, locations, inventoryLocations as initialInventoryLocations, clients as initialClients } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Printer, Eye } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +54,10 @@ export default function DespatchesPage() {
   const handleViewClick = (note: DeliveryNote) => {
     setSelectedNote(note);
     setIsModalOpen(true);
+  };
+
+  const handlePrintClick = (noteId: string) => {
+    window.open(`/despatches/${noteId}/print`, '_blank');
   };
 
   const handleSave = (values: any) => {
@@ -154,9 +158,26 @@ export default function DespatchesPage() {
                         </Badge>
                     </TableCell>
                     <TableCell className="text-right">
-                        <Button variant="outline" size="sm" onClick={() => handleViewClick(note)}>
-                            Ver Detalles
-                        </Button>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" className="h-8 w-8 p-0">
+                                <span className="sr-only">Abrir menú</span>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem onClick={() => handleViewClick(note)}>
+                                <Eye className="mr-2 h-4 w-4"/>
+                                Ver Detalles
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handlePrintClick(note.id)}>
+                                <Printer className="mr-2 h-4 w-4"/>
+                                Imprimir Albarán
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </TableCell>
                     </TableRow>
                 )
