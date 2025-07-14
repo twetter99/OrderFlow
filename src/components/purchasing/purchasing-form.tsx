@@ -39,6 +39,7 @@ const formSchema = z.object({
     itemName: z.string().min(1, "El nombre es obligatorio."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
     price: z.coerce.number().min(0.01, "El precio es obligatorio."),
+    type: z.enum(['Material', 'Servicio']),
   })).min(1, "Debes añadir al menos un artículo."),
   total: z.coerce.number() // Se calculará automáticamente
 });
@@ -64,7 +65,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         supplier: "",
         status: "Pendiente" as const,
         rejectionReason: "",
-        items: [{ itemName: "", quantity: 1, price: 0 }],
+        items: [{ itemName: "", quantity: 1, price: 0, type: 'Material' as const }],
         total: 0,
       };
 
@@ -129,14 +130,15 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
 
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg">Artículos del Pedido</CardTitle>
+                <CardTitle className="text-lg">Conceptos del Pedido</CardTitle>
             </CardHeader>
             <CardContent>
                 <div className="overflow-x-auto">
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[45%]">Nombre del Artículo</TableHead>
+                            <TableHead className="w-[15%]">Tipo</TableHead>
+                            <TableHead className="w-[35%]">Descripción</TableHead>
                             <TableHead className="w-[15%]">Cantidad</TableHead>
                             <TableHead className="w-[25%]">Precio Unitario (€)</TableHead>
                             {!isReadOnly && <TableHead className="w-[10%] text-right"></TableHead>}
@@ -146,13 +148,35 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                         {fields.map((field, index) => (
                             <TableRow key={field.id}>
                                 <TableCell>
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.type`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                                                    <FormControl>
+                                                        <SelectTrigger>
+                                                            <SelectValue />
+                                                        </SelectTrigger>
+                                                    </FormControl>
+                                                    <SelectContent>
+                                                        <SelectItem value="Material">Material</SelectItem>
+                                                        <SelectItem value="Servicio">Servicio</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </TableCell>
+                                <TableCell>
                                      <FormField
                                         control={form.control}
                                         name={`items.${index}.itemName`}
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="p. ej., Módulo GPS v2" {...field} disabled={isReadOnly} />
+                                                    <Input placeholder="p. ej., Módulo GPS v2 / Vuelo Madrid-BCN" {...field} disabled={isReadOnly} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -183,7 +207,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                     <Input type="number" step="0.01" {...field} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
-                                                {!isReadOnly && (
+                                                {!isReadOnly && watchedItems[index]?.type === 'Material' && (
                                                     <ItemPriceInsight
                                                         itemName={watchedItems[index]?.itemName}
                                                         itemPrice={watchedItems[index]?.price}
@@ -212,7 +236,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => append({ itemName: "", quantity: 1, price: 0 })}
+                    onClick={() => append({ itemName: "", quantity: 1, price: 0, type: 'Material' })}
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila

@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -37,7 +37,11 @@ export default function ReceptionsPage() {
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
-  const ordersToReceive = purchaseOrders.filter(o => o.status === 'Enviado');
+  const ordersToReceive = useMemo(() => {
+    return purchaseOrders.filter(o => 
+      o.status === 'Enviado' && o.items.some(item => item.type === 'Material')
+    );
+  }, [purchaseOrders]);
 
   const handleVerifyClick = (order: PurchaseOrder) => {
     setSelectedOrder(order);
@@ -52,12 +56,14 @@ export default function ReceptionsPage() {
     let updatedInventory = [...inventory];
     if (status === 'Recibido') {
       orderToUpdate.items.forEach(itemToReceive => {
-          updatedInventory = updatedInventory.map(stockItem => {
-              if (stockItem.id === itemToReceive.itemId) {
-                  return { ...stockItem, quantity: stockItem.quantity + itemToReceive.quantity };
-              }
-              return stockItem;
-          });
+          if (itemToReceive.type === 'Material' && itemToReceive.itemId) {
+              updatedInventory = updatedInventory.map(stockItem => {
+                  if (stockItem.id === itemToReceive.itemId) {
+                      return { ...stockItem, quantity: stockItem.quantity + itemToReceive.quantity };
+                  }
+                  return stockItem;
+              });
+          }
       });
       setInventory(updatedInventory);
     }
@@ -118,7 +124,7 @@ export default function ReceptionsPage() {
                {ordersToReceive.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
-                        No hay pedidos pendientes de recibir.
+                        No hay pedidos de material pendientes de recibir.
                     </TableCell>
                 </TableRow>
                )}

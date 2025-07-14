@@ -1,10 +1,10 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Check, AlertTriangle, Plus, Minus, QrCode, FileWarning, PackageCheck, Send } from "lucide-react";
+import { Check, AlertTriangle, QrCode, FileWarning, PackageCheck, Anchor } from "lucide-react";
 import type { PurchaseOrder } from '@/lib/types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
@@ -14,21 +14,13 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 type ItemStatus = 'pending' | 'ok' | 'discrepancy';
 
 interface ChecklistItem {
-    id: string;
+    id: string; // This is now itemName for services, or itemId for materials
     name: string;
     expected: number;
     scanned: number;
     status: ItemStatus;
+    type: 'Material' | 'Servicio';
 }
-
-// Simula la obtención de nombres de artículos desde un catálogo
-const itemCatalog: { [key: string]: string } = {
-    'ITEM-001': 'Unidad Central de Procesamiento v4.5',
-    'ITEM-002': 'Soporte de Montaje Pequeño',
-    'ITEM-003': 'Placa de Conexión Principal',
-    'ITEM-004': 'Paquete de Tornillos M5 (100ct)',
-    'ITEM-005': 'Módulo GPS v2',
-};
 
 interface ReceptionChecklistProps {
     order: PurchaseOrder;
@@ -37,15 +29,21 @@ interface ReceptionChecklistProps {
 }
 
 export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: ReceptionChecklistProps) {
-    const initialItems = order.items.map(item => ({
-        id: item.itemId,
-        name: itemCatalog[item.itemId] || 'Artículo Desconocido',
-        expected: item.quantity,
-        scanned: 0,
-        status: 'pending' as ItemStatus,
-    }));
-
-    const [items, setItems] = useState<ChecklistItem[]>(initialItems);
+    const itemsForReception = useMemo(() => 
+        order.items
+            .filter(item => item.type === 'Material')
+            .map(item => ({
+                id: item.itemId || item.itemName, // Fallback to itemName if itemId is missing
+                name: item.itemName,
+                expected: item.quantity,
+                scanned: 0,
+                status: 'pending' as ItemStatus,
+                type: item.type,
+            })),
+        [order.items]
+    );
+    
+    const [items, setItems] = useState<ChecklistItem[]>(itemsForReception);
     const [notes, setNotes] = useState('');
 
     const handleScan = (itemId: string) => {
@@ -87,10 +85,10 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                  <Card>
                     <CardHeader>
                         <CardTitle>Lista de Verificación de Artículos</CardTitle>
-                        <CardDescription>Simula el escaneo de códigos QR para cada artículo del pedido.</CardDescription>
+                        <CardDescription>Simula el escaneo de códigos QR para cada artículo del pedido. Los servicios no se muestran aquí.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                        {items.map(item => (
+                        {items.length > 0 ? items.map(item => (
                             <div key={item.id} className="flex items-center gap-4 p-3 border rounded-lg">
                                 <div className="flex-none w-8 h-8 flex items-center justify-center">
                                     {getStatusIcon(item.status)}
@@ -103,7 +101,7 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                                     <Input
                                       type="number"
                                       value={item.scanned}
-                                      onChange={(e) => handleManualChange(item.id, parseInt(e.target.value, 10))}
+                                      onChange={(e) => handleManualChange(item.id, parseInt(e.target.value, 10) || 0)}
                                       className="w-20 text-center"
                                     />
                                     <span className="text-muted-foreground">/ {item.expected}</span>
@@ -112,7 +110,12 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                                     <QrCode className="w-5 h-5" />
                                 </Button>
                             </div>
-                        ))}
+                        )) : (
+                            <div className="text-center py-8 text-muted-foreground">
+                                <Anchor className="mx-auto h-8 w-8 mb-2" />
+                                <p>No hay materiales físicos en este pedido para recibir.</p>
+                            </div>
+                        )}
                     </CardContent>
                 </Card>
             </div>
@@ -136,7 +139,7 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                     <CardFooter className="flex flex-col gap-2">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                 <Button className="w-full" disabled={!hasDiscrepancy}>
+                                 <Button className="w-full" disabled={!hasDiscrepancy || items.length === 0}>
                                     <FileWarning className="mr-2 h-4 w-4" />
                                     Generar Informe de Incidencia
                                 </Button>
@@ -159,7 +162,7 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                         
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                 <Button className="w-full" disabled={!allItemsOk}>
+                                 <Button className="w-full" disabled={!allItemsOk || items.length === 0}>
                                     <PackageCheck className="mr-2 h-4 w-4" />
                                     Confirmar Recepción Completa
                                 </Button>

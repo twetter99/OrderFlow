@@ -34,12 +34,17 @@ export const inventory: InventoryItem[] = [
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
-  { id: 'PO-2024-07-001', project: 'PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350 }] },
-  { id: 'PO-2024-07-002', project: 'PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50 }] },
-  { id: 'PO-2024-07-003', project: 'PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120 }] },
-  { id: 'PO-2024-07-004', project: 'PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8 }], rejectionReason: 'El precio es superior al acordado en el presupuesto.' },
-  { id: 'PO-2024-07-005', project: 'PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85 }] },
-  { id: 'PO-2024-07-006', project: 'PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45 }] },
+  { id: 'PO-2024-07-001', project: 'PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, type: 'Material' }] },
+  { id: 'PO-2024-07-002', project: 'PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, type: 'Material' }] },
+  { id: 'PO-2024-07-003', project: 'PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, type: 'Material' }] },
+  { id: 'PO-2024-07-004', project: 'PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.' },
+  { id: 'PO-2024-07-005', project: 'PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, type: 'Material' }] },
+  { id: 'PO-2024-07-006', project: 'PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, type: 'Material' }] },
+  { id: 'PO-2024-07-007', project: 'PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobado', date: '2024-07-22', total: 875, items: [
+    { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, type: 'Servicio' },
+    { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, type: 'Servicio' },
+    { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, type: 'Servicio' },
+  ]},
 ];
 
 export const suppliers: Supplier[] = [
@@ -48,6 +53,7 @@ export const suppliers: Supplier[] = [
   { id: 'SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
   { id: 'SUP-004', name: 'Global Nav', contactPerson: 'Susan Chen', email: 'support@globalnav.com', phone: '555-987-6543', deliveryRating: 4.0, qualityRating: 4.7 },
   { id: 'SUP-005', name: 'Ensamblado Interno', contactPerson: 'N/A', email: 'N/A', phone: 'N/A', deliveryRating: 5.0, qualityRating: 5.0 },
+  { id: 'SUP-006', name: 'Viajes Corporativos', contactPerson: 'Agencia de Viajes', email: 'reservas@viajescorp.com', phone: '555-555-5555', deliveryRating: 5.0, qualityRating: 5.0 },
 ];
 
 export const clients: Client[] = [

@@ -31,6 +31,7 @@ export type PurchaseOrderItem = {
   itemName: string;
   quantity: number;
   price: number;
+  type: 'Material' | 'Servicio';
 };
 
 export type PurchaseOrder = {
@@ -55,7 +56,7 @@ export type Supplier = {
 };
 
 export type Client = {
-  id: string;
+  id:string;
   name: string;
   contactPerson: string;
   email: string;
