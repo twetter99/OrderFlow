@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deliveryNotes as initialDeliveryNotes, projects, inventory } from "@/lib/data";
+import { deliveryNotes as initialDeliveryNotes, projects, inventory as initialInventory } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -34,13 +34,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { DeliveryNote } from "@/lib/types";
+import type { DeliveryNote, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { DespatchForm } from "@/components/despatches/despatch-form";
 
 export default function DespatchesPage() {
   const { toast } = useToast();
   const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNote[]>(initialDeliveryNotes);
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
 
@@ -58,7 +59,7 @@ export default function DespatchesPage() {
     if (selectedNote) {
       // Logic for editing (if needed)
     } else {
-        const newNote = { 
+        const newNote: DeliveryNote = { 
             ...values, 
             id: `DN-2024-${String(deliveryNotes.length + 1).padStart(4, '0')}`, 
             date: new Date().toISOString(),
@@ -68,8 +69,20 @@ export default function DespatchesPage() {
         ...deliveryNotes,
         newNote
       ]);
-      toast({ title: "Despacho Creado", description: "El albarán de salida se ha generado correctamente." });
-      // Here you would also update the inventory state
+
+      // Update inventory based on the new despatch note
+      let updatedInventory = [...inventory];
+      newNote.items.forEach(itemToDespatch => {
+          updatedInventory = updatedInventory.map(stockItem => {
+              if (stockItem.id === itemToDespatch.itemId) {
+                  return { ...stockItem, quantity: stockItem.quantity - itemToDespatch.quantity };
+              }
+              return stockItem;
+          });
+      });
+      setInventory(updatedInventory);
+
+      toast({ title: "Despacho Creado", description: "El albarán de salida se ha generado y el stock ha sido actualizado." });
     }
     setIsModalOpen(false);
   };
