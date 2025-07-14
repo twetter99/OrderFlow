@@ -13,12 +13,15 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,9 +51,11 @@ import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 import type { PurchaseOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
-// Simulamos un usuario logueado. Cambia el ID para probar diferentes roles.
-const LOGGED_IN_USER_ID = 'USER-001'; // 'USER-001' es Admin, 'USER-002' es Almacén, 'USER-003' es Empleado
+const LOGGED_IN_USER_ID = 'USER-001';
 
 export default function PurchasingPage() {
   const { toast } = useToast();
@@ -58,12 +63,14 @@ export default function PurchasingPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
   const canApprove = currentUser?.role === 'Administrador';
 
-  const handleAddClick = () => {
-    setSelectedOrder(null);
+  const handleAddClick = (initialData: Partial<PurchaseOrder> | null = null) => {
+    setSelectedOrder(initialData as PurchaseOrder | null);
     setIsModalOpen(true);
   };
 
@@ -77,8 +84,33 @@ export default function PurchasingPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleGenerateWithAI = async () => {
+    if (!aiPrompt) {
+      toast({ variant: "destructive", title: "Prompt vacío", description: "Por favor, escribe lo que necesitas pedir." });
+      return;
+    }
+    setIsGenerating(true);
+    try {
+      const result = await generatePurchaseOrder({ prompt: aiPrompt });
+      if (result && result.items.length > 0) {
+        const newOrder: Partial<PurchaseOrder> = {
+          supplier: result.supplier,
+          items: result.items,
+          status: 'Pendiente',
+        };
+        handleAddClick(newOrder);
+      } else {
+        toast({ variant: "destructive", title: "Error de IA", description: "No se pudo generar el pedido. Revisa el prompt o los datos del proveedor/artículo." });
+      }
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error de IA", description: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
   const handleSave = (values: any) => {
-    if (selectedOrder) {
+    if (selectedOrder && 'id' in selectedOrder) {
       setPurchaseOrders(
         purchaseOrders.map((p) =>
           p.id === selectedOrder.id ? { ...p, ...values, id: p.id, date: new Date().toISOString() } : p
@@ -93,6 +125,7 @@ export default function PurchasingPage() {
       toast({ title: "Pedido creado", description: "El nuevo pedido de compra se ha creado correctamente." });
     }
     setIsModalOpen(false);
+    setSelectedOrder(null);
   };
 
   const confirmDelete = () => {
@@ -113,13 +146,48 @@ export default function PurchasingPage() {
             Crea y rastrea todas tus órdenes de compra.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Crear Solicitud de Compra
-        </Button>
       </div>
+
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Wand2 className="text-primary"/>Creación Rápida con IA</CardTitle>
+          <CardDescription>
+            Escribe lo que necesitas y deja que la IA genere un borrador del pedido de compra por ti.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-2">
+            <Label htmlFor="ai-prompt">Tu Solicitud</Label>
+            <div className="flex gap-2">
+              <Input 
+                id="ai-prompt" 
+                placeholder="Ej: Pedir 20 soportes de montaje pequeños de MetalWorks Ltd." 
+                value={aiPrompt}
+                onChange={(e) => setAiPrompt(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleGenerateWithAI()}
+                disabled={isGenerating}
+              />
+              <Button onClick={handleGenerateWithAI} disabled={isGenerating}>
+                {isGenerating ? <Loader2 className="mr-2 animate-spin" /> : <Bot className="mr-2" />}
+                Generar
+              </Button>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader>
+          <CardTitle>Órdenes de Compra</CardTitle>
+          <CardDescription>Visualiza y gestiona todas tus solicitudes de compra.</CardDescription>
+          <div className="pt-4">
+             <Button onClick={() => handleAddClick()}>
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Crear Pedido Manualmente
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -201,11 +269,16 @@ export default function PurchasingPage() {
         </CardContent>
       </Card>
       
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isModalOpen} onOpenChange={(isOpen) => {
+        setIsModalOpen(isOpen);
+        if (!isOpen) {
+          setSelectedOrder(null);
+        }
+      }}>
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
+              {selectedOrder && 'id' in selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
             </DialogTitle>
             <DialogDescription>
               {selectedOrder
@@ -216,7 +289,10 @@ export default function PurchasingPage() {
           <PurchasingForm
             order={selectedOrder}
             onSave={handleSave}
-            onCancel={() => setIsModalOpen(false)}
+            onCancel={() => {
+              setIsModalOpen(false);
+              setSelectedOrder(null);
+            }}
             canApprove={canApprove}
             suppliers={suppliers}
             inventoryItems={inventory}
