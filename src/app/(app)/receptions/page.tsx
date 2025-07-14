@@ -18,15 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { purchaseOrders as initialPurchaseOrders, inventory as initialInventory } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, QrCode } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { QrCode } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -96,7 +88,7 @@ export default function ReceptionsPage() {
               <TableRow>
                 <TableHead>ID de Orden</TableHead>
                 <TableHead>Proveedor</TableHead>
-                <TableHead>Fecha</TableHead>
+                <TableHead>Fecha de Envío</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
