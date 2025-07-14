@@ -11,6 +11,7 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import { suppliers, purchaseOrders } from '@/lib/data';
 
 const CheckItemPriceInputSchema = z.object({
   itemName: z.string().describe('The name of the item.'),
@@ -32,17 +33,35 @@ export async function checkItemPrice(input: CheckItemPriceInput): Promise<CheckI
 
 const getSuggestedSuppliers = ai.defineTool({
   name: 'getSuggestedSuppliers',
-  description: 'Retrieves a list of suppliers offering the specified item at a lower price.',
+  description: 'Retrieves a list of suppliers offering the specified item at a lower price based on historical purchase order data.',
   inputSchema: z.object({
     itemName: z.string().describe('The name of the item to find suppliers for.'),
     currentSupplier: z.string().describe('The name of the current supplier.'),
+    currentPrice: z.number().describe('The current price of the item.'),
   }),
   outputSchema: z.array(z.string()).describe('A list of supplier names offering the item at a lower price.'),
 },
-async (input) => {
-    // TODO: Implement the logic to fetch suggested suppliers from a database or external API.
-    // For now, return an empty array.
-    return [];
+async ({ itemName, currentSupplier, currentPrice }) => {
+    const alternativeSuppliers = new Set<string>();
+
+    // Find purchase orders containing the item from different suppliers
+    for (const order of purchaseOrders) {
+      if (order.supplier === currentSupplier) continue;
+
+      for (const item of order.items) {
+          // This is a simplified lookup. In a real app, you'd match by SKU or item ID.
+          // We'll use a case-insensitive name match for this prototype.
+          const poItem = purchaseOrders.flatMap(po => po.items).find(i => i.itemId === item.itemId);
+          if (poItem) { // A more robust check might be needed here
+              const historicalItemName = 'itemName' in item ? (item as any).itemName : undefined;
+              if (historicalItemName && historicalItemName.toLowerCase() === itemName.toLowerCase() && item.price < currentPrice) {
+                  alternativeSuppliers.add(order.supplier);
+              }
+          }
+      }
+    }
+    
+    return Array.from(alternativeSuppliers);
 });
 
 const checkItemPricePrompt = ai.definePrompt({
@@ -58,7 +77,7 @@ const checkItemPricePrompt = ai.definePrompt({
 
   Primero, utiliza tus conocimientos y las herramientas disponibles para investigar el precio promedio de este artículo de otros proveedores. Si el precio del artículo es significativamente más alto (por ejemplo, más de un 20% más alto que el promedio), entonces establece isPriceTooHigh en verdadero.
 
-  Considera factores como la reputación del proveedor, la calidad del artículo y los tiempos de entrega al evaluar la diferencia de precio. Usa la herramienta getSuggestedSuppliers para encontrar proveedores alternativos.
+  Considera factores como la reputación del proveedor, la calidad del artículo y los tiempos de entrega al evaluar la diferencia de precio. Usa la herramienta getSuggestedSuppliers para encontrar proveedores alternativos con un precio inferior al actual.
 
   Según tu análisis, proporciona una lista de proveedores sugeridos con precios más bajos para el artículo en el campo suggestedSuppliers. Incluye el precio promedio del artículo de otros proveedores.
 

@@ -25,6 +25,13 @@ export type InventoryItem = {
   }[];
 };
 
+export type PurchaseOrderItem = {
+  itemId: string;
+  itemName: string;
+  quantity: number;
+  price: number;
+};
+
 export type PurchaseOrder = {
   id: string;
   project: string;
@@ -32,11 +39,7 @@ export type PurchaseOrder = {
   status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Rechazado';
   date: string;
   total: number;
-  items: {
-    itemId: string;
-    quantity: number;
-    price: number;
-  }[];
+  items: PurchaseOrderItem[];
   rejectionReason?: string;
 };
 

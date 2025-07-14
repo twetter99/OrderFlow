@@ -32,11 +32,12 @@ export const inventory: InventoryItem[] = [
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
-  { id: 'PO-2024-07-001', project: 'PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', quantity: 10, price: 350 }] },
-  { id: 'PO-2024-07-002', project: 'PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', quantity: 50, price: 15.50 }] },
-  { id: 'PO-2024-07-003', project: 'PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', quantity: 10, price: 120 }] },
-  { id: 'PO-2024-07-004', project: 'PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', quantity: 20, price: 8 }], rejectionReason: 'El precio es superior al acordado en el presupuesto.' },
-  { id: 'PO-2024-07-005', project: 'PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', quantity: 30, price: 85 }] },
+  { id: 'PO-2024-07-001', project: 'PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350 }] },
+  { id: 'PO-2024-07-002', project: 'PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50 }] },
+  { id: 'PO-2024-07-003', project: 'PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120 }] },
+  { id: 'PO-2024-07-004', project: 'PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8 }], rejectionReason: 'El precio es superior al acordado en el presupuesto.' },
+  { id: 'PO-2024-07-005', project: 'PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85 }] },
+  { id: 'PO-2024-07-006', project: 'PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45 }] },
 ];
 
 export const suppliers: Supplier[] = [
