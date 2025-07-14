@@ -75,13 +75,13 @@ export default function LocationsPage() {
           c.id === selectedLocation.id ? { ...c, ...values, id: c.id } : c
         )
       );
-      toast({ title: "Ubicación actualizada", description: "La ubicación se ha actualizado correctamente." });
+      toast({ title: "Almacén actualizado", description: "El almacén se ha actualizado correctamente." });
     } else {
       setLocations([
         ...locations,
         { ...values, id: `LOC-00${locations.length + 1}` },
       ]);
-      toast({ title: "Ubicación creada", description: "La nueva ubicación se ha creado correctamente." });
+      toast({ title: "Almacén creado", description: "El nuevo almacén se ha creado correctamente." });
     }
     setIsModalOpen(false);
   };
@@ -89,7 +89,7 @@ export default function LocationsPage() {
   const confirmDelete = () => {
     if (selectedLocation) {
       setLocations(locations.filter((c) => c.id !== selectedLocation.id));
-      toast({ variant: "destructive", title: "Ubicación eliminada", description: "La ubicación se ha eliminado correctamente." });
+      toast({ variant: "destructive", title: "Almacén eliminado", description: "El almacén se ha eliminado correctamente." });
     }
     setIsDeleteDialogOpen(false);
     setSelectedLocation(null);
@@ -99,14 +99,14 @@ export default function LocationsPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Ubicaciones del Almacén</h1>
+          <h1 className="text-3xl font-bold font-headline">Almacenes</h1>
           <p className="text-muted-foreground">
-            Gestiona las ubicaciones de tu almacén.
+            Gestiona tus almacenes y sus ubicaciones.
           </p>
         </div>
         <Button onClick={handleAddClick}>
           <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Ubicación
+          Añadir Almacén
         </Button>
       </div>
       <Card>
@@ -158,12 +158,12 @@ export default function LocationsPage() {
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>
-              {selectedLocation ? "Editar Ubicación" : "Añadir Nueva Ubicación"}
+              {selectedLocation ? "Editar Almacén" : "Añadir Nuevo Almacén"}
             </DialogTitle>
             <DialogDescription>
               {selectedLocation
-                ? "Edita la información de la ubicación."
-                : "Rellena los detalles para crear una nueva ubicación."}
+                ? "Edita la información del almacén."
+                : "Rellena los detalles para crear un nuevo almacén."}
             </DialogDescription>
           </DialogHeader>
           <LocationForm
@@ -183,7 +183,7 @@ export default function LocationsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              la ubicación.
+              el almacén.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -55,9 +55,9 @@ export function LocationForm({ location, onSave, onCancel }: LocationFormProps) 
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Nombre de la Ubicación</FormLabel>
+              <FormLabel>Nombre del Almacén</FormLabel>
               <FormControl>
-                <Input placeholder="p. ej., Estantería A-1" {...field} />
+                <Input placeholder="p. ej., Almacén Central" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -71,7 +71,7 @@ export function LocationForm({ location, onSave, onCancel }: LocationFormProps) 
               <FormLabel>Descripción</FormLabel>
               <FormControl>
                 <Textarea
-                  placeholder="p. ej., Materiales generales"
+                  placeholder="p. ej., Almacén principal para componentes electrónicos."
                   {...field}
                 />
               </FormControl>

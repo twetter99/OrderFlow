@@ -11,7 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/inventory", label: "Inventario", icon: Warehouse },
-  { href: "/locations", label: "Ubicaciones", icon: MapPin },
+  { href: "/locations", label: "Almacenes", icon: Warehouse },
   { href: "/purchasing", label: "Compras", icon: ShoppingCart },
   { href: "/suppliers", label: "Proveedores", icon: Truck },
   { href: "/clients", label: "Clientes", icon: Building2 },
