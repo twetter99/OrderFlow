@@ -77,4 +77,11 @@ export type DeliveryNote = {
   }[];
   status: 'Pendiente' | 'Completado';
 };
+
+export type InventoryLocation = {
+    id: string;
+    itemId: string;
+    locationId: string;
+    quantity: number;
+}
     

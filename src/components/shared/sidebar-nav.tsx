@@ -11,7 +11,7 @@ const navItems = [
   { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
   { href: "/projects", label: "Proyectos", icon: FolderKanban },
   { href: "/inventory", label: "Inventario", icon: Warehouse },
-  { href: "/locations", label: "Almacenes", icon: Warehouse },
+  { href: "/inventory-locations", label: "Ubicaciones Stock", icon: MapPin },
   { href: "/purchasing", label: "Compras", icon: ShoppingCart },
   { href: "/receptions", label: "Recepciones", icon: Archive },
   { href: "/despatches", label: "Despachos", icon: Send },
@@ -21,6 +21,7 @@ const navItems = [
 ];
 
 const bottomNavItems = [
+  { href: "/locations", label: "Gestionar Almacenes", icon: Warehouse },
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];

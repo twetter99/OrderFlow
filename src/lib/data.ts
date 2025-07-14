@@ -1,4 +1,4 @@
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -47,6 +47,16 @@ export const locations: Location[] = [
     { id: 'LOC-001', name: 'Estantería A-1', description: 'Materiales generales' },
     { id: 'LOC-002', name: 'Estantería A-2', description: 'Componentes electrónicos' },
     { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar' },
+];
+
+export const inventoryLocations: InventoryLocation[] = [
+    { id: 'INVLOC-001', itemId: 'ITEM-001', locationId: 'LOC-002', quantity: 15 },
+    { id: 'INVLOC-002', itemId: 'ITEM-001', locationId: 'LOC-003', quantity: 10 },
+    { id: 'INVLOC-003', itemId: 'ITEM-002', locationId: 'LOC-001', quantity: 8 },
+    { id: 'INVLOC-004', itemId: 'ITEM-003', locationId: 'LOC-001', quantity: 55 },
+    { id: 'INVLOC-005', itemId: 'ITEM-004', locationId: 'LOC-001', quantity: 200 },
+    { id: 'INVLOC-006', itemId: 'ITEM-005', locationId: 'LOC-002', quantity: 12 },
+    { id: 'INVLOC-007', itemId: 'ITEM-006', locationId: 'LOC-002', quantity: 30 },
 ];
 
 export const deliveryNotes: DeliveryNote[] = [
