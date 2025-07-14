@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders } from "@/lib/data";
+import { purchaseOrders as initialPurchaseOrders, inventory as initialInventory } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, QrCode } from "lucide-react";
 import {
@@ -34,13 +34,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { PurchaseOrder } from "@/lib/types";
+import type { InventoryItem, PurchaseOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
+  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
@@ -52,10 +53,28 @@ export default function ReceptionsPage() {
   };
   
   const handleUpdateOrderStatus = (orderId: string, status: PurchaseOrder['status']) => {
+    const orderToUpdate = purchaseOrders.find(o => o.id === orderId);
+    if (!orderToUpdate) return;
+    
+    // Update Inventory
+    let updatedInventory = [...inventory];
+    if (status === 'Recibido') {
+      orderToUpdate.items.forEach(itemToReceive => {
+          updatedInventory = updatedInventory.map(stockItem => {
+              if (stockItem.id === itemToReceive.itemId) {
+                  return { ...stockItem, quantity: stockItem.quantity + itemToReceive.quantity };
+              }
+              return stockItem;
+          });
+      });
+      setInventory(updatedInventory);
+    }
+    
     setPurchaseOrders(prevOrders => prevOrders.map(o => o.id === orderId ? {...o, status: status} : o));
+    
     toast({
         title: "Orden Actualizada",
-        description: `La orden ${orderId} ha sido marcada como ${status}.`
+        description: `La orden ${orderId} ha sido marcada como ${status}. El inventario ha sido actualizado.`
     });
     setIsChecklistOpen(false);
   }
