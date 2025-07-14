@@ -73,12 +73,28 @@ export default function DespatchesPage() {
       // Update inventory based on the new despatch note
       let updatedInventory = [...inventory];
       newNote.items.forEach(itemToDespatch => {
-          updatedInventory = updatedInventory.map(stockItem => {
-              if (stockItem.id === itemToDespatch.itemId) {
-                  return { ...stockItem, quantity: stockItem.quantity - itemToDespatch.quantity };
-              }
-              return stockItem;
-          });
+          const despatchedItem = inventory.find(i => i.id === itemToDespatch.itemId);
+          if (!despatchedItem) return;
+
+          if (despatchedItem.type === 'composite' && despatchedItem.components) {
+              // If it's a composite item, deduct components
+              despatchedItem.components.forEach(component => {
+                  updatedInventory = updatedInventory.map(stockItem => {
+                      if (stockItem.id === component.itemId) {
+                          return { ...stockItem, quantity: stockItem.quantity - (component.quantity * itemToDespatch.quantity) };
+                      }
+                      return stockItem;
+                  });
+              });
+          } else {
+              // If it's a simple item, deduct directly
+              updatedInventory = updatedInventory.map(stockItem => {
+                  if (stockItem.id === itemToDespatch.itemId) {
+                      return { ...stockItem, quantity: stockItem.quantity - itemToDespatch.quantity };
+                  }
+                  return stockItem;
+              });
+          }
       });
       setInventory(updatedInventory);
 

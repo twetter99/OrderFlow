@@ -59,16 +59,39 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
   
   const watchedItems = form.watch('items');
 
+  const getBuildableQuantity = (item: InventoryItem) => {
+    if (item.type !== 'composite' || !item.components) return item.quantity;
+    return Math.min(
+      ...item.components.map(c => {
+        const componentItem = inventoryItems.find(i => i.id === c.itemId);
+        return componentItem ? Math.floor(componentItem.quantity / c.quantity) : 0;
+      })
+    );
+  };
+
   function onSubmit(values: DespatchFormValues) {
     // Check for stock availability
-    for (const item of values.items) {
+    for (const [index, item] of values.items.entries()) {
       const stockItem = inventoryItems.find(i => i.id === item.itemId);
-      if (!stockItem || stockItem.quantity < item.quantity) {
-        form.setError(`items.${values.items.indexOf(item)}.quantity`, {
-          type: "manual",
-          message: `Stock insuficiente. Disponible: ${stockItem?.quantity || 0}`,
-        });
-        return; // Stop submission
+      if (!stockItem) continue;
+
+      if (stockItem.type === 'composite') {
+        const buildable = getBuildableQuantity(stockItem);
+        if (buildable < item.quantity) {
+          form.setError(`items.${index}.quantity`, {
+            type: "manual",
+            message: `Stock insuficiente. Se pueden construir: ${buildable}`,
+          });
+          return; // Stop submission
+        }
+      } else {
+        if (stockItem.quantity < item.quantity) {
+          form.setError(`items.${index}.quantity`, {
+            type: "manual",
+            message: `Stock insuficiente. Disponible: ${stockItem.quantity}`,
+          });
+          return; // Stop submission
+        }
       }
     }
     onSave(values);
@@ -114,7 +137,6 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
                     <TableBody>
                         {fields.map((field, index) => {
                             const selectedItem = inventoryItems.find(i => i.id === watchedItems[index]?.itemId);
-                            const stockAvailable = selectedItem ? selectedItem.quantity : 0;
                             return (
                             <TableRow key={field.id}>
                                 <TableCell>
@@ -130,7 +152,12 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
                                                 </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                {inventoryItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name} (Stock: {i.quantity})</SelectItem>)}
+                                                {inventoryItems.map(i => {
+                                                  const stockLabel = i.type === 'composite' 
+                                                    ? `(Construible: ${getBuildableQuantity(i)})`
+                                                    : `(Stock: ${i.quantity})`;
+                                                  return <SelectItem key={i.id} value={i.id}>{i.name} {stockLabel}</SelectItem>
+                                                })}
                                                 </SelectContent>
                                             </Select>
                                             <FormMessage />
@@ -193,4 +220,3 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
     </Form>
   );
 }
-
