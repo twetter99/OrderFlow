@@ -55,7 +55,8 @@ import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-const LOGGED_IN_USER_ID = 'USER-001';
+const LOGGED_IN_USER_ID = 'USER-001'; // Simula el Admin
+// Para probar como otro rol, cambia a 'USER-002' (Almacén) o 'USER-003' (Empleado)
 
 export default function PurchasingPage() {
   const { toast } = useToast();
@@ -102,7 +103,7 @@ export default function PurchasingPage() {
       } else {
         toast({ variant: "destructive", title: "Error de IA", description: "No se pudo generar el pedido. Revisa el prompt o los datos del proveedor/artículo." });
       }
-    } catch (error) {
+    } catch (error) => {
       toast({ variant: "destructive", title: "Error de IA", description: `Ocurrió un error: ${error instanceof Error ? error.message : String(error)}` });
     } finally {
       setIsGenerating(false);

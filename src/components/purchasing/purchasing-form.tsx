@@ -55,6 +55,8 @@ interface PurchasingFormProps {
 }
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems }: PurchasingFormProps) {
+  const isReadOnly = order && !canApprove;
+  
   const defaultValues = order
     ? { ...order, total: order.total || 0 }
     : {
@@ -103,6 +105,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                       value={field.value}
                       onChange={field.onChange}
                       onAddNew={() => { /* Implementar si es necesario */ }}
+                      disabled={isReadOnly}
                     />
                 </FormControl>
                 <FormMessage />
@@ -116,7 +119,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 <FormItem>
                 <FormLabel>Proyecto (Opcional)</FormLabel>
                 <FormControl>
-                    <Input placeholder="p. ej., PROJ-001" {...field} />
+                    <Input placeholder="p. ej., PROJ-001" {...field} disabled={isReadOnly} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -136,7 +139,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                             <TableHead className="w-[45%]">Nombre del Artículo</TableHead>
                             <TableHead className="w-[15%]">Cantidad</TableHead>
                             <TableHead className="w-[25%]">Precio Unitario (€)</TableHead>
-                            <TableHead className="w-[10%] text-right"></TableHead>
+                            {!isReadOnly && <TableHead className="w-[10%] text-right"></TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -149,7 +152,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="p. ej., Módulo GPS v2" {...field} />
+                                                    <Input placeholder="p. ej., Módulo GPS v2" {...field} disabled={isReadOnly} />
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -163,7 +166,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" {...field} />
+                                                    <Input type="number" {...field} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -177,28 +180,33 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" step="0.01" {...field} />
+                                                    <Input type="number" step="0.01" {...field} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
-                                                <ItemPriceInsight
-                                                    itemName={watchedItems[index]?.itemName}
-                                                    itemPrice={watchedItems[index]?.price}
-                                                    supplierName={watchedSupplier}
+                                                {!isReadOnly && (
+                                                    <ItemPriceInsight
+                                                        itemName={watchedItems[index]?.itemName}
+                                                        itemPrice={watchedItems[index]?.price}
+                                                        supplierName={watchedSupplier}
                                                     />
+                                                )}
                                             </FormItem>
                                         )}
                                     />
                                 </TableCell>
+                                {!isReadOnly && (
                                 <TableCell className="text-right">
                                     <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
                                         <Trash2 className="h-4 w-4 text-destructive" />
                                     </Button>
                                 </TableCell>
+                                )}
                             </TableRow>
                         ))}
                     </TableBody>
                 </Table>
                 </div>
+                 {!isReadOnly && (
                  <Button
                     type="button"
                     variant="outline"
@@ -209,6 +217,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila
                 </Button>
+                )}
                  <FormField
                     control={form.control}
                     name="items"
@@ -225,7 +234,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     render={({ field }) => (
                     <FormItem>
                         <FormLabel>Estado</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canApprove && !!order}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canApprove}>
                         <FormControl>
                             <SelectTrigger>
                             <SelectValue placeholder="Selecciona un estado" />
@@ -243,7 +252,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     </FormItem>
                     )}
                 />
-                 {status === 'Rechazado' && (
+                 {status === 'Rechazado' && canApprove && (
                     <FormField
                         control={form.control}
                         name="rejectionReason"
@@ -271,9 +280,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
 
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="ghost" onClick={onCancel}>
-            Cancelar
+            {isReadOnly ? "Cerrar" : "Cancelar"}
           </Button>
-          <Button type="submit">Guardar Pedido</Button>
+          {!isReadOnly && (
+            <Button type="submit">Guardar Pedido</Button>
+          )}
         </div>
       </form>
     </Form>
