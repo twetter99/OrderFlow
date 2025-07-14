@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -22,12 +22,14 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { PurchaseOrder } from "@/lib/types";
+import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
   project: z.string().min(1, "El ID del proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Rechazado"]),
   total: z.coerce.number().positive("El total debe ser un número positivo."),
+  rejectionReason: z.string().optional(),
 });
 
 type PurchasingFormValues = z.infer<typeof formSchema>;
@@ -47,11 +49,17 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false }: 
         supplier: "",
         status: "Pendiente",
         total: 0,
+        rejectionReason: "",
       };
 
   const form = useForm<PurchasingFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
+  });
+
+  const status = useWatch({
+    control: form.control,
+    name: "status"
   });
 
   function onSubmit(values: PurchasingFormValues) {
@@ -126,6 +134,23 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false }: 
             )}
           />
         </div>
+
+        {status === 'Rechazado' && (
+             <FormField
+                control={form.control}
+                name="rejectionReason"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Motivo del Rechazo</FormLabel>
+                    <FormControl>
+                        <Textarea placeholder="Describe por qué se rechaza este pedido..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        )}
+
         <div className="flex justify-end gap-2 pt-4">
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar
@@ -136,5 +161,3 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false }: 
     </Form>
   );
 }
-
-    

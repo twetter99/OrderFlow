@@ -32,6 +32,7 @@ export type PurchaseOrder = {
     quantity: number;
     price: number;
   }[];
+  rejectionReason?: string;
 };
 
 export type Supplier = {

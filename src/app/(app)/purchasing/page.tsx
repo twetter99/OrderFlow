@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { purchaseOrders as initialPurchaseOrders, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,7 @@ import {
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 import type { PurchaseOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 // Simulamos un usuario logueado. Cambia el ID para probar diferentes roles.
 const LOGGED_IN_USER_ID = 'USER-001'; // 'USER-001' es Admin, 'USER-002' es Almacén, 'USER-003' es Empleado
@@ -119,6 +120,7 @@ export default function PurchasingPage() {
       </div>
       <Card>
         <CardContent className="pt-6">
+        <TooltipProvider>
           <Table>
             <TableHeader>
               <TableRow>
@@ -139,19 +141,31 @@ export default function PurchasingPage() {
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "capitalize",
-                        order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
-                        order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
-                        order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
-                        order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
-                        order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "capitalize",
+                          order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
+                          order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
+                          order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
+                          order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
+                          order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
+                        )}
+                      >
+                        {order.status === 'Pendiente' ? 'Pendiente Aprobación' : order.status}
+                      </Badge>
+                      {order.status === 'Rechazado' && order.rejectionReason && (
+                        <Tooltip>
+                            <TooltipTrigger>
+                                <MessageSquareWarning className="h-4 w-4 text-destructive" />
+                            </TooltipTrigger>
+                            <TooltipContent>
+                                <p>{order.rejectionReason}</p>
+                            </TooltipContent>
+                        </Tooltip>
                       )}
-                    >
-                      {order.status === 'Pendiente' ? 'Pendiente Aprobación' : order.status}
-                    </Badge>
+                    </div>
                   </TableCell>
                   <TableCell>
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
@@ -183,6 +197,7 @@ export default function PurchasingPage() {
               ))}
             </TableBody>
           </Table>
+          </TooltipProvider>
         </CardContent>
       </Card>
       
@@ -230,5 +245,3 @@ export default function PurchasingPage() {
     </div>
   )
 }
-
-    
