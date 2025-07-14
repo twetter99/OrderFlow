@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import Link from "next/link"
@@ -19,13 +20,6 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
-import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -35,6 +29,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { NotificationsPanel } from "./notifications-panel"
 
 export function Header() {
   return (
@@ -120,14 +115,9 @@ export function Header() {
           </div>
         </form>
       </div>
-      <Button variant="outline" size="icon" className="relative">
-        <Bell className="h-4 w-4" />
-        <span className="sr-only">Alternar notificaciones</span>
-         <span className="absolute -top-1 -right-1 flex h-3 w-3">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-3 w-3 bg-accent"></span>
-        </span>
-      </Button>
+      
+      <NotificationsPanel />
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="secondary" size="icon" className="rounded-full">

@@ -1,5 +1,6 @@
 
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation } from './types';
+
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -81,3 +82,40 @@ export const deliveryNotes: DeliveryNote[] = [
     { id: 'DN-2024-0001', projectId: 'PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
     { id: 'DN-2024-0002', projectId: 'PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]
+
+
+// Generador de notificaciones dinámicas
+export const getNotifications = (): Notification[] => {
+    const notifications: Notification[] = [];
+
+    // Notificaciones de aprobación de PO
+    const pendingPOs = purchaseOrders.filter(po => po.status === 'Pendiente');
+    pendingPOs.forEach(po => {
+        notifications.push({
+            id: `notif-po-${po.id}`,
+            title: 'Aprobación Requerida',
+            description: `El pedido ${po.id} necesita tu revisión.`,
+            type: 'alert',
+            link: '/purchasing',
+            isRead: false
+        });
+    });
+
+    // Notificaciones de stock bajo
+    const lowStockItems = inventory.filter(item => {
+        if (item.type === 'composite') return false; // Por ahora, solo items simples
+        return item.quantity < item.minThreshold;
+    });
+    lowStockItems.forEach(item => {
+        notifications.push({
+            id: `notif-stock-${item.id}`,
+            title: 'Stock Bajo',
+            description: `El artículo ${item.name} (${item.sku}) está por debajo del umbral.`,
+            type: 'info',
+            link: '/inventory',
+            isRead: false
+        });
+    });
+    
+    return notifications;
+}

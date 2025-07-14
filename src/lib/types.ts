@@ -94,3 +94,12 @@ export type InventoryLocation = {
     locationId: string;
     quantity: number;
 }
+
+export type Notification = {
+    id: string;
+    title: string;
+    description: string;
+    type: 'alert' | 'info';
+    link: string;
+    isRead: boolean;
+}
