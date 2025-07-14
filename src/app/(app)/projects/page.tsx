@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -16,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { projects as initialProjects } from "@/lib/data";
+import { projects as initialProjects, clients as initialClients } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -45,12 +46,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProjectForm } from "@/components/projects/project-form";
-import type { Project } from "@/lib/types";
+import type { Project, Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
 export default function ProjectsPage() {
   const { toast } = useToast();
   const [projects, setProjects] = useState<Project[]>(initialProjects);
+  const [clients, setClients] = useState<Client[]>(initialClients);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
@@ -206,6 +208,7 @@ export default function ProjectsPage() {
           </DialogHeader>
           <ProjectForm
             project={selectedProject}
+            clients={clients}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />

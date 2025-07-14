@@ -1,3 +1,4 @@
+
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -18,7 +19,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Project } from "@/lib/types";
+import { Project, Client } from "@/lib/types";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -44,11 +45,12 @@ type ProjectFormValues = z.infer<typeof formSchema>;
 
 interface ProjectFormProps {
   project?: Project | null;
+  clients: Client[];
   onSave: (values: ProjectFormValues) => void;
   onCancel: () => void;
 }
 
-export function ProjectForm({ project, onSave, onCancel }: ProjectFormProps) {
+export function ProjectForm({ project, clients, onSave, onCancel }: ProjectFormProps) {
   const defaultValues = project
     ? {
         ...project,
@@ -90,19 +92,50 @@ export function ProjectForm({ project, onSave, onCancel }: ProjectFormProps) {
             </FormItem>
           )}
         />
-        <FormField
-          control={form.control}
-          name="client"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Cliente</FormLabel>
-              <FormControl>
-                <Input placeholder="p. ej., Tránsito de la Ciudad" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="client"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Cliente</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un cliente" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        {clients.map(c => <SelectItem key={c.id} value={c.name}>{c.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="status"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Estado</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un estado" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    <SelectItem value="Planificado">Planificado</SelectItem>
+                    <SelectItem value="En Progreso">En Progreso</SelectItem>
+                    <SelectItem value="Completado">Completado</SelectItem>
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
@@ -131,28 +164,7 @@ export function ProjectForm({ project, onSave, onCancel }: ProjectFormProps) {
             )}
           />
         </div>
-        <FormField
-          control={form.control}
-          name="status"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Estado</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un estado" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  <SelectItem value="Planificado">Planificado</SelectItem>
-                  <SelectItem value="En Progreso">En Progreso</SelectItem>
-                  <SelectItem value="Completado">Completado</SelectItem>
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        
         <div className="grid grid-cols-2 gap-4">
           <FormField
             control={form.control}
