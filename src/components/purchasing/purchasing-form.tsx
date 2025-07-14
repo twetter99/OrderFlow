@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { PurchaseOrder, Supplier, InventoryItem } from "@/lib/types";
+import type { PurchaseOrder, Supplier, InventoryItem, Project } from "@/lib/types";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { PlusCircle, Trash2 } from "lucide-react";
@@ -30,7 +30,7 @@ import { SupplierCombobox } from "../inventory/supplier-combobox";
 import { ItemPriceInsight } from "./item-price-insight";
 
 const formSchema = z.object({
-  project: z.string().optional(),
+  project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Rechazado"]),
   rejectionReason: z.string().optional(),
@@ -53,9 +53,10 @@ interface PurchasingFormProps {
   canApprove?: boolean;
   suppliers: Supplier[];
   inventoryItems: InventoryItem[];
+  projects: Project[];
 }
 
-export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems }: PurchasingFormProps) {
+export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
   const isReadOnly = order && !canApprove;
   
   const defaultValues = order
@@ -118,11 +119,18 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             name="project"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Proyecto (Opcional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="p. ej., PROJ-001" {...field} disabled={isReadOnly} />
-                </FormControl>
-                <FormMessage />
+                  <FormLabel>Proyecto</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                      <FormControl>
+                      <SelectTrigger>
+                          <SelectValue placeholder="Selecciona un proyecto" />
+                      </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                      {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.id})</SelectItem>)}
+                      </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
             )}
            />

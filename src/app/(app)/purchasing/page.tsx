@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory } from "@/lib/data";
+import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory, projects } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2 } from "lucide-react";
 import {
@@ -297,6 +297,7 @@ export default function PurchasingPage() {
             canApprove={canApprove}
             suppliers={suppliers}
             inventoryItems={inventory}
+            projects={projects}
           />
         </DialogContent>
       </Dialog>
