@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Boxes, View } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Boxes, View, Wrench } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -99,14 +99,14 @@ export default function InventoryPage() {
     if (selectedItem) {
       setInventory(
         inventory.map((p) =>
-          p.id === selectedItem.id ? { ...p, ...values, id: p.id, type: 'simple' } : p
+          p.id === selectedItem.id ? { ...p, ...values, id: p.id } : p
         )
       );
       toast({ title: "Artículo actualizado", description: "El artículo del inventario se ha actualizado correctamente." });
     } else {
       setInventory([
         ...inventory,
-        { ...values, id: `ITEM-00${inventory.length + 1}`, type: 'simple' },
+        { ...values, id: `ITEM-00${inventory.length + 1}` },
       ]);
       toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario." });
     }
@@ -141,7 +141,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Inventario</h1>
           <p className="text-muted-foreground">
-            Rastrea y gestiona tus niveles de stock.
+            Rastrea y gestiona tus artículos, kits y servicios.
           </p>
         </div>
         <Button onClick={handleAddClick}>
@@ -165,35 +165,45 @@ export default function InventoryPage() {
             </TableHeader>
             <TableBody>
               {inventoryWithCalculations.map((item) => {
+                const isPhysical = item.type === 'simple' || item.type === 'composite';
                 const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
-                const isLowStock = quantityToShow < item.minThreshold;
+                const isLowStock = isPhysical && quantityToShow < item.minThreshold;
+                
                 return (
                   <TableRow key={item.id} className={cn(isLowStock && "bg-red-50 dark:bg-red-900/20")}>
                     <TableCell className="font-medium">{item.sku}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
-                        {item.type === 'composite' && <Boxes className="h-4 w-4 text-muted-foreground" />}
+                        {item.type === 'composite' && <Boxes className="h-4 w-4 text-muted-foreground" title="Kit/Compuesto" />}
+                        {item.type === 'service' && <Wrench className="h-4 w-4 text-muted-foreground" title="Servicio" />}
                         <span>{item.name}</span>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          isLowStock 
-                            ? "bg-destructive/10 text-destructive border-destructive/20" 
-                            : "bg-green-100 text-green-800 border-green-200"
-                        )}
-                      >
-                        {isLowStock ? "Stock Bajo" : "En Stock"}
-                      </Badge>
+                      {isPhysical && (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            isLowStock 
+                              ? "bg-destructive/10 text-destructive border-destructive/20" 
+                              : "bg-green-100 text-green-800 border-green-200"
+                          )}
+                        >
+                          {isLowStock ? "Stock Bajo" : "En Stock"}
+                        </Badge>
+                      )}
+                      {item.type === 'service' && <Badge variant="secondary">Servicio</Badge>}
                     </TableCell>
                     <TableCell>
-                      <span className="font-bold">{quantityToShow}</span>
-                      {item.type === 'simple' && ` / ${item.minThreshold}`}
-                      {item.type === 'composite' && <span className="text-xs text-muted-foreground"> (Construible)</span>}
+                      {isPhysical && (
+                        <>
+                          <span className="font-bold">{quantityToShow}</span>
+                          {item.type === 'simple' && ` / ${item.minThreshold}`}
+                          {item.type === 'composite' && <span className="text-xs text-muted-foreground"> (Construible)</span>}
+                        </>
+                      )}
                     </TableCell>
-                    <TableCell>{item.supplier}</TableCell>
+                    <TableCell>{isPhysical ? item.supplier : 'N/A'}</TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
                     </TableCell>
@@ -243,12 +253,13 @@ export default function InventoryPage() {
             <DialogDescription>
               {selectedItem
                 ? "Edita la información del artículo."
-                : "Rellena los detalles para crear un nuevo artículo."}
+                : "Rellena los detalles para crear un nuevo artículo, kit o servicio."}
             </DialogDescription>
           </DialogHeader>
           <InventoryForm
             item={selectedItem}
             suppliers={suppliers}
+            inventoryItems={inventory}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
             onAddNewSupplier={handleAddNewSupplier}

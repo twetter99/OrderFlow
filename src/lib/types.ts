@@ -19,7 +19,7 @@ export type InventoryItem = {
   minThreshold: number;
   unitCost: number;
   supplier: string;
-  type: 'simple' | 'composite';
+  type: 'simple' | 'composite' | 'service';
   components?: {
     itemId: string;
     quantity: number;
