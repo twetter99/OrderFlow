@@ -1,3 +1,4 @@
+
 "use client";
 
 import { z } from "zod";
@@ -25,7 +26,7 @@ import type { PurchaseOrder } from "@/lib/types";
 const formSchema = z.object({
   project: z.string().min(1, "El ID del proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
-  status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Parcial", "Rechazado"]),
+  status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Rechazado"]),
   total: z.coerce.number().positive("El total debe ser un número positivo."),
 });
 
@@ -35,9 +36,10 @@ interface PurchasingFormProps {
   order?: PurchaseOrder | null;
   onSave: (values: PurchasingFormValues) => void;
   onCancel: () => void;
+  canApprove?: boolean;
 }
 
-export function PurchasingForm({ order, onSave, onCancel }: PurchasingFormProps) {
+export function PurchasingForm({ order, onSave, onCancel, canApprove = false }: PurchasingFormProps) {
   const defaultValues = order
     ? { ...order }
     : {
@@ -105,7 +107,7 @@ export function PurchasingForm({ order, onSave, onCancel }: PurchasingFormProps)
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Estado</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!canApprove && !!order}>
                   <FormControl>
                     <SelectTrigger>
                       <SelectValue placeholder="Selecciona un estado" />
@@ -116,7 +118,6 @@ export function PurchasingForm({ order, onSave, onCancel }: PurchasingFormProps)
                     <SelectItem value="Aprobado">Aprobado</SelectItem>
                     <SelectItem value="Enviado">Enviado</SelectItem>
                     <SelectItem value="Recibido">Recibido</SelectItem>
-                    <SelectItem value="Parcial">Parcial</SelectItem>
                     <SelectItem value="Rechazado">Rechazado</SelectItem>
                   </SelectContent>
                 </Select>
@@ -135,3 +136,5 @@ export function PurchasingForm({ order, onSave, onCancel }: PurchasingFormProps)
     </Form>
   );
 }
+
+    

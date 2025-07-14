@@ -1,3 +1,4 @@
+
 export type Project = {
   id: string;
   name: string;
@@ -23,7 +24,7 @@ export type PurchaseOrder = {
   id: string;
   project: string;
   supplier: string;
-  status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Parcial' | 'Rechazado';
+  status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Rechazado';
   date: string;
   total: number;
   items: {
@@ -64,3 +65,5 @@ export type Location = {
   name: string;
   description: string;
 };
+
+    

@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState } from "react";
@@ -15,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders } from "@/lib/data";
+import { purchaseOrders as initialPurchaseOrders, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -47,12 +48,18 @@ import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 import type { PurchaseOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 
+// Simulamos un usuario logueado. Cambia el ID para probar diferentes roles.
+const LOGGED_IN_USER_ID = 'USER-001'; // 'USER-001' es Admin, 'USER-002' es Almacén, 'USER-003' es Empleado
+
 export default function PurchasingPage() {
   const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+
+  const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
+  const canApprove = currentUser?.role === 'Administrador';
 
   const handleAddClick = () => {
     setSelectedOrder(null);
@@ -126,7 +133,7 @@ export default function PurchasingPage() {
             </TableHeader>
             <TableBody>
               {purchaseOrders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id} className={cn(order.status === "Pendiente" && "bg-yellow-50 dark:bg-yellow-900/20")}>
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.project}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
@@ -135,15 +142,15 @@ export default function PurchasingPage() {
                     <Badge
                       variant="outline"
                       className={cn(
+                        "capitalize",
                         order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
-                        order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                        order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
                         order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
                         order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
-                        order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200",
-                        "capitalize"
+                        order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
                       )}
                     >
-                      {order.status.toLowerCase()}
+                      {order.status === 'Pendiente' ? 'Pendiente Aprobación' : order.status}
                     </Badge>
                   </TableCell>
                   <TableCell>
@@ -161,7 +168,7 @@ export default function PurchasingPage() {
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(order)}>
-                            Editar
+                            {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
@@ -183,7 +190,7 @@ export default function PurchasingPage() {
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder ? "Editar Pedido de Compra" : "Crear Nuevo Pedido de Compra"}
+              {selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
             </DialogTitle>
             <DialogDescription>
               {selectedOrder
@@ -195,6 +202,7 @@ export default function PurchasingPage() {
             order={selectedOrder}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
+            canApprove={canApprove}
           />
         </DialogContent>
       </Dialog>
@@ -222,3 +230,5 @@ export default function PurchasingPage() {
     </div>
   )
 }
+
+    
