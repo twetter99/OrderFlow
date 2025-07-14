@@ -1,4 +1,4 @@
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location } from './types';
 
 export const projects: Project[] = [
   { id: 'PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
@@ -39,4 +39,10 @@ export const users: User[] = [
   { id: 'USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
   { id: 'USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
   { id: 'USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Empleado' },
+];
+
+export const locations: Location[] = [
+    { id: 'LOC-001', name: 'Estantería A-1', description: 'Materiales generales' },
+    { id: 'LOC-002', name: 'Estantería A-2', description: 'Componentes electrónicos' },
+    { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar' },
 ];

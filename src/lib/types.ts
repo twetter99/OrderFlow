@@ -58,3 +58,9 @@ export type User = {
   phone: string;
   role: 'Administrador' | 'Empleado' | 'Almacén';
 };
+
+export type Location = {
+  id: string;
+  name: string;
+  description: string;
+};
