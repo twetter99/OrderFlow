@@ -78,6 +78,7 @@ export type Location = {
 export type DeliveryNote = {
   id: string;
   projectId: string;
+  locationId: string;
   date: string;
   items: {
     itemId: string;
@@ -92,4 +93,3 @@ export type InventoryLocation = {
     locationId: string;
     quantity: number;
 }
-    

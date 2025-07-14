@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { deliveryNotes as initialDeliveryNotes, projects, inventory as initialInventory } from "@/lib/data";
+import { deliveryNotes as initialDeliveryNotes, projects, inventory as initialInventory, locations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle } from "lucide-react";
 import {
@@ -34,7 +34,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { DeliveryNote, InventoryItem } from "@/lib/types";
+import type { DeliveryNote, InventoryItem, Location as LocationType, InventoryLocation } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { DespatchForm } from "@/components/despatches/despatch-form";
 
@@ -42,6 +42,7 @@ export default function DespatchesPage() {
   const { toast } = useToast();
   const [deliveryNotes, setDeliveryNotes] = useState<DeliveryNote[]>(initialDeliveryNotes);
   const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
+  const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>(initialInventoryLocations);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
 
@@ -59,9 +60,9 @@ export default function DespatchesPage() {
     if (selectedNote) {
       // Logic for editing (if needed)
     } else {
-        const newNote: DeliveryNote = { 
-            ...values, 
-            id: `DN-2024-${String(deliveryNotes.length + 1).padStart(4, '0')}`, 
+        const newNote: DeliveryNote = {
+            ...values,
+            id: `DN-2024-${String(deliveryNotes.length + 1).padStart(4, '0')}`,
             date: new Date().toISOString(),
             status: 'Completado'
         };
@@ -70,39 +71,36 @@ export default function DespatchesPage() {
         newNote
       ]);
 
-      // Update inventory based on the new despatch note
-      let updatedInventory = [...inventory];
+      // Update inventory based on the new despatch note from a specific location
+      let updatedInventoryLocations = [...inventoryLocations];
       newNote.items.forEach(itemToDespatch => {
-          const despatchedItem = inventory.find(i => i.id === itemToDespatch.itemId);
-          if (!despatchedItem) return;
+          const stockItem = inventory.find(i => i.id === itemToDespatch.itemId);
+          if (!stockItem) return;
 
-          if (despatchedItem.type === 'composite' && despatchedItem.components) {
-              // If it's a composite item, deduct components
-              despatchedItem.components.forEach(component => {
-                  updatedInventory = updatedInventory.map(stockItem => {
-                      if (stockItem.id === component.itemId) {
-                          return { ...stockItem, quantity: stockItem.quantity - (component.quantity * itemToDespatch.quantity) };
-                      }
-                      return stockItem;
-                  });
+          if (stockItem.type === 'composite' && stockItem.components) {
+              // Deduct components from the selected location
+              stockItem.components.forEach(component => {
+                  const componentToDespatchQty = component.quantity * itemToDespatch.quantity;
+                  const locIndex = updatedInventoryLocations.findIndex(l => l.locationId === newNote.locationId && l.itemId === component.itemId);
+                  if (locIndex > -1) {
+                      updatedInventoryLocations[locIndex].quantity -= componentToDespatchQty;
+                  }
               });
           } else {
-              // If it's a simple item, deduct directly
-              updatedInventory = updatedInventory.map(stockItem => {
-                  if (stockItem.id === itemToDespatch.itemId) {
-                      return { ...stockItem, quantity: stockItem.quantity - itemToDespatch.quantity };
-                  }
-                  return stockItem;
-              });
+              // Deduct simple item from the selected location
+              const locIndex = updatedInventoryLocations.findIndex(l => l.locationId === newNote.locationId && l.itemId === itemToDespatch.itemId);
+              if (locIndex > -1) {
+                  updatedInventoryLocations[locIndex].quantity -= itemToDespatch.quantity;
+              }
           }
       });
-      setInventory(updatedInventory);
+      setInventoryLocations(updatedInventoryLocations);
 
       toast({ title: "Despacho Creado", description: "El albarán de salida se ha generado y el stock ha sido actualizado." });
     }
     setIsModalOpen(false);
   };
-  
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -124,6 +122,7 @@ export default function DespatchesPage() {
               <TableRow>
                 <TableHead>Albarán ID</TableHead>
                 <TableHead>Proyecto</TableHead>
+                <TableHead>Almacén Origen</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -132,10 +131,12 @@ export default function DespatchesPage() {
             <TableBody>
               {deliveryNotes.map((note) => {
                 const project = projects.find(p => p.id === note.projectId);
+                const location = locations.find(l => l.id === note.locationId);
                 return (
                     <TableRow key={note.id}>
                     <TableCell className="font-medium">{note.id}</TableCell>
                     <TableCell>{project?.name || note.projectId}</TableCell>
+                    <TableCell>{location?.name || 'Desconocido'}</TableCell>
                     <TableCell>{new Date(note.date).toLocaleDateString()}</TableCell>
                     <TableCell>
                         <Badge
@@ -159,7 +160,7 @@ export default function DespatchesPage() {
             })}
              {deliveryNotes.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se ha creado ningún despacho.
                     </TableCell>
                 </TableRow>
@@ -168,7 +169,7 @@ export default function DespatchesPage() {
           </Table>
         </CardContent>
       </Card>
-      
+
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
@@ -176,9 +177,9 @@ export default function DespatchesPage() {
               {selectedNote ? `Detalles del Albarán ${selectedNote.id}` : "Crear Albarán de Salida"}
             </DialogTitle>
             <DialogDescription>
-              {selectedNote 
+              {selectedNote
                 ? "Visualiza los artículos incluidos en este despacho."
-                : "Selecciona un proyecto y añade los artículos a enviar."
+                : "Selecciona un proyecto, un almacén y añade los artículos a enviar."
               }
             </DialogDescription>
           </DialogHeader>
@@ -186,6 +187,8 @@ export default function DespatchesPage() {
             note={selectedNote}
             projects={projects}
             inventoryItems={inventory}
+            locations={locations}
+            inventoryLocations={inventoryLocations}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />

@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useFieldArray, useForm } from "react-hook-form";
+import { useFieldArray, useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,13 +21,15 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { DeliveryNote, Project, InventoryItem } from "@/lib/types";
+import type { DeliveryNote, Project, InventoryItem, Location, InventoryLocation } from "@/lib/types";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { useMemo } from "react";
 
 const formSchema = z.object({
   projectId: z.string().min(1, "Debes seleccionar un proyecto."),
+  locationId: z.string().min(1, "Debes seleccionar un almacén de origen."),
   items: z.array(z.object({
     itemId: z.string().min(1, "Debes seleccionar un artículo."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser al menos 1."),
@@ -40,55 +42,76 @@ interface DespatchFormProps {
   note?: DeliveryNote | null;
   projects: Project[];
   inventoryItems: InventoryItem[];
+  locations: Location[];
+  inventoryLocations: InventoryLocation[];
   onSave: (values: DespatchFormValues) => void;
   onCancel: () => void;
 }
 
-export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel }: DespatchFormProps) {
+export function DespatchForm({ note, projects, inventoryItems, locations, inventoryLocations, onSave, onCancel }: DespatchFormProps) {
   const isReadOnly = !!note;
 
   const form = useForm<DespatchFormValues>({
     resolver: zodResolver(formSchema),
-    defaultValues: note ? { projectId: note.projectId, items: note.items } : { projectId: "", items: [{ itemId: "", quantity: 1 }] },
+    defaultValues: note
+      ? { projectId: note.projectId, items: note.items, locationId: note.locationId }
+      : { projectId: "", locationId: "", items: [{ itemId: "", quantity: 1 }] },
   });
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items",
   });
-  
+
+  const watchedLocationId = useWatch({ control: form.control, name: 'locationId' });
   const watchedItems = form.watch('items');
 
-  const getBuildableQuantity = (item: InventoryItem) => {
-    if (item.type !== 'composite' || !item.components) return item.quantity;
+  const getStockInLocation = (itemId: string, locationId: string) => {
+    return inventoryLocations.find(l => l.itemId === itemId && l.locationId === locationId)?.quantity || 0;
+  };
+
+  const getBuildableQuantityInLocation = (item: InventoryItem, locationId: string) => {
+    if (item.type !== 'composite' || !item.components) return getStockInLocation(item.id, locationId);
     return Math.min(
       ...item.components.map(c => {
-        const componentItem = inventoryItems.find(i => i.id === c.itemId);
-        return componentItem ? Math.floor(componentItem.quantity / c.quantity) : 0;
+        const componentStockInLoc = getStockInLocation(c.itemId, locationId);
+        return Math.floor(componentStockInLoc / c.quantity);
       })
     );
   };
+  
+  const availableInventory = useMemo(() => {
+    if (!watchedLocationId) return [];
+    return inventoryItems.filter(item => {
+        if (item.type === 'composite') {
+            return getBuildableQuantityInLocation(item, watchedLocationId) > 0;
+        }
+        return getStockInLocation(item.id, watchedLocationId) > 0;
+    });
+  }, [watchedLocationId, inventoryItems, inventoryLocations]);
+
 
   function onSubmit(values: DespatchFormValues) {
-    // Check for stock availability
+    // Check for stock availability in the selected location
     for (const [index, item] of values.items.entries()) {
       const stockItem = inventoryItems.find(i => i.id === item.itemId);
       if (!stockItem) continue;
 
       if (stockItem.type === 'composite') {
-        const buildable = getBuildableQuantity(stockItem);
+        const buildable = getBuildableQuantityInLocation(stockItem, values.locationId);
         if (buildable < item.quantity) {
           form.setError(`items.${index}.quantity`, {
             type: "manual",
-            message: `Stock insuficiente. Se pueden construir: ${buildable}`,
+            message: `Stock insuficiente en almacén. Se pueden construir: ${buildable}`,
           });
           return; // Stop submission
         }
       } else {
-        if (stockItem.quantity < item.quantity) {
+        const stockInLoc = getStockInLocation(item.itemId, values.locationId);
+        if (stockInLoc < item.quantity) {
           form.setError(`items.${index}.quantity`, {
             type: "manual",
-            message: `Stock insuficiente. Disponible: ${stockItem.quantity}`,
+            message: `Stock insuficiente en almacén. Disponible: ${stockInLoc}`,
           });
           return; // Stop submission
         }
@@ -100,26 +123,48 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <FormField
-          control={form.control}
-          name="projectId"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Proyecto de Destino</FormLabel>
-              <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
-                <FormControl>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecciona un proyecto" />
-                  </SelectTrigger>
-                </FormControl>
-                <SelectContent>
-                  {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        <div className="grid md:grid-cols-2 gap-4">
+            <FormField
+            control={form.control}
+            name="projectId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Proyecto de Destino</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un proyecto" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+            <FormField
+            control={form.control}
+            name="locationId"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Almacén de Origen</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un almacén" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {locations.map(l => <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
+                </FormItem>
+            )}
+            />
+        </div>
         
         <Card>
             <CardHeader>
@@ -136,7 +181,6 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
                     </TableHeader>
                     <TableBody>
                         {fields.map((field, index) => {
-                            const selectedItem = inventoryItems.find(i => i.id === watchedItems[index]?.itemId);
                             return (
                             <TableRow key={field.id}>
                                 <TableCell>
@@ -145,17 +189,17 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
                                     name={`items.${index}.itemId`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly || !watchedLocationId}>
                                                 <FormControl>
                                                 <SelectTrigger>
                                                     <SelectValue placeholder="Selecciona un artículo" />
                                                 </SelectTrigger>
                                                 </FormControl>
                                                 <SelectContent>
-                                                {inventoryItems.map(i => {
-                                                  const stockLabel = i.type === 'composite' 
-                                                    ? `(Construible: ${getBuildableQuantity(i)})`
-                                                    : `(Stock: ${i.quantity})`;
+                                                {availableInventory.map(i => {
+                                                  const stockLabel = i.type === 'composite'
+                                                    ? `(Construible: ${getBuildableQuantityInLocation(i, watchedLocationId)})`
+                                                    : `(Stock: ${getStockInLocation(i.id, watchedLocationId)})`;
                                                   return <SelectItem key={i.id} value={i.id}>{i.name} {stockLabel}</SelectItem>
                                                 })}
                                                 </SelectContent>
@@ -195,6 +239,7 @@ export function DespatchForm({ note, projects, inventoryItems, onSave, onCancel 
                         size="sm"
                         className="mt-4"
                         onClick={() => append({ itemId: "", quantity: 1 })}
+                        disabled={!watchedLocationId}
                     >
                         <PlusCircle className="mr-2 h-4 w-4" />
                         Añadir Artículo

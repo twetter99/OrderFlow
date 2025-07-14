@@ -1,3 +1,4 @@
+
 import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation } from './types';
 
 export const projects: Project[] = [
@@ -14,15 +15,15 @@ export const inventory: InventoryItem[] = [
   { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, supplier: 'Soluciones de Ferretería', type: 'simple' },
   { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, supplier: 'Global Nav', type: 'simple' },
   { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, supplier: 'TechParts Inc.', type: 'simple' },
-  { 
-    id: 'ITEM-100', 
-    sku: 'KIT-INST-BASIC', 
-    name: 'Kit de Instalación Básico', 
+  {
+    id: 'ITEM-100',
+    sku: 'KIT-INST-BASIC',
+    name: 'Kit de Instalación Básico',
     quantity: 0, // La cantidad se calcula en base a los componentes
-    minThreshold: 5, 
+    minThreshold: 5,
     unitCost: 478, // Costo es la suma de los componentes
     supplier: 'Ensamblado Interno',
-    type: 'composite', 
+    type: 'composite',
     components: [
       { itemId: 'ITEM-001', quantity: 1 }, // 1x CPU
       { itemId: 'ITEM-005', quantity: 1 }, // 1x GPS
@@ -61,9 +62,9 @@ export const users: User[] = [
 ];
 
 export const locations: Location[] = [
-    { id: 'LOC-001', name: 'Estantería A-1', description: 'Materiales generales' },
-    { id: 'LOC-002', name: 'Estantería A-2', description: 'Componentes electrónicos' },
-    { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar' },
+    { id: 'LOC-001', name: 'Almacén Principal', description: 'Almacén principal para componentes generales.' },
+    { id: 'LOC-002', name: 'Almacén Secundario', description: 'Almacén para componentes electrónicos sensibles.' },
+    { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar.' },
 ];
 
 export const inventoryLocations: InventoryLocation[] = [
@@ -77,6 +78,6 @@ export const inventoryLocations: InventoryLocation[] = [
 ];
 
 export const deliveryNotes: DeliveryNote[] = [
-    { id: 'DN-2024-0001', projectId: 'PROJ-001', date: '2024-07-20', status: 'Completado', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
-    { id: 'DN-2024-0002', projectId: 'PROJ-002', date: '2024-07-22', status: 'Completado', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
+    { id: 'DN-2024-0001', projectId: 'PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
+    { id: 'DN-2024-0002', projectId: 'PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]

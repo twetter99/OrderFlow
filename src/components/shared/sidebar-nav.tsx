@@ -19,10 +19,10 @@ const navItems = [
   { href: "/clients", label: "Clientes", icon: Building2 },
   { href: "/reports", label: "Reportes", icon: BarChart3 },
   { href: "/ai-assistant", label: "Asistente IA", icon: Bot },
+  { href: "/locations", label: "Almacenes", icon: Warehouse },
 ];
 
 const bottomNavItems = [
-  { href: "/locations", label: "Gestionar Almacenes", icon: Warehouse },
   { href: "/users", label: "Usuarios", icon: Users },
   { href: "/settings", label: "Configuración", icon: Settings },
 ];
