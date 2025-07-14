@@ -3,7 +3,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Bell, AlertCircle, PackageWarning } from 'lucide-react';
+import { Bell, AlertCircle, Archive } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -55,7 +55,7 @@ export function NotificationsPanel() {
                     {notification.type === 'alert' ? (
                         <AlertCircle className="h-4 w-4 text-destructive" />
                     ) : (
-                        <PackageWarning className="h-4 w-4 text-yellow-500" />
+                        <Archive className="h-4 w-4 text-yellow-500" />
                     )}
                 </div>
                 <div className="flex-grow">
