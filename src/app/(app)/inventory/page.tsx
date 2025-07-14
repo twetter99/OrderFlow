@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Boxes, View } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,7 @@ import { InventoryForm } from "@/components/inventory/inventory-form";
 import type { InventoryItem, Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { SupplierForm } from "@/components/suppliers/supplier-form";
+import { ItemDetailsModal } from "@/components/inventory/item-details-modal";
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -55,8 +56,24 @@ export default function InventoryPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  const inventoryWithCalculations = useMemo(() => {
+    return inventory.map(item => {
+      if (item.type === 'composite') {
+        const buildableQuantity = Math.min(
+          ...(item.components?.map(c => {
+            const componentItem = inventory.find(i => i.id === c.itemId);
+            return componentItem ? Math.floor(componentItem.quantity / c.quantity) : 0;
+          }) || [0])
+        );
+        return { ...item, buildableQuantity };
+      }
+      return { ...item, buildableQuantity: item.quantity };
+    });
+  }, [inventory]);
 
   const handleAddClick = () => {
     setSelectedItem(null);
@@ -73,18 +90,23 @@ export default function InventoryPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleViewDetailsClick = (item: InventoryItem) => {
+    setSelectedItem(item);
+    setIsDetailsModalOpen(true);
+  };
+
   const handleSave = (values: any) => {
     if (selectedItem) {
       setInventory(
         inventory.map((p) =>
-          p.id === selectedItem.id ? { ...p, ...values, id: p.id } : p
+          p.id === selectedItem.id ? { ...p, ...values, id: p.id, type: 'simple' } : p
         )
       );
       toast({ title: "Artículo actualizado", description: "El artículo del inventario se ha actualizado correctamente." });
     } else {
       setInventory([
         ...inventory,
-        { ...values, id: `ITEM-00${inventory.length + 1}` },
+        { ...values, id: `ITEM-00${inventory.length + 1}`, type: 'simple' },
       ]);
       toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario." });
     }
@@ -142,12 +164,18 @@ export default function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventory.map((item) => {
-                const isLowStock = item.quantity < item.minThreshold;
+              {inventoryWithCalculations.map((item) => {
+                const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
+                const isLowStock = quantityToShow < item.minThreshold;
                 return (
                   <TableRow key={item.id} className={cn(isLowStock && "bg-red-50 dark:bg-red-900/20")}>
                     <TableCell className="font-medium">{item.sku}</TableCell>
-                    <TableCell>{item.name}</TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {item.type === 'composite' && <Boxes className="h-4 w-4 text-muted-foreground" />}
+                        <span>{item.name}</span>
+                      </div>
+                    </TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -161,7 +189,9 @@ export default function InventoryPage() {
                       </Badge>
                     </TableCell>
                     <TableCell>
-                      {item.quantity} / {item.minThreshold}
+                      <span className="font-bold">{quantityToShow}</span>
+                      {item.type === 'simple' && ` / ${item.minThreshold}`}
+                      {item.type === 'composite' && <span className="text-xs text-muted-foreground"> (Construible)</span>}
                     </TableCell>
                     <TableCell>{item.supplier}</TableCell>
                     <TableCell>
@@ -178,6 +208,12 @@ export default function InventoryPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                          {item.type === 'composite' && (
+                            <DropdownMenuItem onClick={() => handleViewDetailsClick(item)}>
+                              <View className="mr-2 h-4 w-4" />
+                              Ver Componentes
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleEditClick(item)}>
                             Editar
                           </DropdownMenuItem>
@@ -219,6 +255,15 @@ export default function InventoryPage() {
           />
         </DialogContent>
       </Dialog>
+      
+      {selectedItem && (
+        <ItemDetailsModal
+          item={selectedItem}
+          allInvetoryItems={inventory}
+          isOpen={isDetailsModalOpen}
+          onClose={() => setIsDetailsModalOpen(false)}
+        />
+      )}
 
       <Dialog open={isSupplierModalOpen} onOpenChange={setIsSupplierModalOpen}>
         <DialogContent className="sm:max-w-[625px]">

@@ -57,6 +57,21 @@ export function InventoryForm({ item, suppliers, onSave, onCancel, onAddNewSuppl
     onSave(values);
   }
 
+  // No se puede editar un artículo compuesto desde este formulario
+  if (item?.type === 'composite') {
+    return (
+        <div className="space-y-4 text-center">
+            <p>La edición de artículos compuestos (Kits) no está disponible en este formulario.</p>
+            <p className="text-sm text-muted-foreground">Puedes gestionar sus componentes desde otra interfaz.</p>
+             <div className="flex justify-end gap-2 pt-4">
+                <Button type="button" variant="ghost" onClick={onCancel}>
+                    Cerrar
+                </Button>
+            </div>
+        </div>
+    )
+  }
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

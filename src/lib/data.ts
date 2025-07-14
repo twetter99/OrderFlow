@@ -8,12 +8,27 @@ export const projects: Project[] = [
 ];
 
 export const inventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', quantity: 25, minThreshold: 10, unitCost: 350, supplier: 'TechParts Inc.' },
-  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', quantity: 8, minThreshold: 20, unitCost: 15.50, supplier: 'MetalWorks Ltd.' },
-  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', quantity: 55, minThreshold: 30, unitCost: 45, supplier: 'MetalWorks Ltd.' },
-  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, supplier: 'Soluciones de Ferretería' },
-  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, supplier: 'Global Nav' },
-  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, supplier: 'TechParts Inc.' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', quantity: 25, minThreshold: 10, unitCost: 350, supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', quantity: 8, minThreshold: 20, unitCost: 15.50, supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', quantity: 55, minThreshold: 30, unitCost: 45, supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, supplier: 'Soluciones de Ferretería', type: 'simple' },
+  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, supplier: 'Global Nav', type: 'simple' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, supplier: 'TechParts Inc.', type: 'simple' },
+  { 
+    id: 'ITEM-100', 
+    sku: 'KIT-INST-BASIC', 
+    name: 'Kit de Instalación Básico', 
+    quantity: 0, // La cantidad se calcula en base a los componentes
+    minThreshold: 5, 
+    unitCost: 478, // Costo es la suma de los componentes
+    supplier: 'Ensamblado Interno',
+    type: 'composite', 
+    components: [
+      { itemId: 'ITEM-001', quantity: 1 }, // 1x CPU
+      { itemId: 'ITEM-005', quantity: 1 }, // 1x GPS
+      { itemId: 'ITEM-004', quantity: 1 }, // 1x Paquete de tornillos
+    ]
+  },
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
@@ -29,6 +44,7 @@ export const suppliers: Supplier[] = [
   { id: 'SUP-002', name: 'MetalWorks Ltd.', contactPerson: 'John Smith', email: 'contact@metalworks.com', phone: '987-654-3210', deliveryRating: 4.2, qualityRating: 4.5 },
   { id: 'SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
   { id: 'SUP-004', name: 'Global Nav', contactPerson: 'Susan Chen', email: 'support@globalnav.com', phone: '555-987-6543', deliveryRating: 4.0, qualityRating: 4.7 },
+  { id: 'SUP-005', name: 'Ensamblado Interno', contactPerson: 'N/A', email: 'N/A', phone: 'N/A', deliveryRating: 5.0, qualityRating: 5.0 },
 ];
 
 export const clients: Client[] = [
