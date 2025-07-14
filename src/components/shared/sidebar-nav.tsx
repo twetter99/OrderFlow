@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3 } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -17,6 +17,7 @@ const navItems = [
   { href: "/despatches", label: "Despachos", icon: Send },
   { href: "/suppliers", label: "Proveedores", icon: Truck },
   { href: "/clients", label: "Clientes", icon: Building2 },
+  { href: "/reports", label: "Reportes", icon: BarChart3 },
   { href: "/ai-assistant", label: "Asistente IA", icon: Bot },
 ];
 
@@ -35,7 +36,7 @@ export function SidebarNav() {
         <Bot className="h-6 w-6 text-primary" />
         <h1 className="text-lg font-bold font-headline">OrderFlow</h1>
       </div>
-      <nav className="flex-1 p-4 space-y-2">
+      <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {navItems.map((item) => {
             const isActive = pathname.startsWith(item.href);
             return (
