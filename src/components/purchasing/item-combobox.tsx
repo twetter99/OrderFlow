@@ -19,6 +19,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import type { InventoryItem } from "@/lib/types"
+import { Input } from "@/components/ui/input"
 
 interface ItemComboboxProps {
   inventoryItems: InventoryItem[];
