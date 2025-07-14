@@ -67,7 +67,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
             <FormItem>
               <FormLabel>Nombre Completo</FormLabel>
               <FormControl>
-                <Input placeholder="p. ej., John Doe" {...field} />
+                <Input placeholder="p. ej., Juan Pérez" {...field} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -80,7 +80,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                 <FormItem>
                 <FormLabel>Correo Electrónico</FormLabel>
                 <FormControl>
-                    <Input type="email" placeholder="p. ej., john.doe@example.com" {...field} />
+                    <Input type="email" placeholder="p. ej., juan.perez@example.com" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
@@ -94,7 +94,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                 <FormItem>
                 <FormLabel>Teléfono</FormLabel>
                 <FormControl>
-                    <Input placeholder="p. ej., 123-456-7890" {...field} />
+                    <Input placeholder="p. ej., 600 123 456" {...field} />
                 </FormControl>
                 <FormMessage />
                 </FormItem>
