@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -27,9 +28,10 @@ interface SupplierComboboxProps {
   value: string;
   onChange: (value: string) => void;
   onAddNew: () => void;
+  disabled?: boolean;
 }
 
-export function SupplierCombobox({ suppliers, value, onChange, onAddNew }: SupplierComboboxProps) {
+export function SupplierCombobox({ suppliers, value, onChange, onAddNew, disabled }: SupplierComboboxProps) {
   const [open, setOpen] = React.useState(false)
 
   return (
@@ -40,6 +42,7 @@ export function SupplierCombobox({ suppliers, value, onChange, onAddNew }: Suppl
           role="combobox"
           aria-expanded={open}
           className="w-full justify-between"
+          disabled={disabled}
         >
           {value
             ? suppliers.find((supplier) => supplier.name.toLowerCase() === value.toLowerCase())?.name

@@ -43,17 +43,6 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
     }
     setOpen(false);
   };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      const text = e.target.value;
-      setInputValue(text);
-      const existingItem = inventoryItems.find(item => item.name.toLowerCase() === text.toLowerCase());
-      if (!existingItem) {
-          onChange({ name: text, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
-      }
-  }
-
-  const selectedItem = inventoryItems.find(item => item.name === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -111,7 +100,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
                     </div>
                    <div className="flex-shrink-0">
                     {item.imageUrl ? (
-                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="rounded-md object-cover"/>
+                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="rounded-md object-cover" data-ai-hint={item.dataAiHint}/>
                     ) : (
                         <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md">
                             <ImageOff className="h-5 w-5 text-muted-foreground" />

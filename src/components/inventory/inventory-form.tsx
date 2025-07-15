@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -31,6 +32,7 @@ const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   unit: z.string().min(1, "La unidad es obligatoria."),
   imageUrl: z.string().url("Debe ser una URL de imagen válida o una Data URL.").optional().or(z.literal('')),
+  dataAiHint: z.string().optional(),
   observations: z.string().optional(),
   // Campos opcionales según el tipo
   minThreshold: z.coerce.number().optional(),

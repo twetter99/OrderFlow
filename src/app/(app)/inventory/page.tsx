@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -238,6 +239,7 @@ export default function InventoryPage() {
                           width={40}
                           height={40}
                           className="rounded-md object-cover"
+                          data-ai-hint={item.dataAiHint}
                         />
                       ) : (
                         <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md">

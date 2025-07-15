@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -52,6 +53,7 @@ const formSchema = z.object({
     tipo: z.enum(['estado_inicial', 'esquema', 'detalle']),
     url_imagen: z.string().url("Debe ser una URL válida."),
     descripcion: z.string().min(1, "La descripción es obligatoria."),
+    dataAiHint: z.string().optional(),
   })).optional(),
 });
 
@@ -232,7 +234,7 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
                             ))}
                         </TableBody>
                     </Table>
-                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendImage({ url_imagen: "https://placehold.co/600x400.png", tipo: 'detalle', descripcion: ''  })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Imagen</Button>
+                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendImage({ url_imagen: "https://placehold.co/600x400.png", tipo: 'detalle', descripcion: '', dataAiHint: '' })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Imagen</Button>
                 </CardContent>
             </Card>
         </div>
