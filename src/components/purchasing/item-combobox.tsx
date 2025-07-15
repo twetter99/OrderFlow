@@ -32,45 +32,55 @@ interface ItemComboboxProps {
 
 export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, disabled }: ItemComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [inputValue, setInputValue] = React.useState(value)
-
-  React.useEffect(() => {
-    setInputValue(value)
-  }, [value])
 
   const handleSelect = (currentValue: string) => {
     const selectedItem = inventoryItems.find(item => item.name.toLowerCase() === currentValue.toLowerCase());
     if (selectedItem) {
       onChange(selectedItem);
-      setInputValue(selectedItem.name);
     }
     setOpen(false);
   };
-  
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const text = e.target.value;
-    setInputValue(text);
-    onTextChange(text);
-  };
+
+  // Este es un componente no controlado para la entrada de texto manual.
+  const ManualInput = () => {
+    const [text, setText] = React.useState(value);
+
+    return (
+        <Input 
+            value={text} 
+            onChange={(e) => {
+                const newText = e.target.value;
+                setText(newText);
+                onTextChange(newText);
+            }} 
+            placeholder="Escribe un artículo personalizado..."
+            disabled={disabled}
+        />
+    )
+  }
+
+  const selectedItem = inventoryItems.find(item => item.name === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <div className="relative">
-          <Input
-            value={inputValue}
-            onChange={handleInputChange}
-            placeholder="Buscar o escribir un artículo..."
-            className="w-full pr-8"
-            disabled={disabled}
-            onClick={() => setOpen(true)}
-          />
-          <ChevronsUpDown 
-            className="absolute right-2 top-1/2 -translate-y-1/2 h-4 w-4 shrink-0 opacity-50" 
-            onClick={() => setOpen((o) => !o)}
-          />
+        <div className="flex gap-2">
+            <PopoverTrigger asChild>
+                <Button
+                variant="outline"
+                role="combobox"
+                aria-expanded={open}
+                className="w-[calc(100%-4rem)] justify-between"
+                disabled={disabled}
+                >
+                <span className="truncate">
+                    {value ? value : "Selecciona un artículo..."}
+                </span>
+                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </PopoverTrigger>
+            {/* Si el artículo no está en la lista, mostramos un input manual */}
+            {!selectedItem && <div className="w-full"><ManualInput/></div>}
         </div>
-      </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>
         <Command>
           <CommandInput placeholder="Buscar artículo..." />
@@ -88,7 +98,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, di
                         <Check
                             className={cn(
                             "mr-2 h-4 w-4 flex-shrink-0 mt-1",
-                            value.toLowerCase() === item.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                            value === item.name ? "opacity-100" : "opacity-0"
                             )}
                         />
                         <div className="flex-grow">
