@@ -98,6 +98,10 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
       form.setValue('unit', 'ud');
   }
 
+  if (itemType === 'service') {
+      form.setValue('unit', 'ud');
+  }
+
 
   function onSubmit(values: InventoryFormValues) {
     const finalValues = { ...values };
@@ -105,6 +109,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         finalValues.quantity = 0;
         finalValues.minThreshold = 0;
         finalValues.supplier = 'N/A';
+        finalValues.unit = 'ud';
     }
     if (values.type === 'composite') {
         finalValues.quantity = 0; // Se calcula en tiempo real
@@ -128,7 +133,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
               <FormLabel>Tipo de Artículo</FormLabel>
               <FormControl>
                 <RadioGroup
-                  onValueChange={field.onChange}
+                  onValueChange={(value) => {
+                    field.onChange(value);
+                    if (value === 'service' || value === 'composite') {
+                      form.setValue('unit', 'ud');
+                    }
+                  }}
                   defaultValue={field.value}
                   className="flex space-x-4"
                   disabled={isEditing}
@@ -222,9 +232,17 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Unidad</FormLabel>
-                    <FormControl>
-                        <Input placeholder="ud, ml, kg..." {...field} />
-                    </FormControl>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una unidad"/>
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            <SelectItem value="ud">Unidad (ud)</SelectItem>
+                            <SelectItem value="ml">Metro Lineal (ml)</SelectItem>
+                        </SelectContent>
+                    </Select>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -287,9 +305,16 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Unidad de Medida</FormLabel>
-                        <FormControl>
-                            <Input placeholder="h, ud, viaje..." {...field} />
-                        </FormControl>
+                         <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una unidad"/>
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="ud">Unidad (ud)</SelectItem>
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                         </FormItem>
                     )}
