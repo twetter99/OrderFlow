@@ -1,7 +1,7 @@
 
 "use client"
 
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer, Tooltip } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
 import {
   Card,
   CardContent,
@@ -15,8 +15,13 @@ import { inventory, suppliers } from "@/lib/data"
 // Calculate inventory value per supplier
 const supplierInventoryValue = suppliers.map(supplier => {
     const value = inventory
-        .filter(item => item.supplier === supplier.name)
-        .reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
+        .filter(item => item.supplier === supplier.name && item.type === 'simple')
+        .reduce((acc, item) => {
+             const totalQuantity = inventory
+              .filter(i => i.id === item.id)
+              .reduce((sum, i) => sum + (i.quantity || 0), 0);
+            return acc + (totalQuantity * item.unitCost);
+        }, 0);
     return { name: supplier.name, value: value };
 }).filter(s => s.value > 0);
 
@@ -24,7 +29,7 @@ const supplierInventoryValue = suppliers.map(supplier => {
 const chartConfig = {
   value: {
     label: "Valor",
-    color: "hsl(var(--primary))",
+    color: "hsl(var(--chart-1))",
   },
 } satisfies ChartConfig
 
@@ -43,7 +48,7 @@ export function InventoryValueChart() {
               <YAxis
                 type="category"
                 dataKey="name"
-                stroke="#888888"
+                stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
@@ -51,19 +56,17 @@ export function InventoryValueChart() {
               />
               <XAxis
                 type="number"
-                stroke="#888888"
+                stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
                 tickLine={false}
                 axisLine={false}
                 tickFormatter={(value) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR', notation: 'compact' }).format(value as number)}
               />
-              <Tooltip
-                cursor={{ fill: 'hsl(var(--muted))' }}
-                content={<ChartTooltipContent 
+              <ChartTooltipContent 
                     formatter={(value) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value as number)}
                     nameKey="value" 
-                 />}
-              />
+                    cursor={{ fill: 'hsl(var(--muted))' }}
+                 />
               <Bar dataKey="value" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
