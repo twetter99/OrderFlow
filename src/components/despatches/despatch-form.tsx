@@ -68,7 +68,6 @@ export function DespatchForm({ note, clients, projects, inventoryItems, location
 
   const watchedLocationId = useWatch({ control: form.control, name: 'locationId' });
   const watchedClientId = useWatch({ control: form.control, name: 'clientId' });
-  const watchedItems = form.watch('items');
 
   const filteredProjects = useMemo(() => {
     if (!watchedClientId) return [];
@@ -294,7 +293,7 @@ export function DespatchForm({ note, clients, projects, inventoryItems, location
                  <FormField
                     control={form.control}
                     name="items"
-                    render={() => <FormItem><FormMessage /></FormItem>}
+                    render={() => <FormItem><FormMessage className="pt-2" /></FormItem>}
                   />
             </CardContent>
         </Card>

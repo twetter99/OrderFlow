@@ -21,7 +21,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { PlusCircle, Trash2, Camera, Upload, ImageOff } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef } from "react";
 import { Textarea } from "../ui/textarea";
 import Image from "next/image";
 
@@ -153,6 +153,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
               <FormControl>
                 <RadioGroup
                   onValueChange={(value) => {
+                    if (isEditing) return; // Don't allow changing type when editing
                     field.onChange(value);
                     if (value === 'service' || value === 'composite') {
                       form.setValue('unit', 'ud', { shouldValidate: true });

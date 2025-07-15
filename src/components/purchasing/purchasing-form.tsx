@@ -245,13 +245,13 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                         inventoryItems={inventoryItems}
                                                         value={field.value}
                                                         onChange={(selectedItem) => {
-                                                            field.onChange(selectedItem.name);
+                                                            form.setValue(`items.${index}.itemName`, selectedItem.name);
                                                             form.setValue(`items.${index}.price`, selectedItem.unitCost);
                                                             form.setValue(`items.${index}.itemId`, selectedItem.id);
                                                             form.setValue(`items.${index}.unit`, selectedItem.unit);
                                                         }}
                                                         onTextChange={(text) => {
-                                                            field.onChange(text);
+                                                            form.setValue(`items.${index}.itemName`, text);
                                                             form.setValue(`items.${index}.itemId`, undefined);
                                                         }}
                                                         disabled={isReadOnly}
