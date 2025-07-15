@@ -12,14 +12,19 @@ const navGroups = [
   {
     items: [
       { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
-      { href: "/projects", label: "Proyectos", icon: FolderKanban },
     ],
+  },
+  {
+    title: "Proyectos",
+    items: [
+      { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
+      { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
+    ]
   },
   {
     title: "Logística",
     items: [
       { href: "/inventory", label: "Inventario", icon: Warehouse },
-      { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
       { href: "/locations", label: "Almacenes", icon: Building2 },
     ],
   },
