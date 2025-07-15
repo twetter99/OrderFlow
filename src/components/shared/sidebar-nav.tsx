@@ -20,9 +20,6 @@ const navGroups = [
     items: [
       { href: "/inventory", label: "Inventario", icon: Warehouse },
       { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
-      { href: "/inventory-locations", label: "Stock en Almacenes", icon: MapPin },
-      { href: "/transfers", label: "Transferencias", icon: ArrowRightLeft },
-      { href: "/receptions", label: "Recepciones", icon: Archive },
       { href: "/locations", label: "Almacenes", icon: Building2 },
     ],
   },
@@ -52,6 +49,16 @@ const bottomNavItems = [
 export function SidebarNav() {
   const pathname = usePathname();
 
+  const isLinkActive = (href: string) => {
+    if (href === "/inventory") {
+      return pathname === href;
+    }
+     if (href === "/dashboard") {
+      return pathname === href;
+    }
+    return pathname.startsWith(href);
+  };
+
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-card">
       <div className="flex items-center gap-2 h-16 border-b px-6">
@@ -65,17 +72,14 @@ export function SidebarNav() {
                  <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
             )}
             {group.items.map((item) => {
-                const isActive = item.href === '/inventory' 
-                    ? pathname === item.href 
-                    : pathname.startsWith(item.href);
-                const isDashboard = item.href === "/dashboard";
+                const isActive = isLinkActive(item.href);
                 return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  (isDashboard ? pathname === item.href : isActive) && "bg-muted text-primary"
+                  isActive && "bg-muted text-primary"
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -88,7 +92,7 @@ export function SidebarNav() {
       </nav>
       <div className="mt-auto p-2 space-y-1 border-t">
         {bottomNavItems.map((item) => {
-            const isActive = pathname === item.href || (pathname.startsWith(item.href) && pathname.charAt(item.href.length) === '/');
+            const isActive = isLinkActive(item.href);
             return (
                 <Link
                     key={item.href}

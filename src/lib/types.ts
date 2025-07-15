@@ -29,10 +29,9 @@ export type InventoryItem = {
   sku: string;
   name: string;
   imageUrl?: string;
-  quantity: number;
   minThreshold: number;
   unitCost: number;
-  unit: string; // e.g., 'ud', 'ml'
+  unit: 'ud' | 'ml';
   supplier: string;
   type: 'simple' | 'composite' | 'service';
   observations?: string;
