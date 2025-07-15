@@ -249,10 +249,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                             form.setValue(`items.${index}.price`, selectedItem.unitCost);
                                                             form.setValue(`items.${index}.itemId`, selectedItem.id);
                                                             form.setValue(`items.${index}.unit`, selectedItem.unit);
-                                                        }}
-                                                        onTextChange={(text) => {
-                                                            form.setValue(`items.${index}.itemName`, text);
-                                                            form.setValue(`items.${index}.itemId`, undefined);
+                                                            form.setValue(`items.${index}.type`, selectedItem.type || 'Material');
                                                         }}
                                                         disabled={isReadOnly}
                                                    />

@@ -20,18 +20,21 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 import type { InventoryItem } from "@/lib/types"
-import { Input } from "@/components/ui/input"
 
 interface ItemComboboxProps {
   inventoryItems: InventoryItem[];
   value: string;
-  onChange: (item: InventoryItem) => void;
-  onTextChange: (text: string) => void;
+  onChange: (item: InventoryItem | { name: string, unitCost: number, unit: string, id: undefined, sku: undefined, type: 'Material' | 'Servicio' }) => void;
   disabled?: boolean;
 }
 
-export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, disabled }: ItemComboboxProps) {
+export function ItemCombobox({ inventoryItems, value, onChange, disabled }: ItemComboboxProps) {
   const [open, setOpen] = React.useState(false)
+  const [inputValue, setInputValue] = React.useState(value || '')
+
+  React.useEffect(() => {
+    setInputValue(value || '');
+  }, [value]);
 
   const handleSelect = (currentValue: string) => {
     const selectedItem = inventoryItems.find(item => item.name.toLowerCase() === currentValue.toLowerCase());
@@ -40,54 +43,52 @@ export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, di
     }
     setOpen(false);
   };
-
-  // Este es un componente no controlado para la entrada de texto manual.
-  const ManualInput = () => {
-    const [text, setText] = React.useState(value);
-
-    return (
-        <Input 
-            value={text} 
-            onChange={(e) => {
-                const newText = e.target.value;
-                setText(newText);
-                onTextChange(newText);
-            }} 
-            placeholder="Escribe un artículo personalizado..."
-            disabled={disabled}
-        />
-    )
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      const text = e.target.value;
+      setInputValue(text);
+      const existingItem = inventoryItems.find(item => item.name.toLowerCase() === text.toLowerCase());
+      if (!existingItem) {
+          onChange({ name: text, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+      }
   }
 
   const selectedItem = inventoryItems.find(item => item.name === value);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
-        <div className="flex gap-2">
-            <PopoverTrigger asChild>
-                <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={open}
-                className="w-[calc(100%-4rem)] justify-between"
-                disabled={disabled}
-                >
-                <span className="truncate">
-                    {value ? value : "Selecciona un artículo..."}
-                </span>
-                <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-            </PopoverTrigger>
-            {/* Si el artículo no está en la lista, mostramos un input manual */}
-            {!selectedItem && <div className="w-full"><ManualInput/></div>}
-        </div>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between"
+          disabled={disabled}
+        >
+          <span className="truncate">
+            {value ? value : "Selecciona o escribe un artículo..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>
-        <Command>
-          <CommandInput placeholder="Buscar artículo..." />
+        <Command shouldFilter={false}>
+          <CommandInput 
+            placeholder="Buscar o crear artículo..." 
+            value={inputValue}
+            onValueChange={setInputValue}
+          />
           <CommandList>
-            <CommandEmpty>No se encontró ningún artículo.</CommandEmpty>
+            <CommandEmpty>
+                <CommandItem onSelect={() => {
+                    onChange({ name: inputValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+                    setOpen(false);
+                }}>
+                    Crear nuevo artículo: "{inputValue}"
+                </CommandItem>
+            </CommandEmpty>
             <CommandGroup>
-              {inventoryItems.map((item) => (
+              {inventoryItems.filter(item => item.name.toLowerCase().includes(inputValue.toLowerCase())).map((item) => (
                 <CommandItem
                   key={item.id}
                   value={item.name}
