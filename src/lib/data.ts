@@ -307,3 +307,5 @@ export const getNotifications = (): Notification[] => {
     
     return notifications;
 }
+
+    

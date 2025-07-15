@@ -232,7 +232,7 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
                             ))}
                         </TableBody>
                     </Table>
-                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendImage({ url_imagen: "", tipo: 'detalle', descripcion: ''  })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Imagen</Button>
+                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendImage({ url_imagen: "https://placehold.co/600x400.png", tipo: 'detalle', descripcion: ''  })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Imagen</Button>
                 </CardContent>
             </Card>
         </div>
@@ -246,3 +246,5 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
     </Form>
   );
 }
+
+    
