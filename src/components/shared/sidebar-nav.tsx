@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench, ClipboardList, ListChecks, Plane } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench, ClipboardList, ListChecks, Plane, Activity } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 import { cn } from "@/lib/utils";
@@ -22,6 +22,7 @@ const navGroups = [
       { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
       { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
       { href: "/travel-planning", label: "Planificación Desplazamientos", icon: Plane },
+      { href: "/project-tracking", label: "Seguimiento y Control", icon: Activity },
     ]
   },
   {
@@ -62,8 +63,12 @@ export function SidebarNav() {
     if (href === "/dashboard") {
       return pathname === href;
     }
-    // Exact match for /inventory to avoid conflict with /inventory-locations
+    // Exact match for /inventory to avoid conflict with other /inventory-* routes
     if (href === "/inventory") {
+        return pathname === href;
+    }
+    // Exact match for /locations to avoid conflict with other /locations/* routes
+    if (href === "/locations") {
         return pathname === href;
     }
     return pathname.startsWith(href);
