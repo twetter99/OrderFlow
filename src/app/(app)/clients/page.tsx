@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -46,8 +46,8 @@ import { ClientForm } from "@/components/clients/client-form";
 import type { Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { addClient, updateClient } from "./actions";
-import { collection, getDocs } from "firebase/firestore";
+import { addClient, updateClient, deleteClient, deleteMultipleClients } from "./actions";
+import { collection, getDocs, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function ClientsPage() {
@@ -60,25 +60,22 @@ export default function ClientsPage() {
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   useEffect(() => {
-    const fetchClients = async () => {
-        try {
-            const querySnapshot = await getDocs(collection(db, "clients"));
-            const clientsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
-            setClients(clientsData);
-        } catch (error) {
-            console.error("Error fetching clients: ", error);
-            setClients(initialClients); // Fallback to mock data on error
-            toast({
-              variant: "destructive",
-              title: "Error de Carga",
-              description: "No se pudieron cargar los clientes desde la base de datos. Se muestran datos de ejemplo.",
-            });
-        } finally {
-            setLoading(false);
-        }
-    };
+    const unsubscribe = onSnapshot(collection(db, "clients"), (snapshot) => {
+        const clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+        setClients(clientsData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching clients: ", error);
+        setClients(initialClients); // Fallback to mock data on error
+        toast({
+          variant: "destructive",
+          title: "Error de Carga",
+          description: "No se pudieron cargar los clientes. Se muestran datos de ejemplo.",
+        });
+        setLoading(false);
+    });
 
-    fetchClients();
+    return () => unsubscribe();
   }, [toast]);
 
 
@@ -92,40 +89,41 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (client: Client) => {
-    setSelectedClient(client);
+  const handleDeleteTrigger = (client?: Client) => {
+    if (client) {
+      setSelectedClient(client);
+      setSelectedRowIds([client.id]);
+    } else {
+      setSelectedClient(null);
+    }
     setIsDeleteDialogOpen(true);
   };
   
-  const handleBulkDeleteClick = () => {
-    setIsDeleteDialogOpen(true);
-  };
-
   const handleSave = async (values: any) => {
-    let result;
-    if (selectedClient) {
-        result = await updateClient(selectedClient.id, values);
-    } else {
-        result = await addClient(values);
-    }
+    const result = selectedClient 
+      ? await updateClient(selectedClient.id, values) 
+      : await addClient(values);
 
     if (result.success) {
       toast({ title: selectedClient ? "Cliente actualizado" : "Cliente creado", description: result.message });
-      // Refetch clients or update state locally
-       const querySnapshot = await getDocs(collection(db, "clients"));
-       const clientsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
-       setClients(clientsData);
+      setIsModalOpen(false);
+      setSelectedClient(null);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.message });
     }
-
-    setIsModalOpen(false);
-    setSelectedClient(null);
   };
 
-  const confirmDelete = () => {
-    // Implement Firestore delete logic here
-    console.log("Delete operation needs to be implemented with Firestore.");
+  const confirmDelete = async () => {
+    const result = selectedRowIds.length > 1
+        ? await deleteMultipleClients(selectedRowIds)
+        : await deleteClient(selectedRowIds[0]);
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
     setSelectedClient(null);
     setSelectedRowIds([]);
@@ -161,7 +159,7 @@ export default function ClientsPage() {
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
-          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+          <Button variant="destructive" onClick={() => handleDeleteTrigger()}>
             <Trash2 className="mr-2 h-4 w-4" />
             Eliminar ({selectedRowIds.length})
           </Button>
@@ -221,7 +219,7 @@ export default function ClientsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(client)}
+                            onClick={() => handleDeleteTrigger(client)}
                           >
                             Eliminar
                           </DropdownMenuItem>
