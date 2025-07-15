@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -15,8 +16,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { locations as initialLocations } from "@/lib/data";
-import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
+import { locations as initialLocations, inventoryLocations as initialInventoryLocations, inventory } from "@/lib/data";
+import { MoreHorizontal, PlusCircle, Trash2, View } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,11 +50,28 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function LocationsPage() {
   const { toast } = useToast();
+  const router = useRouter();
   const [locations, setLocations] = useState<Location[]>(initialLocations);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  const locationStats = useMemo(() => {
+    return locations.map(location => {
+      const itemsInLocation = initialInventoryLocations.filter(il => il.locationId === location.id);
+      const uniqueSkus = new Set(itemsInLocation.map(il => il.itemId)).size;
+      const totalValue = itemsInLocation.reduce((sum, il) => {
+        const itemDetails = inventory.find(i => i.id === il.itemId);
+        return sum + (itemDetails ? itemDetails.unitCost * il.quantity : 0);
+      }, 0);
+      return {
+        ...location,
+        uniqueSkus,
+        totalValue
+      };
+    });
+  }, [locations]);
 
   const handleAddClick = () => {
     setSelectedLocation(null);
@@ -72,6 +90,10 @@ export default function LocationsPage() {
 
   const handleBulkDeleteClick = () => {
     setIsDeleteDialogOpen(true);
+  };
+  
+  const handleViewInventoryClick = (locationId: string) => {
+    router.push(`/locations/${locationId}`);
   };
 
   const handleSave = (values: any) => {
@@ -95,6 +117,7 @@ export default function LocationsPage() {
   const confirmDelete = () => {
     if (selectedRowIds.length > 0) {
         setLocations(locations.filter((loc) => !selectedRowIds.includes(loc.id)));
+        // En una app real, también se debería manejar el stock de los almacenes eliminados
         toast({ variant: "destructive", title: "Almacenes eliminados", description: `${selectedRowIds.length} almacenes han sido eliminados.` });
         setSelectedRowIds([]);
     } else if (selectedLocation) {
@@ -127,7 +150,7 @@ export default function LocationsPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Almacenes</h1>
           <p className="text-muted-foreground">
-            Gestiona tus almacenes y sus ubicaciones.
+            Gestiona tus almacenes y consulta un resumen de su inventario.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -155,12 +178,13 @@ export default function LocationsPage() {
                   />
                 </TableHead>
                 <TableHead>Nombre</TableHead>
-                <TableHead>Descripción</TableHead>
+                <TableHead>SKUs Únicos</TableHead>
+                <TableHead>Valor Total de Stock</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {locations.map((location) => (
+              {locationStats.map((location) => (
                 <TableRow key={location.id} data-state={selectedRowIds.includes(location.id) ? "selected" : ""}>
                    <TableCell padding="checkbox">
                     <Checkbox
@@ -170,8 +194,13 @@ export default function LocationsPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{location.name}</TableCell>
-                  <TableCell>{location.description}</TableCell>
+                  <TableCell>{location.uniqueSkus}</TableCell>
+                  <TableCell>{new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(location.totalValue)}</TableCell>
                   <TableCell className="text-right">
+                      <Button variant="outline" size="sm" onClick={() => handleViewInventoryClick(location.id)} className="mr-2">
+                          <View className="mr-2 h-4 w-4" />
+                          Ver Inventario
+                      </Button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" className="h-8 w-8 p-0">
@@ -183,13 +212,13 @@ export default function LocationsPage() {
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(location)}>
-                            Editar
+                            Editar Detalles
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
                             onClick={() => handleDeleteClick(location)}
                           >
-                            Eliminar
+                            Eliminar Almacén
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -231,6 +260,7 @@ export default function LocationsPage() {
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
               {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} almacenes seleccionados.` : " el almacén."}
+              Eliminar un almacén no elimina los artículos, pero su stock asignado quedará huérfano.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -2,29 +2,12 @@
 "use client";
 
 import React from "react";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Card, CardContent } from "@/components/ui/card";
-import { inventory, locations as initialLocations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
+import { useRouter } from "next/navigation";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 export default function InventoryLocationsPage() {
-  const enrichedInventoryLocations = initialInventoryLocations.map(invLoc => {
-    const item = inventory.find(i => i.id === invLoc.itemId);
-    const location = initialLocations.find(l => l.id === invLoc.locationId);
-    return {
-      ...invLoc,
-      itemName: item?.name || "Desconocido",
-      itemSku: item?.sku || "N/A",
-      locationName: location?.name || "Desconocido",
-    };
-  }).sort((a, b) => a.locationName.localeCompare(b.locationName) || a.itemName.localeCompare(b.itemName));
-
+  const router = useRouter();
 
   return (
     <div className="flex flex-col gap-8">
@@ -37,34 +20,16 @@ export default function InventoryLocationsPage() {
         </div>
       </div>
       <Card>
-        <CardContent className="pt-6">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Almacén / Ubicación</TableHead>
-                <TableHead>SKU</TableHead>
-                <TableHead>Nombre del Artículo</TableHead>
-                <TableHead className="text-right">Cantidad</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {enrichedInventoryLocations.map((loc) => (
-                <TableRow key={loc.id}>
-                  <TableCell className="font-medium">{loc.locationName}</TableCell>
-                  <TableCell>{loc.itemSku}</TableCell>
-                  <TableCell>{loc.itemName}</TableCell>
-                  <TableCell className="text-right font-bold">{loc.quantity}</TableCell>
-                </TableRow>
-              ))}
-               {enrichedInventoryLocations.length === 0 && (
-                <TableRow>
-                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No hay stock registrado en ninguna ubicación.
-                    </TableCell>
-                </TableRow>
-               )}
-            </TableBody>
-          </Table>
+        <CardHeader>
+          <CardTitle>Selecciona un Almacén</CardTitle>
+          <CardDescription>
+            Para ver el inventario detallado de una ubicación específica, ve a la sección de "Almacenes" y selecciona "Ver Inventario" para el almacén deseado.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <Button onClick={() => router.push('/locations')}>
+            Ir a Almacenes
+          </Button>
         </CardContent>
       </Card>
     </div>

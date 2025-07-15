@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
+import { inventory as initialInventory, suppliers as initialSuppliers, inventoryLocations } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2, ImageOff } from "lucide-react";
 import {
@@ -65,18 +65,29 @@ export default function InventoryPage() {
 
   const inventoryWithCalculations = useMemo(() => {
     return inventory.map(item => {
+      // Calcular la cantidad total de todas las ubicaciones
+      const totalQuantity = inventoryLocations
+        .filter(loc => loc.itemId === item.id)
+        .reduce((sum, loc) => sum + loc.quantity, 0);
+      
+      let buildableQuantity = totalQuantity;
       if (item.type === 'composite') {
-        const buildableQuantity = Math.min(
+        // Calcular la cantidad construible basada en los componentes
+        buildableQuantity = Math.min(
           ...(item.components?.map(c => {
-            const componentItem = inventory.find(i => i.id === c.itemId);
-            return componentItem ? Math.floor(componentItem.quantity / c.quantity) : 0;
+            const componentTotalQuantity = inventoryLocations
+              .filter(loc => loc.itemId === c.itemId)
+              .reduce((sum, loc) => sum + loc.quantity, 0);
+            return Math.floor(componentTotalQuantity / c.quantity);
           }) || [0])
         );
-        return { ...item, buildableQuantity };
       }
-      return { ...item, buildableQuantity: item.quantity };
+      
+      // Asignar la cantidad calculada al item para visualización
+      return { ...item, quantity: totalQuantity, buildableQuantity };
     });
   }, [inventory]);
+
 
   const handleAddClick = () => {
     setSelectedItem(null);
@@ -111,11 +122,9 @@ export default function InventoryPage() {
       );
       toast({ title: "Artículo actualizado", description: "El artículo del inventario se ha actualizado correctamente." });
     } else {
-      setInventory([
-        ...inventory,
-        { ...values, id: `ITEM-${String(inventory.length + 1).padStart(3, '0')}` },
-      ]);
-      toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario." });
+       const newItem = { ...values, id: `ITEM-${String(inventory.length + 1).padStart(3, '0')}` };
+       setInventory([...inventory, newItem]);
+      toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario. Recuerda añadir stock desde una recepción o desde la página de un almacén." });
     }
     setIsModalOpen(false);
   };
@@ -169,7 +178,7 @@ export default function InventoryPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Inventario</h1>
           <p className="text-muted-foreground">
-            Rastrea y gestiona tus artículos, kits y servicios.
+            Rastrea y gestiona tus artículos, kits y servicios. La cantidad total es la suma de todas las ubicaciones.
           </p>
         </div>
          {selectedRowIds.length > 0 ? (
@@ -200,7 +209,7 @@ export default function InventoryPage() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
                 <TableHead>Estado</TableHead>
-                <TableHead>Cantidad</TableHead>
+                <TableHead>Cantidad Total</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Costo Unitario</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -319,7 +328,7 @@ export default function InventoryPage() {
             <DialogDescription>
               {selectedItem
                 ? "Edita la información del artículo."
-                : "Rellena los detalles para crear un nuevo artículo, kit o servicio."}
+                : "Rellena los detalles para crear un nuevo artículo, kit o servicio. El stock se añade desde recepciones o almacenes."}
             </DialogDescription>
           </DialogHeader>
           <InventoryForm

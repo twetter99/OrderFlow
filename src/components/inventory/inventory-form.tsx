@@ -33,7 +33,6 @@ const formSchema = z.object({
   imageUrl: z.string().url("Debe ser una URL de imagen válida o una Data URL.").optional().or(z.literal('')),
   observations: z.string().optional(),
   // Campos opcionales según el tipo
-  quantity: z.coerce.number().optional(),
   minThreshold: z.coerce.number().optional(),
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo."),
   supplier: z.string().optional(),
@@ -58,14 +57,13 @@ interface InventoryFormProps {
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
   const defaultValues = item
-    ? { ...item }
+    ? { ...item, minThreshold: item.minThreshold || 0 }
     : {
         type: 'simple' as const,
         sku: "",
         name: "",
         imageUrl: "",
         observations: "",
-        quantity: 0,
         minThreshold: 10,
         unitCost: 0,
         unit: 'ud',
@@ -124,15 +122,17 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   }
 
   function onSubmit(values: InventoryFormValues) {
-    const finalValues = { ...values };
+    const finalValues: any = { ...values };
+    
+    // Elimina el campo quantity si existe, ya que ahora se gestiona por ubicación.
+    delete finalValues.quantity;
+
     if (values.type === 'service') {
-        finalValues.quantity = 0;
         finalValues.minThreshold = 0;
         finalValues.supplier = 'N/A';
         finalValues.unit = 'ud';
     }
     if (values.type === 'composite') {
-        finalValues.quantity = 0;
         finalValues.supplier = 'Ensamblado Interno';
         finalValues.unit = 'ud';
     }
@@ -255,26 +255,13 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-3 gap-4">
-            <FormField
-                control={form.control}
-                name="quantity"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Cantidad en Stock</FormLabel>
-                    <FormControl>
-                    <Input type="number" placeholder="25" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
-            <FormField
+            <div className="grid grid-cols-2 gap-4">
+             <FormField
                 control={form.control}
                 name="minThreshold"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Umbral Mínimo</FormLabel>
+                    <FormLabel>Umbral Mínimo de Stock Total</FormLabel>
                     <FormControl>
                     <Input type="number" placeholder="10" {...field} />
                     </FormControl>
