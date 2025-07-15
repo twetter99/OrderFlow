@@ -216,7 +216,7 @@ export default function SuppliersPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedSupplier ? "Editar Proveedor" : "Añadir Nuevo Proveedor"}

@@ -70,7 +70,7 @@ export default function TransfersPage() {
       </Card>
 
       <Dialog open={isTransferModalOpen} onOpenChange={setIsTransferModalOpen}>
-        <DialogContent>
+        <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>Transferir Stock entre Almacenes</DialogTitle>
                 <DialogDescription>

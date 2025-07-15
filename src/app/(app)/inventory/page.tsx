@@ -311,7 +311,7 @@ export default function InventoryPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {selectedItem ? "Editar Artículo" : "Añadir Nuevo Artículo"}
@@ -343,7 +343,7 @@ export default function InventoryPage() {
       )}
 
       <Dialog open={isSupplierModalOpen} onOpenChange={setIsSupplierModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>Añadir Nuevo Proveedor</DialogTitle>
             <DialogDescription>

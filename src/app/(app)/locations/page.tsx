@@ -202,7 +202,7 @@ export default function LocationsPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedLocation ? "Editar Almacén" : "Añadir Nuevo Almacén"}

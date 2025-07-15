@@ -206,7 +206,7 @@ export default function ClientsPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedClient ? "Editar Cliente" : "Añadir Nuevo Cliente"}

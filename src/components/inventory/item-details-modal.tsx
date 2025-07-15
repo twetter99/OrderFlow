@@ -35,7 +35,7 @@ export function ItemDetailsModal({ item, allInvetoryItems, isOpen, onClose }: It
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Boxes className="h-6 w-6" />

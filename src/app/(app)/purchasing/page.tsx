@@ -326,7 +326,7 @@ export default function PurchasingPage() {
           setSelectedOrder(null);
         }
       }}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
               {selectedOrder && 'id' in selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}

@@ -245,7 +245,7 @@ export default function ProjectsPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[625px]">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {selectedProject ? "Editar Proyecto" : "Añadir Nuevo Proyecto"}

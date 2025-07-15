@@ -195,7 +195,7 @@ export default function DespatchesPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {selectedNote ? `Detalles del Albarán ${selectedNote.id}` : "Crear Albarán de Salida"}
