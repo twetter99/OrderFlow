@@ -16,9 +16,10 @@ export type InventoryItem = {
   id: string;
   sku: string;
   name: string;
-  quantity: number; // Para artículos simples, es el stock. Para compuestos, puede ser 0.
+  quantity: number;
   minThreshold: number;
   unitCost: number;
+  unit: string; // e.g., 'ud', 'ml', 'kg', 'h'
   supplier: string;
   type: 'simple' | 'composite' | 'service';
   components?: {
@@ -32,6 +33,7 @@ export type PurchaseOrderItem = {
   itemName: string;
   quantity: number;
   price: number;
+  unit: string;
   type: 'Material' | 'Servicio';
 };
 

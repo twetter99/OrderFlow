@@ -13,12 +13,14 @@ export const projects: Project[] = [
 ];
 
 export const inventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', quantity: 25, minThreshold: 10, unitCost: 350, supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', quantity: 8, minThreshold: 20, unitCost: 15.50, supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', quantity: 55, minThreshold: 30, unitCost: 45, supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, supplier: 'Soluciones de Ferretería', type: 'simple' },
-  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, supplier: 'Global Nav', type: 'simple' },
-  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', quantity: 25, minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', quantity: 8, minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', quantity: 55, minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', quantity: 200, minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
+  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', quantity: 12, minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', quantity: 30, minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', quantity: 150, minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', quantity: 0, minThreshold: 0, unitCost: 75, unit: 'h', supplier: 'N/A', type: 'service' },
   {
     id: 'ITEM-100',
     sku: 'KIT-INST-BASIC',
@@ -26,6 +28,7 @@ export const inventory: InventoryItem[] = [
     quantity: 0, // La cantidad se calcula en base a los componentes
     minThreshold: 5,
     unitCost: 478, // Costo es la suma de los componentes
+    unit: 'ud',
     supplier: 'Ensamblado Interno',
     type: 'composite',
     components: [
@@ -37,16 +40,16 @@ export const inventory: InventoryItem[] = [
 ];
 
 export const purchaseOrders: PurchaseOrder[] = [
-  { id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }).toISOString() },
-  { id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }).toISOString() },
-  { id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }).toISOString() },
-  { id: 'WF-PO-2024-004', project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }).toISOString() },
-  { id: 'WF-PO-2024-005', project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }).toISOString() },
-  { id: 'WF-PO-2024-006', project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }).toISOString() }, // Retrasado
+  { id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }).toISOString() },
+  { id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }).toISOString() },
+  { id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }).toISOString() },
+  { id: 'WF-PO-2024-004', project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }).toISOString() },
+  { id: 'WF-PO-2024-005', project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }).toISOString() },
+  { id: 'WF-PO-2024-006', project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }).toISOString() }, // Retrasado
   { id: 'WF-PO-2024-007', project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobado', date: '2024-07-22', total: 875, items: [
-    { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, type: 'Servicio' },
-    { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, type: 'Servicio' },
-    { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, type: 'Servicio' },
+    { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, unit: 'viaje', type: 'Servicio' },
+    { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, unit: 'noche', type: 'Servicio' },
+    { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, unit: 'ud', type: 'Servicio' },
   ], estimatedDeliveryDate: today.toISOString() },
 ];
 
@@ -85,6 +88,7 @@ export const inventoryLocations: InventoryLocation[] = [
     { id: 'INVLOC-005', itemId: 'ITEM-004', locationId: 'LOC-001', quantity: 200 },
     { id: 'INVLOC-006', itemId: 'ITEM-005', locationId: 'LOC-002', quantity: 12 },
     { id: 'INVLOC-007', itemId: 'ITEM-006', locationId: 'LOC-002', quantity: 30 },
+    { id: 'INVLOC-008', itemId: 'ITEM-007', locationId: 'LOC-001', quantity: 150 },
 ];
 
 export const deliveryNotes: DeliveryNote[] = [

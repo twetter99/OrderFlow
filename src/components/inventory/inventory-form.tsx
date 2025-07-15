@@ -27,6 +27,7 @@ const formSchema = z.object({
   type: z.enum(['simple', 'composite', 'service']),
   sku: z.string().min(1, "El SKU es obligatorio."),
   name: z.string().min(1, "El nombre es obligatorio."),
+  unit: z.string().min(1, "La unidad es obligatoria."),
   // Campos opcionales según el tipo
   quantity: z.coerce.number().optional(),
   minThreshold: z.coerce.number().optional(),
@@ -61,6 +62,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         quantity: 0,
         minThreshold: 10,
         unitCost: 0,
+        unit: 'ud',
         supplier: "",
         components: [],
       };
@@ -93,6 +95,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   // Actualizar el costo del kit automáticamente
   if (itemType === 'composite') {
       form.setValue('unitCost', kitCost);
+      form.setValue('unit', 'ud');
   }
 
 
@@ -106,6 +109,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     if (values.type === 'composite') {
         finalValues.quantity = 0; // Se calcula en tiempo real
         finalValues.supplier = 'Ensamblado Interno';
+        finalValues.unit = 'ud';
     }
     onSave(finalValues);
   }
@@ -185,7 +189,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
             <FormField
                 control={form.control}
                 name="quantity"
@@ -210,6 +214,19 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     </FormControl>
                     <FormMessage />
                 </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="unit"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Unidad</FormLabel>
+                    <FormControl>
+                        <Input placeholder="ud, ml, kg..." {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
                 )}
             />
             </div>
@@ -250,19 +267,34 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         )}
         
         {itemType === 'service' && (
-             <FormField
-                control={form.control}
-                name="unitCost"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Costo/Tarifa por Hora (€)</FormLabel>
-                    <FormControl>
-                        <Input type="number" step="0.01" placeholder="75,00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
+            <div className="grid grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="unitCost"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Costo/Tarifa (€)</FormLabel>
+                        <FormControl>
+                            <Input type="number" step="0.01" placeholder="75,00" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                 <FormField
+                    control={form.control}
+                    name="unit"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Unidad de Medida</FormLabel>
+                        <FormControl>
+                            <Input placeholder="h, ud, viaje..." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
         )}
 
         {itemType === 'composite' && (
@@ -348,4 +380,3 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     </Form>
   );
 }
-

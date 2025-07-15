@@ -46,6 +46,7 @@ const formSchema = z.object({
     itemName: z.string().min(1, "El nombre es obligatorio."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
     price: z.coerce.number().min(0.01, "El precio es obligatorio."),
+    unit: z.string().min(1, "La unidad es obligatoria."),
     type: z.enum(['Material', 'Servicio']),
   })).min(1, "Debes añadir al menos un artículo."),
   total: z.coerce.number() // Se calculará automáticamente
@@ -74,7 +75,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: new Date(),
         status: "Pendiente" as const,
         rejectionReason: "",
-        items: [{ itemName: "", quantity: 1, price: 0, type: 'Material' as const }],
+        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
         total: 0,
       };
 
@@ -192,10 +193,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead className="w-[15%]">Tipo</TableHead>
+                            <TableHead className="w-[10%]">Tipo</TableHead>
                             <TableHead className="w-[35%]">Descripción</TableHead>
                             <TableHead className="w-[15%]">Cantidad</TableHead>
-                            <TableHead className="w-[25%]">Precio Unitario (€)</TableHead>
+                            <TableHead className="w-[10%]">Unidad</TableHead>
+                            <TableHead className="w-[20%]">Precio Unitario (€)</TableHead>
                             {!isReadOnly && <TableHead className="w-[10%] text-right"></TableHead>}
                         </TableRow>
                     </TableHeader>
@@ -238,6 +240,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                             field.onChange(selectedItem.name);
                                                             form.setValue(`items.${index}.price`, selectedItem.unitCost);
                                                             form.setValue(`items.${index}.itemId`, selectedItem.id);
+                                                            form.setValue(`items.${index}.unit`, selectedItem.unit);
                                                         }}
                                                         onTextChange={(text) => {
                                                             field.onChange(text);
@@ -259,6 +262,20 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                             <FormItem>
                                                 <FormControl>
                                                     <Input type="number" {...field} disabled={isReadOnly}/>
+                                                </FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                      <FormField
+                                        control={form.control}
+                                        name={`items.${index}.unit`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormControl>
+                                                    <Input placeholder="ud" {...field} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -304,7 +321,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => append({ itemName: "", quantity: 1, price: 0, type: 'Material' })}
+                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' })}
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila

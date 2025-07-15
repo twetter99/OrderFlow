@@ -244,11 +244,12 @@ export default function InventoryPage() {
                     </TableCell>
                     <TableCell>
                       {isPhysical && (
-                        <>
+                        <div className="flex items-baseline gap-1">
                           <span className="font-bold">{quantityToShow}</span>
-                          {item.type === 'simple' && ` / ${item.minThreshold}`}
+                          <span className="text-xs text-muted-foreground">{item.unit}</span>
+                          {item.type === 'simple' && <span className="text-xs text-muted-foreground">/ {item.minThreshold}</span>}
                           {item.type === 'composite' && <span className="text-xs text-muted-foreground"> (Construible)</span>}
-                        </>
+                        </div>
                       )}
                     </TableCell>
                     <TableCell>{isPhysical ? item.supplier : 'N/A'}</TableCell>
@@ -365,5 +366,3 @@ export default function InventoryPage() {
     </div>
   )
 }
-
-    

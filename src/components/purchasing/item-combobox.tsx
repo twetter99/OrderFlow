@@ -91,7 +91,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, di
                   <div>
                     {item.name}
                     <div className="text-xs text-muted-foreground">
-                        SKU: {item.sku} | Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
+                        SKU: {item.sku} | Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}
                     </div>
                   </div>
                 </CommandItem>
