@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { projects as initialProjects, clients as initialClients, users } from "@/lib/data";
+import { projects as initialProjects, clients as initialClients, users as initialUsers } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
@@ -46,18 +46,43 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProjectForm } from "@/components/projects/project-form";
-import type { Project, Client } from "@/lib/types";
+import type { Project, Client, User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { db } from "@/lib/firebase";
+import { collection, onSnapshot } from "firebase/firestore";
 
 export default function ProjectsPage() {
   const { toast } = useToast();
-  const [projects, setProjects] = useState<Project[]>(initialProjects);
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
+      const projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+      setProjects(projectsData);
+    });
+    const unsubClients = onSnapshot(collection(db, "clients"), (snapshot) => {
+      const clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+      setClients(clientsData);
+    });
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
+      const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+      setUsers(usersData);
+    });
+    
+    return () => {
+      unsubProjects();
+      unsubClients();
+      unsubUsers();
+    }
+  }, []);
 
   const handleAddClick = () => {
     setSelectedProject(null);
@@ -83,17 +108,12 @@ export default function ProjectsPage() {
     const valuesToSave = { ...values, client: clientName };
 
     if (selectedProject) {
-      setProjects(
-        projects.map((p) =>
-          p.id === selectedProject.id ? { ...p, ...valuesToSave, id: p.id } : p
-        )
-      );
+      // Implement update logic here
+      console.log("Updating project", selectedProject.id, valuesToSave);
       toast({ title: "Proyecto actualizado", description: "El proyecto se ha actualizado correctamente." });
     } else {
-      setProjects([
-        ...projects,
-        { ...valuesToSave, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}`, codigo_proyecto: `P24-FLOTA-${String(projects.length + 1).padStart(3, '0')}` },
-      ]);
+      // Implement create logic here
+      console.log("Creating new project", valuesToSave);
       toast({ title: "Proyecto creado", description: "El nuevo proyecto se ha creado correctamente." });
     }
     setIsModalOpen(false);
@@ -101,11 +121,11 @@ export default function ProjectsPage() {
 
   const confirmDelete = () => {
     if (selectedRowIds.length > 0) {
-        setProjects(projects.filter((p) => !selectedRowIds.includes(p.id)));
+        // Implement bulk delete logic here
         toast({ variant: "destructive", title: "Proyectos eliminados", description: `${selectedRowIds.length} proyectos han sido eliminados.` });
         setSelectedRowIds([]);
     } else if (selectedProject) {
-      setProjects(projects.filter((p) => p.id !== selectedProject.id));
+      // Implement single delete logic here
       toast({ variant: "destructive", title: "Proyecto eliminado", description: "El proyecto se ha eliminado correctamente." });
     }
     setIsDeleteDialogOpen(false);

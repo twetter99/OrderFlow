@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -46,14 +46,33 @@ import { SupplierForm } from "@/components/suppliers/supplier-form";
 import type { Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { addSupplier, updateSupplier, deleteSupplier, deleteMultipleSuppliers } from "./actions";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function SuppliersPage() {
   const { toast } = useToast();
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+   useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "suppliers"), (snapshot) => {
+        const suppliersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier));
+        setSuppliers(suppliersData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching suppliers: ", error);
+        setSuppliers(initialSuppliers); // Fallback to mock data on error
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleAddClick = () => {
     setSelectedSupplier(null);
@@ -66,43 +85,47 @@ export default function SuppliersPage() {
   };
 
   const handleDeleteClick = (supplier: Supplier) => {
-    setSelectedSupplier(supplier);
+    setSupplierToDelete(supplier);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
+    setSupplierToDelete(null);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
-    if (selectedSupplier) {
-      setSuppliers(
-        suppliers.map((p) =>
-          p.id === selectedSupplier.id ? { ...p, ...values, id: p.id } : p
-        )
-      );
-      toast({ title: "Proveedor actualizado", description: "El proveedor se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedSupplier 
+      ? await updateSupplier(selectedSupplier.id, values) 
+      : await addSupplier(values);
+
+    if (result.success) {
+      toast({ title: selectedSupplier ? "Proveedor actualizado" : "Proveedor creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      setSuppliers([
-        ...suppliers,
-        { ...values, id: `WF-SUP-${String(suppliers.length + 1).padStart(3, '0')}` },
-      ]);
-      toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setSuppliers(suppliers.filter((s) => !selectedRowIds.includes(s.id)));
-        toast({ variant: "destructive", title: "Proveedores eliminados", description: `${selectedRowIds.length} proveedores han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedSupplier) {
-      setSuppliers(suppliers.filter((p) => p.id !== selectedSupplier.id));
-      toast({ variant: "destructive", title: "Proveedor eliminado", description: "El proveedor se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    let result;
+    if (supplierToDelete) {
+        result = await deleteSupplier(supplierToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleSuppliers(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
-    setSelectedSupplier(null);
+    setSupplierToDelete(null);
+    setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -244,7 +267,7 @@ export default function SuppliersPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proveedores seleccionados.` : " el proveedor."}
+              {supplierToDelete ? ` el proveedor "${supplierToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proveedores seleccionados.` : " el proveedor.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

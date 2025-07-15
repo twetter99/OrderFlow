@@ -56,6 +56,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
@@ -89,13 +90,8 @@ export default function ClientsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteTrigger = (client?: Client) => {
-    if (client) {
-      setSelectedClient(client);
-      setSelectedRowIds([client.id]);
-    } else {
-      setSelectedClient(null);
-    }
+  const handleDeleteTrigger = (client: Client) => {
+    setClientToDelete(client);
     setIsDeleteDialogOpen(true);
   };
   
@@ -114,9 +110,14 @@ export default function ClientsPage() {
   };
 
   const confirmDelete = async () => {
-    const result = selectedRowIds.length > 1
-        ? await deleteMultipleClients(selectedRowIds)
-        : await deleteClient(selectedRowIds[0]);
+    let result;
+    if (clientToDelete) {
+        result = await deleteClient(clientToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleClients(selectedRowIds);
+    } else {
+        return; // No-op
+    }
 
     if (result.success) {
         toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
@@ -125,7 +126,7 @@ export default function ClientsPage() {
     }
     
     setIsDeleteDialogOpen(false);
-    setSelectedClient(null);
+    setClientToDelete(null);
     setSelectedRowIds([]);
   };
 
@@ -159,7 +160,7 @@ export default function ClientsPage() {
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
-          <Button variant="destructive" onClick={() => handleDeleteTrigger()}>
+          <Button variant="destructive" onClick={() => setIsDeleteDialogOpen(true)}>
             <Trash2 className="mr-2 h-4 w-4" />
             Eliminar ({selectedRowIds.length})
           </Button>
@@ -262,7 +263,7 @@ export default function ClientsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} clientes seleccionados.` : " el cliente."}
+              {clientToDelete ? ` el cliente "${clientToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} clientes seleccionados.` : " el cliente seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
