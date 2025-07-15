@@ -27,7 +27,8 @@ export const projects: Project[] = [
     spent: 23000,
     margen_previsto: 0.15,
     centro_coste: 'CC-INST-VEH',
-    responsable_proyecto_id: 'WF-USER-001'
+    responsable_proyecto_id: 'WF-USER-001',
+    equipo_tecnico_ids: ['WF-USER-002', 'WF-USER-003']
   },
   {
     id: 'WF-PROJ-002',
@@ -50,7 +51,8 @@ export const projects: Project[] = [
     spent: 18500,
     margen_previsto: 0.20,
     centro_coste: 'CC-PROY-ESP',
-    responsable_proyecto_id: 'WF-USER-001'
+    responsable_proyecto_id: 'WF-USER-001',
+    equipo_tecnico_ids: ['WF-USER-003']
   },
   {
     id: 'WF-PROJ-003',
@@ -73,7 +75,8 @@ export const projects: Project[] = [
     spent: 0,
     margen_previsto: 0.18,
     centro_coste: 'CC-SEGURIDAD',
-    responsable_proyecto_id: 'WF-USER-003'
+    responsable_proyecto_id: 'WF-USER-003',
+    equipo_tecnico_ids: []
   },
   {
     id: 'WF-PROJ-004',
@@ -96,7 +99,8 @@ export const projects: Project[] = [
     spent: 9800,
     margen_previsto: 0.12,
     centro_coste: 'CC-MANT',
-    responsable_proyecto_id: 'WF-USER-003'
+    responsable_proyecto_id: 'WF-USER-003',
+    equipo_tecnico_ids: ['WF-USER-003']
   },
 ];
 

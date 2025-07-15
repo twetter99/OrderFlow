@@ -1,4 +1,5 @@
 
+
 export type Project = {
   id: string;
   codigo_proyecto: string;
@@ -21,6 +22,7 @@ export type Project = {
   margen_previsto: number;
   centro_coste: string;
   responsable_proyecto_id: string; 
+  equipo_tecnico_ids: string[];
 };
 
 export type InventoryItem = {

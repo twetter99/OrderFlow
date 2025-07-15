@@ -3,7 +3,7 @@
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -29,9 +29,18 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, X } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Badge } from "@/components/ui/badge";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
@@ -40,6 +49,8 @@ const formSchema = z.object({
   tipo_flota: z.enum(['autobuses', 'camiones', 'furgonetas', 'otros']),
   numero_vehiculos: z.coerce.number().int().min(1, "Debe haber al menos un vehículo."),
   responsable_proyecto_id: z.string().min(1, "Debes asignar un responsable."),
+  equipo_tecnico_ids: z.array(z.string()).optional(),
+  
   centro_coste: z.string().min(1, "El centro de coste es obligatorio."),
   
   localizacion_base: z.object({
@@ -72,7 +83,8 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
         ...project,
         startDate: new Date(project.startDate),
         endDate: new Date(project.endDate),
-        margen_previsto: project.margen_previsto * 100 // Convert to percentage for display
+        margen_previsto: project.margen_previsto * 100, // Convert to percentage for display
+        equipo_tecnico_ids: project.equipo_tecnico_ids || [],
       }
     : {
         name: "",
@@ -81,6 +93,7 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
         tipo_flota: "autobuses",
         numero_vehiculos: 1,
         responsable_proyecto_id: "",
+        equipo_tecnico_ids: [],
         centro_coste: "",
         localizacion_base: { direccion: "", ciudad: "", provincia: "" },
         startDate: new Date(),
@@ -102,6 +115,8 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
     });
   }
 
+  const technicians = users.filter(u => u.role === 'Empleado' || u.role === 'Almacén');
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -121,28 +136,33 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                 </FormItem>
             )}
             />
-            <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="clientId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Cliente</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un cliente" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
+            <FormField
+                control={form.control}
+                name="clientId"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Cliente</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un cliente" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+        </div>
+
+        {/* Team Assignment */}
+        <div className="space-y-4 p-4 border rounded-lg">
+             <h3 className="text-lg font-medium">Asignación de Equipo</h3>
+             <div className="grid grid-cols-2 gap-4">
+                 <FormField
                     control={form.control}
                     name="responsable_proyecto_id"
                     render={({ field }) => (
@@ -162,7 +182,62 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                         </FormItem>
                     )}
                 />
-            </div>
+                 <FormField
+                  control={form.control}
+                  name="equipo_tecnico_ids"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Equipo Técnico</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto", !field.value?.length && "text-muted-foreground")}>
+                                <div className="flex gap-1 flex-wrap">
+                                    {field.value && field.value.length > 0 ? (
+                                        field.value.map(userId => (
+                                            <Badge variant="secondary" key={userId}>
+                                                {users.find(u => u.id === userId)?.name}
+                                            </Badge>
+                                        ))
+                                    ) : "Seleccionar técnicos..."}
+                                </div>
+                                <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-full p-0">
+                            <Command>
+                                <CommandInput placeholder="Buscar técnico..." />
+                                <CommandList>
+                                    <CommandEmpty>No se encontraron técnicos.</CommandEmpty>
+                                    <CommandGroup>
+                                        {technicians.map(tech => (
+                                            <CommandItem
+                                                key={tech.id}
+                                                onSelect={() => {
+                                                    const selected = field.value || [];
+                                                    const newSelection = selected.includes(tech.id)
+                                                        ? selected.filter(id => id !== tech.id)
+                                                        : [...selected, tech.id];
+                                                    field.onChange(newSelection);
+                                                }}
+                                            >
+                                                <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(tech.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                                    <X className="h-4 w-4" />
+                                                </div>
+                                                {tech.name}
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+             </div>
         </div>
 
         {/* Fleet and Location Info */}

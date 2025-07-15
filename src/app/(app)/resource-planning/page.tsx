@@ -6,11 +6,14 @@ import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ListChecks, Users, Package, Calendar, GanttChartSquare, PackagePlus } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { projects, replanteos, inventory, inventoryLocations, installationTemplates } from '@/lib/data';
+import { projects, replanteos, inventory, inventoryLocations, installationTemplates, users } from '@/lib/data';
 import type { InventoryItem, ReplanteoMaterial } from '@/lib/types';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
 
 type MaterialNeed = {
   item: InventoryItem;
@@ -22,6 +25,19 @@ type MaterialNeed = {
 export default function ResourcePlanningPage() {
   const router = useRouter();
   const [selectedProjectId, setSelectedProjectId] = useState<string | null>(null);
+
+  const selectedProject = useMemo(() => {
+    if (!selectedProjectId) return null;
+    return projects.find(p => p.id === selectedProjectId) || null;
+  }, [selectedProjectId]);
+
+  const assignedTeam = useMemo(() => {
+    if (!selectedProject || !selectedProject.equipo_tecnico_ids) return [];
+    return selectedProject.equipo_tecnico_ids
+        .map(userId => users.find(u => u.id === userId))
+        .filter(Boolean); // Filter out any undefined users
+  }, [selectedProject]);
+
 
   const materialNeeds = useMemo((): MaterialNeed[] => {
     if (!selectedProjectId) return [];
@@ -134,10 +150,58 @@ export default function ResourcePlanningPage() {
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2"><Users className="h-6 w-6 text-primary"/>Gestión de Técnicos</CardTitle>
-                    <CardDescription>Asigna técnicos y visualiza la carga de trabajo.</CardDescription>
+                    <CardDescription>Equipo de instalación asignado a este proyecto.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                     <div className="p-6 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                     {assignedTeam.length > 0 ? (
+                        <div className="space-y-4">
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Responsable del Proyecto</h4>
+                                {(() => {
+                                    const manager = users.find(u => u.id === selectedProject?.responsable_proyecto_id);
+                                    return manager ? (
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={`https://i.pravatar.cc/40?u=${manager.id}`} />
+                                                <AvatarFallback>{manager.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-medium">{manager.name}</p>
+                                                <p className="text-xs text-muted-foreground">{manager.email}</p>
+                                            </div>
+                                        </div>
+                                    ) : <p className="text-sm text-muted-foreground">No asignado</p>
+                                })()}
+                            </div>
+                            <div className="space-y-2">
+                                <h4 className="font-semibold text-sm">Equipo Técnico</h4>
+                                <div className="flex flex-wrap gap-2">
+                                    <TooltipProvider>
+                                        {assignedTeam.map(user => user && (
+                                            <Tooltip key={user.id}>
+                                                <TooltipTrigger>
+                                                    <Avatar>
+                                                        <AvatarImage src={`https://i.pravatar.cc/40?u=${user.id}`} />
+                                                        <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+                                                    </Avatar>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>{user.name}</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        ))}
+                                    </TooltipProvider>
+                                </div>
+                            </div>
+                        </div>
+                     ) : (
+                         <div className="p-6 text-center text-muted-foreground border-2 border-dashed rounded-lg">
+                            <Users className="mx-auto h-12 w-12 mb-4" />
+                            <h3 className="font-semibold">Sin Equipo Asignado</h3>
+                            <p className="text-sm">Aún no se ha asignado un equipo técnico a este proyecto.</p>
+                         </div>
+                     )}
+                     <div className="p-6 text-center text-muted-foreground border-2 border-dashed rounded-lg mt-6">
                         <Calendar className="mx-auto h-12 w-12 mb-4" />
                         <h3 className="font-semibold">Calendario de Disponibilidad</h3>
                         <p className="text-sm">Próximamente: Un calendario visual para asignar técnicos y ver su disponibilidad y carga de trabajo.</p>
