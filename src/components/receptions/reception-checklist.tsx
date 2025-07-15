@@ -4,12 +4,13 @@
 import React, { useState, useMemo } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
-import { Check, AlertTriangle, QrCode, FileWarning, PackageCheck, Anchor } from "lucide-react";
-import type { PurchaseOrder } from '@/lib/types';
+import { Check, AlertTriangle, QrCode, FileWarning, PackageCheck, Anchor, Warehouse } from "lucide-react";
+import type { PurchaseOrder, Location } from '@/lib/types';
 import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 type ItemStatus = 'pending' | 'ok' | 'discrepancy';
 
@@ -24,16 +25,17 @@ interface ChecklistItem {
 
 interface ReceptionChecklistProps {
     order: PurchaseOrder;
-    onUpdateStatus: (orderId: string, status: PurchaseOrder['status']) => void;
+    locations: Location[];
+    onUpdateStatus: (orderId: string, status: PurchaseOrder['status'], receivingLocationId?: string, receivedItems?: { itemId: string; quantity: number }[]) => void;
     onCancel: () => void;
 }
 
-export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: ReceptionChecklistProps) {
+export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel }: ReceptionChecklistProps) {
     const itemsForReception = useMemo(() => 
         order.items
-            .filter(item => item.type === 'Material')
+            .filter(item => item.type === 'Material' && item.itemId)
             .map(item => ({
-                id: item.itemId || item.itemName, // Fallback to itemName if itemId is missing
+                id: item.itemId!,
                 name: item.itemName,
                 expected: item.quantity,
                 scanned: 0,
@@ -45,6 +47,7 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
     
     const [items, setItems] = useState<ChecklistItem[]>(itemsForReception);
     const [notes, setNotes] = useState('');
+    const [receivingLocationId, setReceivingLocationId] = useState<string>("");
 
     const handleScan = (itemId: string) => {
         setItems(prevItems => prevItems.map(item => {
@@ -69,7 +72,7 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
     }
 
     const allItemsOk = items.every(item => item.status === 'ok');
-    const hasDiscrepancy = items.some(item => item.status === 'discrepancy' || item.scanned !== item.expected);
+    const hasDiscrepancy = items.some(item => item.status === 'discrepancy' || (item.scanned !== item.expected && item.status !== 'ok'));
 
     const getStatusIcon = (status: ItemStatus) => {
         switch (status) {
@@ -78,14 +81,43 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
             default: return <div className="w-4 h-4 rounded-full bg-gray-300" />;
         }
     };
+
+    const handleConfirm = () => {
+        const receivedItems = items
+            .filter(item => item.scanned > 0)
+            .map(item => ({ itemId: item.id, quantity: item.scanned }));
+
+        onUpdateStatus(order.id, 'Recibido', receivingLocationId, receivedItems);
+    }
     
+    const canConfirm = !!receivingLocationId && items.length > 0;
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="md:col-span-2 space-y-4">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2"><Warehouse className="h-5 w-5"/> Almacén de Destino</CardTitle>
+                        <CardDescription>Selecciona el almacén donde se guardará esta mercancía.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                         <Select onValueChange={setReceivingLocationId} value={receivingLocationId}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona un almacén..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {locations.map(loc => (
+                                    <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </CardContent>
+                </Card>
+
                  <Card>
                     <CardHeader>
                         <CardTitle>Lista de Verificación de Artículos</CardTitle>
-                        <CardDescription>Simula el escaneo de códigos QR para cada artículo del pedido. Los servicios no se muestran aquí.</CardDescription>
+                        <CardDescription>Verifica las cantidades recibidas. Los servicios no se muestran aquí.</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {items.length > 0 ? items.map(item => (
@@ -103,10 +135,11 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                                       value={item.scanned}
                                       onChange={(e) => handleManualChange(item.id, parseInt(e.target.value, 10) || 0)}
                                       className="w-20 text-center"
+                                      disabled={!receivingLocationId}
                                     />
                                     <span className="text-muted-foreground">/ {item.expected}</span>
                                 </div>
-                                <Button size="icon" variant="outline" onClick={() => handleScan(item.id)}>
+                                <Button size="icon" variant="outline" onClick={() => handleScan(item.id)} disabled={!receivingLocationId}>
                                     <QrCode className="w-5 h-5" />
                                 </Button>
                             </div>
@@ -139,21 +172,21 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                     <CardFooter className="flex flex-col gap-2">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                 <Button className="w-full" disabled={!hasDiscrepancy || items.length === 0}>
+                                 <Button className="w-full" disabled={!canConfirm || !hasDiscrepancy}>
                                     <FileWarning className="mr-2 h-4 w-4" />
-                                    Generar Informe de Incidencia
+                                    Recibir con Incidencia
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar Incidencia</AlertDialogTitle>
+                                <AlertDialogTitle>Confirmar Recepción con Incidencia</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Se registrará una incidencia para esta recepción. Esto notificará al departamento de compras para que contacte con el proveedor. ¿Deseas continuar?
+                                    Se registrará una incidencia y se recibirá la cantidad escaneada. El inventario se actualizará y la orden se marcará como "Recibido". ¿Deseas continuar?
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => onUpdateStatus(order.id, 'Recibido')}>
+                                <AlertDialogAction onClick={handleConfirm}>
                                     Confirmar y Recibir
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
@@ -162,21 +195,21 @@ export function ReceptionChecklist({ order, onUpdateStatus, onCancel }: Receptio
                         
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                 <Button className="w-full" disabled={!allItemsOk || items.length === 0}>
+                                 <Button className="w-full" disabled={!canConfirm || !allItemsOk}>
                                     <PackageCheck className="mr-2 h-4 w-4" />
                                     Confirmar Recepción Completa
                                 </Button>
                             </AlertDialogTrigger>
                              <AlertDialogContent>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar Recepción</AlertDialogTitle>
+                                <AlertDialogTitle>Confirmar Recepción Completa</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Todos los artículos coinciden. El inventario se actualizará y la orden se marcará como "Recibido". ¿Estás seguro?
+                                    Todos los artículos coinciden. El inventario en {locations.find(l => l.id === receivingLocationId)?.name || 'el almacén seleccionado'} se actualizará y la orden se marcará como "Recibido". ¿Estás seguro?
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
                                 <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => onUpdateStatus(order.id, 'Recibido')}>
+                                <AlertDialogAction onClick={handleConfirm}>
                                     Confirmar
                                 </AlertDialogAction>
                                 </AlertDialogFooter>
