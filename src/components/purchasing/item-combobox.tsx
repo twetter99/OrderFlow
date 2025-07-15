@@ -2,7 +2,8 @@
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown } from "lucide-react"
+import Image from "next/image";
+import { Check, ChevronsUpDown, ImageOff } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -81,19 +82,31 @@ export function ItemCombobox({ inventoryItems, value, onChange, onTextChange, di
                   key={item.id}
                   value={item.name}
                   onSelect={handleSelect}
+                  className="flex justify-between items-start gap-2"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value.toLowerCase() === item.name.toLowerCase() ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  <div>
-                    {item.name}
-                    <div className="text-xs text-muted-foreground">
-                        SKU: {item.sku} | Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}
+                    <div className="flex items-start gap-2">
+                        <Check
+                            className={cn(
+                            "mr-2 h-4 w-4 flex-shrink-0 mt-1",
+                            value.toLowerCase() === item.name.toLowerCase() ? "opacity-100" : "opacity-0"
+                            )}
+                        />
+                        <div className="flex-grow">
+                            {item.name}
+                            <div className="text-xs text-muted-foreground">
+                                SKU: {item.sku} | Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}
+                            </div>
+                        </div>
                     </div>
-                  </div>
+                   <div className="flex-shrink-0">
+                    {item.imageUrl ? (
+                        <Image src={item.imageUrl} alt={item.name} width={40} height={40} className="rounded-md object-cover"/>
+                    ) : (
+                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md">
+                            <ImageOff className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                    )}
+                   </div>
                 </CommandItem>
               ))}
             </CommandGroup>

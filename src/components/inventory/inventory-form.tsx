@@ -28,6 +28,7 @@ const formSchema = z.object({
   sku: z.string().min(1, "El SKU es obligatorio."),
   name: z.string().min(1, "El nombre es obligatorio."),
   unit: z.string().min(1, "La unidad es obligatoria."),
+  imageUrl: z.string().url("Debe ser una URL de imagen válida.").optional().or(z.literal('')),
   // Campos opcionales según el tipo
   quantity: z.coerce.number().optional(),
   minThreshold: z.coerce.number().optional(),
@@ -59,6 +60,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         type: 'simple' as const,
         sku: "",
         name: "",
+        imageUrl: "",
         quantity: 0,
         minThreshold: 10,
         unitCost: 0,
@@ -196,6 +198,22 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
             )}
           />
         </div>
+
+        {itemType !== 'service' && (
+          <FormField
+            control={form.control}
+            name="imageUrl"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>URL de la Imagen</FormLabel>
+                <FormControl>
+                  <Input placeholder="https://placehold.co/100x100.png" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
         
         {itemType === 'simple' && (
             <>

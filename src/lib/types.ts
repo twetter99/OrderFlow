@@ -16,6 +16,7 @@ export type InventoryItem = {
   id: string;
   sku: string;
   name: string;
+  imageUrl?: string;
   quantity: number;
   minThreshold: number;
   unitCost: number;

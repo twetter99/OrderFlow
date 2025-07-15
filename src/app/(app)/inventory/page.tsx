@@ -2,6 +2,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -18,7 +19,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2, ImageOff } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -195,6 +196,7 @@ export default function InventoryPage() {
                     aria-label="Seleccionar todo"
                   />
                 </TableHead>
+                <TableHead className="w-[80px]">Imagen</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
                 <TableHead>Estado</TableHead>
@@ -218,6 +220,21 @@ export default function InventoryPage() {
                         onCheckedChange={() => handleRowSelect(item.id)}
                         aria-label={`Seleccionar artículo ${item.name}`}
                       />
+                    </TableCell>
+                    <TableCell>
+                      {item.imageUrl ? (
+                        <Image
+                          src={item.imageUrl}
+                          alt={item.name}
+                          width={40}
+                          height={40}
+                          className="rounded-md object-cover"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md">
+                            <ImageOff className="h-5 w-5 text-muted-foreground" />
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell className="font-medium">{item.sku}</TableCell>
                     <TableCell>
