@@ -17,7 +17,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { projects as initialProjects, clients as initialClients } from "@/lib/data";
+import { projects as initialProjects, clients as initialClients, users } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
@@ -92,7 +92,7 @@ export default function ProjectsPage() {
     } else {
       setProjects([
         ...projects,
-        { ...valuesToSave, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}` },
+        { ...valuesToSave, id: `WF-PROJ-${String(projects.length + 1).padStart(3, '0')}`, codigo_proyecto: `P24-FLOTA-${String(projects.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Proyecto creado", description: "El nuevo proyecto se ha creado correctamente." });
     }
@@ -163,9 +163,10 @@ export default function ProjectsPage() {
                 </TableHead>
                 <TableHead>Nombre del Proyecto</TableHead>
                 <TableHead>Cliente</TableHead>
+                <TableHead>Tipo Flota</TableHead>
+                <TableHead>Nº Vehículos</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Progreso</TableHead>
-                <TableHead className="text-right">Presupuesto</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -185,6 +186,8 @@ export default function ProjectsPage() {
                     </TableCell>
                     <TableCell className="font-medium">{project.name}</TableCell>
                     <TableCell>{project.client}</TableCell>
+                    <TableCell className="capitalize">{project.tipo_flota}</TableCell>
+                    <TableCell>{project.numero_vehiculos}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -208,10 +211,6 @@ export default function ProjectsPage() {
                           {progress}%
                         </span>
                       </div>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(project.spent)} / 
-                      {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(project.budget)}
                     </TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
@@ -245,7 +244,7 @@ export default function ProjectsPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {selectedProject ? "Editar Proyecto" : "Añadir Nuevo Proyecto"}
@@ -259,6 +258,7 @@ export default function ProjectsPage() {
           <ProjectForm
             project={selectedProject}
             clients={clients}
+            users={users}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />

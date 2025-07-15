@@ -6,10 +6,98 @@ import { add, sub } from 'date-fns';
 const today = new Date();
 
 export const projects: Project[] = [
-  { id: 'WF-PROJ-001', name: 'Actualización Flota A de Autobuses', client: 'Tránsito de la Ciudad', clientId: 'WF-CLI-001', status: 'En Progreso', budget: 50000, spent: 23000, startDate: '2024-05-01', endDate: '2024-08-31' },
-  { id: 'WF-PROJ-002', name: 'Instalación Nuevo Autobús Turístico', client: 'Compañía de Turismo', clientId: 'WF-CLI-002', status: 'En Progreso', budget: 25000, spent: 18500, startDate: '2024-06-15', endDate: '2024-09-15' },
-  { id: 'WF-PROJ-003', name: 'Sistema de Seguridad para Autobús Escolar', client: 'Junta Escolar del Distrito', clientId: 'WF-CLI-003', status: 'Planificado', budget: 75000, spent: 0, startDate: '2024-09-01', endDate: '2024-12-31' },
-  { id: 'WF-PROJ-004', name: 'Mantenimiento de Rutina', client: 'Tránsito de la Ciudad', clientId: 'WF-CLI-001', status: 'Completado', budget: 10000, spent: 9800, startDate: '2024-04-01', endDate: '2024-04-30' },
+  {
+    id: 'WF-PROJ-001',
+    codigo_proyecto: 'P24-FLOTA-A-MAD',
+    name: 'Actualización Flota A de Autobuses',
+    clientId: 'WF-CLI-001',
+    client: 'Tránsito de la Ciudad',
+    status: 'En Progreso',
+    tipo_flota: 'autobuses',
+    numero_vehiculos: 50,
+    localizacion_base: {
+      direccion: 'Calle de la Flota, 123',
+      ciudad: 'Madrid',
+      provincia: 'Madrid',
+      coordenadas: { lat: 40.416775, lng: -3.703790 }
+    },
+    startDate: '2024-05-01',
+    endDate: '2024-08-31',
+    budget: 50000,
+    spent: 23000,
+    margen_previsto: 0.15,
+    centro_coste: 'CC-INST-VEH',
+    responsable_proyecto_id: 'WF-USER-001'
+  },
+  {
+    id: 'WF-PROJ-002',
+    codigo_proyecto: 'P24-TURISMO-BCN',
+    name: 'Instalación Nuevo Autobús Turístico',
+    clientId: 'WF-CLI-002',
+    client: 'Compañía de Turismo',
+    status: 'En Progreso',
+    tipo_flota: 'autobuses',
+    numero_vehiculos: 5,
+    localizacion_base: {
+      direccion: 'Avinguda del Port, 45',
+      ciudad: 'Barcelona',
+      provincia: 'Barcelona',
+      coordenadas: { lat: 41.385063, lng: 2.173404 }
+    },
+    startDate: '2024-06-15',
+    endDate: '2024-09-15',
+    budget: 25000,
+    spent: 18500,
+    margen_previsto: 0.20,
+    centro_coste: 'CC-PROY-ESP',
+    responsable_proyecto_id: 'WF-USER-001'
+  },
+  {
+    id: 'WF-PROJ-003',
+    codigo_proyecto: 'P24-ESCOLARES-SVQ',
+    name: 'Sistema de Seguridad para Autobús Escolar',
+    clientId: 'WF-CLI-003',
+    client: 'Junta Escolar del Distrito',
+    status: 'Planificado',
+    tipo_flota: 'autobuses',
+    numero_vehiculos: 200,
+    localizacion_base: {
+      direccion: 'Plaza de España, s/n',
+      ciudad: 'Sevilla',
+      provincia: 'Sevilla',
+      coordenadas: { lat: 37.38283, lng: -5.97317 }
+    },
+    startDate: '2024-09-01',
+    endDate: '2024-12-31',
+    budget: 75000,
+    spent: 0,
+    margen_previsto: 0.18,
+    centro_coste: 'CC-SEGURIDAD',
+    responsable_proyecto_id: 'WF-USER-003'
+  },
+  {
+    id: 'WF-PROJ-004',
+    codigo_proyecto: 'P24-MANT-001',
+    name: 'Mantenimiento de Rutina',
+    clientId: 'WF-CLI-001',
+    client: 'Tránsito de la Ciudad',
+    status: 'Completado',
+    tipo_flota: 'otros',
+    numero_vehiculos: 10,
+    localizacion_base: {
+      direccion: 'Calle de la Flota, 123',
+      ciudad: 'Madrid',
+      provincia: 'Madrid',
+      coordenadas: { lat: 40.416775, lng: -3.703790 }
+    },
+    startDate: '2024-04-01',
+    endDate: '2024-04-30',
+    budget: 10000,
+    spent: 9800,
+    margen_previsto: 0.12,
+    centro_coste: 'CC-MANT',
+    responsable_proyecto_id: 'WF-USER-003'
+  },
 ];
 
 export const inventory: InventoryItem[] = [

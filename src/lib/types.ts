@@ -2,14 +2,26 @@
 
 export type Project = {
   id: string;
+  codigo_proyecto: string;
   name: string;
-  client: string;
   clientId: string;
+  client: string; // This can be derived, but keeping for simplicity
   status: 'Planificado' | 'En Progreso' | 'Completado';
-  budget: number;
-  spent: number;
-  startDate: string;
-  endDate: string;
+  tipo_flota: 'autobuses' | 'camiones' | 'furgonetas' | 'otros';
+  numero_vehiculos: number;
+  localizacion_base: {
+    direccion: string;
+    ciudad: string;
+    provincia: string;
+    coordenadas: { lat: number; lng: number };
+  };
+  startDate: string; // Mantengo como fecha_inicio_prevista
+  endDate: string; // Mantengo como fecha_fin_prevista
+  budget: number; // Mantengo como presupuesto_total
+  spent: number; // Gasto real
+  margen_previsto: number;
+  centro_coste: string;
+  responsable_proyecto_id: string; // Foreign key to User
 };
 
 export type InventoryItem = {
