@@ -232,17 +232,19 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                             )}
                         </div>
                         <div className="flex-grow space-y-2">
-                            <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                <Upload className="mr-2 h-4 w-4" />
-                                Cargar Imagen
-                            </Button>
-                            <Button type="button" variant="outline" className="md:hidden" onClick={() => cameraInputRef.current?.click()}>
-                                <Camera className="mr-2 h-4 w-4" />
-                                Tomar Foto
-                            </Button>
+                             <div className="flex gap-2">
+                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    Cargar
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => cameraInputRef.current?.click()}>
+                                    <Camera className="mr-2 h-4 w-4" />
+                                    Tomar Foto
+                                </Button>
+                            </div>
                             <Input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageChange} />
                             <Input type="file" accept="image/*" capture="environment" ref={cameraInputRef} className="hidden" onChange={handleImageChange} />
-                            <p className="text-xs text-muted-foreground">Sube un archivo o toma una foto (móvil).</p>
+                            <p className="text-xs text-muted-foreground">Sube un archivo o usa la cámara del dispositivo.</p>
                         </div>
                     </div>
                     <FormMessage />
