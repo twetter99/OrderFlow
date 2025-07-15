@@ -1,5 +1,4 @@
 import { StatsCard } from "@/components/dashboard/stats-card";
-import { InventoryValueChart } from "@/components/dashboard/inventory-value-chart";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { DollarSign, Package, FolderKanban, AlertTriangle } from "lucide-react";
@@ -63,15 +62,8 @@ export default function DashboardPage() {
           isAlert={lowStockItems > 0}
         />
       </div>
-      <div className="grid gap-6 lg:grid-cols-5">
-        <div className="lg:col-span-3">
-            <InventoryValueChart />
-        </div>
-        <div className="lg:col-span-2">
-            <ActiveProjectsList />
-        </div>
-      </div>
-      <div>
+      <div className="grid gap-6 md:grid-cols-2">
+        <ActiveProjectsList />
         <RecentOrdersTable />
       </div>
     </div>
