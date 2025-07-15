@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -46,14 +46,41 @@ import { ClientForm } from "@/components/clients/client-form";
 import type { Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { addClient, updateClient } from "./actions";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>(initialClients);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    const fetchClients = async () => {
+        try {
+            const querySnapshot = await getDocs(collection(db, "clients"));
+            const clientsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+            setClients(clientsData);
+        } catch (error) {
+            console.error("Error fetching clients: ", error);
+            setClients(initialClients); // Fallback to mock data on error
+            toast({
+              variant: "destructive",
+              title: "Error de Carga",
+              description: "No se pudieron cargar los clientes desde la base de datos. Se muestran datos de ejemplo.",
+            });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    fetchClients();
+  }, [toast]);
+
 
   const handleAddClick = () => {
     setSelectedClient(null);
@@ -74,35 +101,34 @@ export default function ClientsPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
+  const handleSave = async (values: any) => {
+    let result;
     if (selectedClient) {
-      setClients(
-        clients.map((c) =>
-          c.id === selectedClient.id ? { ...c, ...values, id: c.id } : c
-        )
-      );
-      toast({ title: "Cliente actualizado", description: "El cliente se ha actualizado correctamente." });
+        result = await updateClient(selectedClient.id, values);
     } else {
-      setClients([
-        ...clients,
-        { ...values, id: `WF-CLI-${String(clients.length + 1).padStart(3, '0')}` },
-      ]);
-      toast({ title: "Cliente creado", description: "El nuevo cliente se ha creado correctamente." });
+        result = await addClient(values);
     }
+
+    if (result.success) {
+      toast({ title: selectedClient ? "Cliente actualizado" : "Cliente creado", description: result.message });
+      // Refetch clients or update state locally
+       const querySnapshot = await getDocs(collection(db, "clients"));
+       const clientsData = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
+       setClients(clientsData);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+
     setIsModalOpen(false);
+    setSelectedClient(null);
   };
 
   const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setClients(clients.filter((c) => !selectedRowIds.includes(c.id)));
-        toast({ variant: "destructive", title: "Clientes eliminados", description: `${selectedRowIds.length} clientes han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedClient) {
-      setClients(clients.filter((c) => c.id !== selectedClient.id));
-      toast({ variant: "destructive", title: "Cliente eliminado", description: "El cliente se ha eliminado correctamente." });
-    }
+    // Implement Firestore delete logic here
+    console.log("Delete operation needs to be implemented with Firestore.");
     setIsDeleteDialogOpen(false);
     setSelectedClient(null);
+    setSelectedRowIds([]);
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -120,6 +146,10 @@ export default function ClientsPage() {
         : [...prev, rowId]
     );
   };
+
+  if (loading) {
+      return <div>Cargando clientes...</div>
+  }
   
   return (
     <div className="flex flex-col gap-8">
