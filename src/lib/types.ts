@@ -32,7 +32,7 @@ export type InventoryItem = {
   quantity: number;
   minThreshold: number;
   unitCost: number;
-  unit: string; // e.g., 'ud', 'ml', 'kg', 'h'
+  unit: string; // e.g., 'ud', 'ml'
   supplier: string;
   type: 'simple' | 'composite' | 'service';
   observations?: string;
