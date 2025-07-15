@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { inventory as initialInventory, suppliers as initialSuppliers } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Boxes, View, Wrench } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,7 @@ import type { InventoryItem, Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { SupplierForm } from "@/components/suppliers/supplier-form";
 import { ItemDetailsModal } from "@/components/inventory/item-details-modal";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -59,6 +60,7 @@ export default function InventoryPage() {
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const inventoryWithCalculations = useMemo(() => {
     return inventory.map(item => {
@@ -89,6 +91,10 @@ export default function InventoryPage() {
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleBulkDeleteClick = () => {
+    setIsDeleteDialogOpen(true);
+  };
 
   const handleViewDetailsClick = (item: InventoryItem) => {
     setSelectedItem(item);
@@ -96,7 +102,7 @@ export default function InventoryPage() {
   };
 
   const handleSave = (values: any) => {
-    if (selectedItem) {
+    if (selectedItem && 'id' in selectedItem) {
       setInventory(
         inventory.map((p) =>
           p.id === selectedItem.id ? { ...p, ...values, id: p.id } : p
@@ -106,7 +112,7 @@ export default function InventoryPage() {
     } else {
       setInventory([
         ...inventory,
-        { ...values, id: `ITEM-00${inventory.length + 1}` },
+        { ...values, id: `ITEM-${String(inventory.length + 1).padStart(3, '0')}` },
       ]);
       toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario." });
     }
@@ -114,25 +120,46 @@ export default function InventoryPage() {
   };
 
   const confirmDelete = () => {
-    if (selectedItem) {
+    if (selectedRowIds.length > 0) {
+        setInventory(inventory.filter((item) => !selectedRowIds.includes(item.id)));
+        toast({ variant: "destructive", title: "Artículos eliminados", description: `${selectedRowIds.length} artículos han sido eliminados.` });
+        setSelectedRowIds([]);
+    } else if (selectedItem) {
       setInventory(inventory.filter((p) => p.id !== selectedItem.id));
       toast({ variant: "destructive", title: "Artículo eliminado", description: "El artículo se ha eliminado del inventario." });
     }
     setIsDeleteDialogOpen(false);
     setSelectedItem(null);
   };
+  
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(inventory.map(item => item.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
 
   const handleAddNewSupplier = () => {
-    setIsModalOpen(false); // Cierra el modal de inventario
-    setIsSupplierModalOpen(true); // Abre el modal de proveedor
+    setIsModalOpen(false);
+    setIsSupplierModalOpen(true);
   };
 
   const handleSaveSupplier = (values: any) => {
-    const newSupplier = { ...values, id: `SUP-00${suppliers.length + 1}` };
+    const newSupplier = { ...values, id: `SUP-${String(suppliers.length + 1).padStart(3, '0')}` };
     setSuppliers([...suppliers, newSupplier]);
     toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
     setIsSupplierModalOpen(false);
-    setIsModalOpen(true); // Vuelve a abrir el modal de inventario
+    setIsModalOpen(true);
   };
   
   return (
@@ -144,16 +171,30 @@ export default function InventoryPage() {
             Rastrea y gestiona tus artículos, kits y servicios.
           </p>
         </div>
+         {selectedRowIds.length > 0 ? (
+          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar ({selectedRowIds.length})
+          </Button>
+        ) : (
         <Button onClick={handleAddClick}>
           <PlusCircle className="mr-2 h-4 w-4" />
           Añadir Artículo
         </Button>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === inventory.length && inventory.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
                 <TableHead>Estado</TableHead>
@@ -170,7 +211,14 @@ export default function InventoryPage() {
                 const isLowStock = isPhysical && quantityToShow < item.minThreshold;
                 
                 return (
-                  <TableRow key={item.id} className={cn(isLowStock && "bg-red-50 dark:bg-red-900/20")}>
+                  <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""} className={cn(isLowStock && !selectedRowIds.includes(item.id) && "bg-red-50 dark:bg-red-900/20")}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedRowIds.includes(item.id)}
+                        onCheckedChange={() => handleRowSelect(item.id)}
+                        aria-label={`Seleccionar artículo ${item.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{item.sku}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
@@ -303,7 +351,7 @@ export default function InventoryPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el artículo del inventario.
+              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} artículos seleccionados.` : " el artículo del inventario."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
