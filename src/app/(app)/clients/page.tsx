@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { clients as initialClients } from "@/lib/data";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,7 @@ import {
 import { ClientForm } from "@/components/clients/client-form";
 import type { Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ClientsPage() {
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export default function ClientsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const handleAddClick = () => {
     setSelectedClient(null);
@@ -65,6 +67,10 @@ export default function ClientsPage() {
 
   const handleDeleteClick = (client: Client) => {
     setSelectedClient(client);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleBulkDeleteClick = () => {
     setIsDeleteDialogOpen(true);
   };
 
@@ -87,12 +93,32 @@ export default function ClientsPage() {
   };
 
   const confirmDelete = () => {
-    if (selectedClient) {
+    if (selectedRowIds.length > 0) {
+        setClients(clients.filter((c) => !selectedRowIds.includes(c.id)));
+        toast({ variant: "destructive", title: "Clientes eliminados", description: `${selectedRowIds.length} clientes han sido eliminados.` });
+        setSelectedRowIds([]);
+    } else if (selectedClient) {
       setClients(clients.filter((c) => c.id !== selectedClient.id));
       toast({ variant: "destructive", title: "Cliente eliminado", description: "El cliente se ha eliminado correctamente." });
     }
     setIsDeleteDialogOpen(false);
     setSelectedClient(null);
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(clients.map(c => c.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
   };
   
   return (
@@ -104,16 +130,30 @@ export default function ClientsPage() {
             Gestiona la información de tus clientes.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Cliente
-        </Button>
+        {selectedRowIds.length > 0 ? (
+          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar ({selectedRowIds.length})
+          </Button>
+        ) : (
+          <Button onClick={handleAddClick}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Añadir Cliente
+          </Button>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === clients.length && clients.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Persona de Contacto</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
@@ -123,7 +163,14 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
               {clients.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow key={client.id} data-state={selectedRowIds.includes(client.id) ? "selected" : ""}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRowIds.includes(client.id)}
+                      onCheckedChange={() => handleRowSelect(client.id)}
+                      aria-label={`Seleccionar cliente ${client.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.contactPerson}</TableCell>
                   <TableCell>{client.email}</TableCell>
@@ -187,7 +234,7 @@ export default function ClientsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el cliente.
+              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} clientes seleccionados.` : " el cliente."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

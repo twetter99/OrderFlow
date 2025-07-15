@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { users as initialUsers } from "@/lib/data";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,6 +47,7 @@ import type { User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function UsersPage() {
   const { toast } = useToast();
@@ -54,6 +55,7 @@ export default function UsersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const handleAddClick = () => {
     setSelectedUser(null);
@@ -67,6 +69,10 @@ export default function UsersPage() {
 
   const handleDeleteClick = (user: User) => {
     setSelectedUser(user);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
     setIsDeleteDialogOpen(true);
   };
 
@@ -89,7 +95,11 @@ export default function UsersPage() {
   };
 
   const confirmDelete = () => {
-    if (selectedUser) {
+    if (selectedRowIds.length > 0) {
+        setUsers(users.filter((u) => !selectedRowIds.includes(u.id)));
+        toast({ variant: "destructive", title: "Usuarios eliminados", description: `${selectedRowIds.length} usuarios han sido eliminados.` });
+        setSelectedRowIds([]);
+    } else if (selectedUser) {
       setUsers(users.filter((u) => u.id !== selectedUser.id));
       toast({ variant: "destructive", title: "Usuario eliminado", description: "El usuario se ha eliminado correctamente." });
     }
@@ -97,6 +107,22 @@ export default function UsersPage() {
     setSelectedUser(null);
   };
   
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(users.map(u => u.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -106,16 +132,30 @@ export default function UsersPage() {
             Gestiona los roles y permisos de los usuarios.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Usuario
-        </Button>
+        {selectedRowIds.length > 0 ? (
+          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar ({selectedRowIds.length})
+          </Button>
+        ) : (
+          <Button onClick={handleAddClick}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Añadir Usuario
+          </Button>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
+                 <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === users.length && users.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
@@ -125,7 +165,14 @@ export default function UsersPage() {
             </TableHeader>
             <TableBody>
               {users.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.id} data-state={selectedRowIds.includes(user.id) ? "selected" : ""}>
+                   <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRowIds.includes(user.id)}
+                      onCheckedChange={() => handleRowSelect(user.id)}
+                      aria-label={`Seleccionar usuario ${user.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.phone}</TableCell>
@@ -201,7 +248,7 @@ export default function UsersPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el usuario.
+              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} usuarios seleccionados.` : " el usuario."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

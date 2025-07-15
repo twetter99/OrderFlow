@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { suppliers as initialSuppliers } from "@/lib/data";
-import { MoreHorizontal, PlusCircle, Star } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Star, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +45,7 @@ import {
 import { SupplierForm } from "@/components/suppliers/supplier-form";
 import type { Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SuppliersPage() {
   const { toast } = useToast();
@@ -52,6 +53,7 @@ export default function SuppliersPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const handleAddClick = () => {
     setSelectedSupplier(null);
@@ -65,6 +67,10 @@ export default function SuppliersPage() {
 
   const handleDeleteClick = (supplier: Supplier) => {
     setSelectedSupplier(supplier);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
     setIsDeleteDialogOpen(true);
   };
 
@@ -87,7 +93,11 @@ export default function SuppliersPage() {
   };
 
   const confirmDelete = () => {
-    if (selectedSupplier) {
+    if (selectedRowIds.length > 0) {
+        setSuppliers(suppliers.filter((s) => !selectedRowIds.includes(s.id)));
+        toast({ variant: "destructive", title: "Proveedores eliminados", description: `${selectedRowIds.length} proveedores han sido eliminados.` });
+        setSelectedRowIds([]);
+    } else if (selectedSupplier) {
       setSuppliers(suppliers.filter((p) => p.id !== selectedSupplier.id));
       toast({ variant: "destructive", title: "Proveedor eliminado", description: "El proveedor se ha eliminado correctamente." });
     }
@@ -95,6 +105,22 @@ export default function SuppliersPage() {
     setSelectedSupplier(null);
   };
   
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(suppliers.map(s => s.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -104,16 +130,30 @@ export default function SuppliersPage() {
             Gestiona la información y el rendimiento de tus proveedores.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Proveedor
-        </Button>
+        {selectedRowIds.length > 0 ? (
+          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar ({selectedRowIds.length})
+          </Button>
+        ) : (
+          <Button onClick={handleAddClick}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Añadir Proveedor
+          </Button>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === suppliers.length && suppliers.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Persona de Contacto</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
@@ -124,7 +164,14 @@ export default function SuppliersPage() {
             </TableHeader>
             <TableBody>
               {suppliers.map((supplier) => (
-                <TableRow key={supplier.id}>
+                <TableRow key={supplier.id} data-state={selectedRowIds.includes(supplier.id) ? "selected" : ""}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRowIds.includes(supplier.id)}
+                      onCheckedChange={() => handleRowSelect(supplier.id)}
+                      aria-label={`Seleccionar proveedor ${supplier.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>{supplier.contactPerson}</TableCell>
                   <TableCell>{supplier.email}</TableCell>
@@ -197,7 +244,7 @@ export default function SuppliersPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el proveedor.
+              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proveedores seleccionados.` : " el proveedor."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -19,7 +19,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { projects as initialProjects, clients as initialClients } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -48,6 +48,7 @@ import {
 import { ProjectForm } from "@/components/projects/project-form";
 import type { Project, Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ProjectsPage() {
   const { toast } = useToast();
@@ -56,6 +57,7 @@ export default function ProjectsPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const handleAddClick = () => {
     setSelectedProject(null);
@@ -69,6 +71,10 @@ export default function ProjectsPage() {
 
   const handleDeleteClick = (project: Project) => {
     setSelectedProject(project);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
     setIsDeleteDialogOpen(true);
   };
 
@@ -94,12 +100,32 @@ export default function ProjectsPage() {
   };
 
   const confirmDelete = () => {
-    if (selectedProject) {
+    if (selectedRowIds.length > 0) {
+        setProjects(projects.filter((p) => !selectedRowIds.includes(p.id)));
+        toast({ variant: "destructive", title: "Proyectos eliminados", description: `${selectedRowIds.length} proyectos han sido eliminados.` });
+        setSelectedRowIds([]);
+    } else if (selectedProject) {
       setProjects(projects.filter((p) => p.id !== selectedProject.id));
       toast({ variant: "destructive", title: "Proyecto eliminado", description: "El proyecto se ha eliminado correctamente." });
     }
     setIsDeleteDialogOpen(false);
     setSelectedProject(null);
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(projects.map(p => p.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
   };
 
   return (
@@ -111,16 +137,30 @@ export default function ProjectsPage() {
             Gestiona tus proyectos de instalación y sigue su progreso.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Proyecto
-        </Button>
+        {selectedRowIds.length > 0 ? (
+          <Button variant="destructive" onClick={handleBulkDeleteClick}>
+            <Trash2 className="mr-2 h-4 w-4" />
+            Eliminar ({selectedRowIds.length})
+          </Button>
+        ) : (
+          <Button onClick={handleAddClick}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Añadir Proyecto
+          </Button>
+        )}
       </div>
       <Card>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === projects.length && projects.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre del Proyecto</TableHead>
                 <TableHead>Cliente</TableHead>
                 <TableHead>Estado</TableHead>
@@ -135,7 +175,14 @@ export default function ProjectsPage() {
                   (project.spent / project.budget) * 100
                 );
                 return (
-                  <TableRow key={project.id}>
+                  <TableRow key={project.id} data-state={selectedRowIds.includes(project.id) ? "selected" : ""}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        checked={selectedRowIds.includes(project.id)}
+                        onCheckedChange={() => handleRowSelect(project.id)}
+                        aria-label={`Seleccionar proyecto ${project.name}`}
+                      />
+                    </TableCell>
                     <TableCell className="font-medium">{project.name}</TableCell>
                     <TableCell>{project.client}</TableCell>
                     <TableCell>
@@ -227,7 +274,7 @@ export default function ProjectsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el proyecto.
+              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proyectos seleccionados.` : " el proyecto."}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
