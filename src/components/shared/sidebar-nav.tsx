@@ -65,14 +65,15 @@ export function SidebarNav() {
                  <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
             )}
             {group.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                const isActive = pathname === item.href || (pathname.startsWith(item.href) && pathname.charAt(item.href.length) === '/');
+                const isDashboard = item.href === "/dashboard";
                 return (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  isActive && "bg-muted text-primary"
+                  (isDashboard ? pathname === item.href : isActive) && "bg-muted text-primary"
                 )}
               >
                 <item.icon className="h-4 w-4" />
@@ -85,7 +86,7 @@ export function SidebarNav() {
       </nav>
       <div className="mt-auto p-2 space-y-1 border-t">
         {bottomNavItems.map((item) => {
-            const isActive = pathname.startsWith(item.href);
+            const isActive = pathname === item.href || (pathname.startsWith(item.href) && pathname.charAt(item.href.length) === '/');
             return (
                 <Link
                     key={item.href}
