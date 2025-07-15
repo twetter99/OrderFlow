@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { Replanteo, Project, PlantillaInstalacion, User, InventoryItem } from "@/lib/types";
-import { CalendarIcon, PlusCircle, Trash2, ImageOff } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
 import { cn } from "@/lib/utils";
@@ -32,7 +32,6 @@ import { es } from "date-fns/locale";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import Image from "next/image";
 
 const formSchema = z.object({
   proyecto_id: z.string().min(1, "Debes seleccionar un proyecto."),
@@ -53,7 +52,6 @@ const formSchema = z.object({
     tipo: z.enum(['estado_inicial', 'esquema', 'detalle']),
     url_imagen: z.string().url("Debe ser una URL válida."),
     descripcion: z.string().min(1, "La descripción es obligatoria."),
-    dataAiHint: z.string().optional(),
   })).optional(),
 });
 
@@ -162,81 +160,39 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
             )}/>
         </div>
 
-        <div className="grid md:grid-cols-2 gap-6">
-            <Card>
-                <CardHeader>
-                    <CardTitle>Materiales Ajustados</CardTitle>
-                    <div className="flex items-center gap-4 pt-2">
-                        <FormField control={form.control} name="tiempo_estimado_ajustado" render={({ field }) => (
-                            <FormItem className="flex-1"><FormLabel>Tiempo Estimado (h)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
-                        )}/>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Cant.</TableHead><TableHead/></TableRow></TableHeader>
-                        <TableBody>
-                            {materialFields.map((field, index) => (
-                                <TableRow key={field.id}>
-                                    <TableCell>
-                                         <FormField control={form.control} name={`materiales.${index}.material_id`} render={({ field }) => (
-                                            <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona..."/></SelectTrigger></FormControl><SelectContent>{physicalItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
-                                        )} />
-                                        <FormField control={form.control} name={`materiales.${index}.justificacion_cambio`} render={({ field }) => (
-                                            <FormItem><FormControl><Input className="mt-1 text-xs h-7" placeholder="Justificación del cambio..." {...field}/></FormControl><FormMessage/></FormItem>
-                                        )}/>
-                                    </TableCell>
-                                    <TableCell>
-                                        <FormField control={form.control} name={`materiales.${index}.cantidad_prevista`} render={({ field }) => (
-                                            <FormItem><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
-                                        )}/>
-                                    </TableCell>
-                                    <TableCell>
-                                        <Button type="button" variant="ghost" size="icon" onClick={() => removeMaterial(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendMaterial({ material_id: "", cantidad_prevista: 1, justificacion_cambio: '' })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Material</Button>
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader><CardTitle>Imágenes del Replanteo</CardTitle></CardHeader>
-                <CardContent>
-                    <Table>
-                        <TableHeader><TableRow><TableHead>Imagen</TableHead><TableHead>Tipo</TableHead><TableHead/></TableRow></TableHeader>
-                        <TableBody>
-                            {imageFields.map((field, index) => (
-                                <TableRow key={field.id}>
-                                    <TableCell>
-                                        <FormField control={form.control} name={`imagenes.${index}.url_imagen`} render={({ field }) => (
-                                            <FormItem>
-                                                <div className="flex items-center gap-2">
-                                                    {field.value ? <Image src={field.value} alt="preview" width={40} height={40} className="rounded-md object-cover"/> : <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md"><ImageOff className="h-5 w-5 text-muted-foreground" /></div>}
-                                                    <Input placeholder="https://placehold.co/..." {...field}/>
-                                                </div>
-                                                <FormMessage/>
-                                            </FormItem>
-                                        )}/>
-                                    </TableCell>
-                                    <TableCell>
-                                         <FormField control={form.control} name={`imagenes.${index}.tipo`} render={({ field }) => (
-                                            <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="estado_inicial">Estado Inicial</SelectItem><SelectItem value="esquema">Esquema</SelectItem><SelectItem value="detalle">Detalle</SelectItem></SelectContent></Select><FormMessage/></FormItem>
-                                        )}/>
-                                         <FormField control={form.control} name={`imagenes.${index}.descripcion`} render={({ field }) => (
-                                            <FormItem><FormControl><Input className="mt-1 text-xs h-7" placeholder="Descripción..." {...field}/></FormControl><FormMessage/></FormItem>
-                                        )}/>
-                                    </TableCell>
-                                    <TableCell><Button type="button" variant="ghost" size="icon" onClick={() => removeImage(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendImage({ url_imagen: "https://placehold.co/600x400.png", tipo: 'detalle', descripcion: '', dataAiHint: '' })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Imagen</Button>
-                </CardContent>
-            </Card>
+        <div className="space-y-4 p-4 border rounded-lg">
+            <h3 className="text-lg font-medium">Materiales y Tiempos Ajustados</h3>
+             <div className="flex items-center gap-4 pt-2">
+                <FormField control={form.control} name="tiempo_estimado_ajustado" render={({ field }) => (
+                    <FormItem className="flex-1"><FormLabel>Tiempo Estimado (h)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                )}/>
+            </div>
+             <Table>
+                <TableHeader><TableRow><TableHead>Material</TableHead><TableHead>Cant.</TableHead><TableHead/></TableRow></TableHeader>
+                <TableBody>
+                    {materialFields.map((field, index) => (
+                        <TableRow key={field.id}>
+                            <TableCell>
+                                    <FormField control={form.control} name={`materiales.${index}.material_id`} render={({ field }) => (
+                                    <FormItem><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona..."/></SelectTrigger></FormControl><SelectContent>{physicalItems.map(i => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                                )} />
+                                <FormField control={form.control} name={`materiales.${index}.justificacion_cambio`} render={({ field }) => (
+                                    <FormItem><FormControl><Input className="mt-1 text-xs h-7" placeholder="Justificación del cambio..." {...field}/></FormControl><FormMessage/></FormItem>
+                                )}/>
+                            </TableCell>
+                            <TableCell>
+                                <FormField control={form.control} name={`materiales.${index}.cantidad_prevista`} render={({ field }) => (
+                                    <FormItem><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                )}/>
+                            </TableCell>
+                            <TableCell>
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removeMaterial(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                            </TableCell>
+                        </TableRow>
+                    ))}
+                </TableBody>
+            </Table>
+            <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendMaterial({ material_id: "", cantidad_prevista: 1, justificacion_cambio: '' })}><PlusCircle className="mr-2 h-4 w-4"/>Añadir Material</Button>
         </div>
 
 
@@ -248,5 +204,3 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
     </Form>
   );
 }
-
-    

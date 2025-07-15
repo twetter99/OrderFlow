@@ -22,11 +22,10 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { DeliveryNote, Project, InventoryItem, Location, InventoryLocation, Client } from "@/lib/types";
-import { PlusCircle, Trash2, ImageOff } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { useMemo } from "react";
-import Image from "next/image";
 
 const formSchema = z.object({
   clientId: z.string().min(1, "Debes seleccionar un cliente."),
@@ -234,16 +233,7 @@ export function DespatchForm({ note, clients, projects, inventoryItems, location
                                                     : `(Stock: ${getStockInLocation(i.id, watchedLocationId)})`;
                                                   return (
                                                     <SelectItem key={i.id} value={i.id}>
-                                                        <div className="flex items-center gap-2">
-                                                            {i.imageUrl ? (
-                                                                <Image src={i.imageUrl} alt={i.name} width={24} height={24} className="rounded-sm" />
-                                                            ) : (
-                                                                <div className="w-6 h-6 flex-shrink-0 flex items-center justify-center bg-muted rounded-sm">
-                                                                    <ImageOff className="h-4 w-4 text-muted-foreground" />
-                                                                </div>
-                                                            )}
-                                                            <span>{i.name} {stockLabel}</span>
-                                                        </div>
+                                                      <span>{i.name} {stockLabel}</span>
                                                     </SelectItem>
                                                   )
                                                 })}

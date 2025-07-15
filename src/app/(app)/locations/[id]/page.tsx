@@ -4,7 +4,6 @@
 
 import React, { useState, useMemo } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Image from "next/image";
 import {
   Table,
   TableBody,
@@ -22,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { inventory as initialInventory, locations as initialLocations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
-import { ArrowLeft, PlusCircle, ImageOff, ArrowRightLeft } from "lucide-react";
+import { ArrowLeft, PlusCircle, ArrowRightLeft } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -216,7 +215,6 @@ export default function LocationDetailsPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="w-[80px]">Imagen</TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
                 <TableHead className="text-right">Cantidad en esta Ubicación</TableHead>
@@ -225,22 +223,6 @@ export default function LocationDetailsPage() {
             <TableBody>
               {stockInLocation.length > 0 ? stockInLocation.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell>
-                      {item.imageUrl ? (
-                        <Image
-                          src={item.imageUrl}
-                          alt={item.name!}
-                          width={40}
-                          height={40}
-                          className="rounded-md object-cover"
-                          data-ai-hint={item.dataAiHint}
-                        />
-                      ) : (
-                        <div className="w-10 h-10 flex items-center justify-center bg-muted rounded-md">
-                            <ImageOff className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      )}
-                    </TableCell>
                   <TableCell className="font-medium">{item.sku}</TableCell>
                   <TableCell>{item.name}</TableCell>
                   <TableCell className="text-right font-bold">{item.quantity}</TableCell>

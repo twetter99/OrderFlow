@@ -29,8 +29,6 @@ export type InventoryItem = {
   id: string;
   sku: string;
   name: string;
-  imageUrl?: string;
-  dataAiHint?: string;
   minThreshold: number;
   unitCost: number;
   unit: 'ud' | 'ml';
@@ -168,7 +166,6 @@ export type ReplanteoImagen = {
   tipo: 'estado_inicial' | 'esquema' | 'detalle';
   url_imagen: string;
   descripcion: string;
-  dataAiHint?: string;
 };
 
 export type Replanteo = {

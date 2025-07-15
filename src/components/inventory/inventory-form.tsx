@@ -19,20 +19,17 @@ import type { InventoryItem, Supplier } from "@/lib/types";
 import { SupplierCombobox } from "./supplier-combobox";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { PlusCircle, Trash2, Camera, Upload, ImageOff } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { Textarea } from "../ui/textarea";
-import Image from "next/image";
 
 const formSchema = z.object({
   type: z.enum(['simple', 'composite', 'service']),
   sku: z.string().min(1, "El SKU es obligatorio."),
   name: z.string().min(1, "El nombre es obligatorio."),
   unit: z.string().min(1, "La unidad es obligatoria."),
-  imageUrl: z.string().url("Debe ser una URL de imagen válida o una Data URL.").optional().or(z.literal('')),
-  dataAiHint: z.string().optional(),
   observations: z.string().optional(),
   // Campos opcionales según el tipo
   minThreshold: z.coerce.number().optional(),
@@ -64,7 +61,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         type: 'simple' as const,
         sku: "",
         name: "",
-        imageUrl: "",
         observations: "",
         minThreshold: 10,
         unitCost: 0,
@@ -85,23 +81,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
 
   const itemType = useWatch({ control: form.control, name: "type" });
   const watchedComponents = useWatch({ control: form.control, name: "components" });
-  const watchedImageUrl = useWatch({ control: form.control, name: "imageUrl" });
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const cameraInputRef = useRef<HTMLInputElement>(null);
   
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        form.setValue("imageUrl", reader.result as string, { shouldValidate: true });
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-
   const simpleInventoryItems = useMemo(() => {
     return inventoryItems.filter(i => i.type === 'simple');
   }, [inventoryItems]);
@@ -218,43 +198,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
             )}
           />
         </div>
-
-        {itemType !== 'service' && (
-           <FormField
-            control={form.control}
-            name="imageUrl"
-            render={() => (
-                <FormItem>
-                    <FormLabel>Imagen del Artículo</FormLabel>
-                    <div className="flex items-center gap-4">
-                        <div className="w-24 h-24 flex-shrink-0 border rounded-md flex items-center justify-center bg-muted">
-                            {watchedImageUrl ? (
-                                <Image src={watchedImageUrl} alt="Vista previa del artículo" width={96} height={96} className="object-cover rounded-md" />
-                            ) : (
-                                <ImageOff className="h-10 w-10 text-muted-foreground" />
-                            )}
-                        </div>
-                        <div className="flex-grow space-y-2">
-                             <div className="flex gap-2">
-                                <Button type="button" variant="outline" onClick={() => fileInputRef.current?.click()}>
-                                    <Upload className="mr-2 h-4 w-4" />
-                                    Cargar
-                                </Button>
-                                <Button type="button" variant="outline" onClick={() => cameraInputRef.current?.click()}>
-                                    <Camera className="mr-2 h-4 w-4" />
-                                    Tomar Foto
-                                </Button>
-                            </div>
-                            <Input type="file" accept="image/*" ref={fileInputRef} className="hidden" onChange={handleImageChange} />
-                            <Input type="file" accept="image/*" capture="environment" ref={cameraInputRef} className="hidden" onChange={handleImageChange} />
-                            <p className="text-xs text-muted-foreground">Sube un archivo o usa la cámara del dispositivo.</p>
-                        </div>
-                    </div>
-                    <FormMessage />
-                </FormItem>
-            )}
-            />
-        )}
         
         {itemType === 'simple' && (
             <>

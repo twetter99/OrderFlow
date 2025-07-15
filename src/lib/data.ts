@@ -108,20 +108,18 @@ const mockProjects: Project[] = [
   },
 ];
 const mockInventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'circuit board', minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
-  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'metal bracket', minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'metal plate', minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'screws', minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
-  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'gps module', minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
-  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'security camera', minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'power cable', minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', imageUrl: '', minThreshold: 0, unitCost: 75, unit: 'ud', supplier: 'N/A', type: 'service' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
+  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
+  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', minThreshold: 0, unitCost: 75, unit: 'ud', supplier: 'N/A', type: 'service' },
   {
     id: 'ITEM-100',
     sku: 'KIT-INST-BASIC',
     name: 'Kit de Instalación Básico',
-    imageUrl: 'https://placehold.co/100x100.png',
-    dataAiHint: 'electronics kit',
     minThreshold: 5,
     unitCost: 478, // Costo es la suma de los componentes
     unit: 'ud',
@@ -243,8 +241,8 @@ const mockReplanteos: Replanteo[] = [
       { id: 'RE-MAT-003', replanteo_id: 'RE-001', material_id: 'ITEM-007', cantidad_prevista: 2, justificacion_cambio: 'Extensión de cableado necesaria' }
     ],
     imagenes: [
-      { id: 'RE-IMG-001', replanteo_id: 'RE-001', tipo: 'estado_inicial', url_imagen: 'https://placehold.co/600x400.png', descripcion: 'Vista del salpicadero antes de la instalación.', dataAiHint: 'dashboard bus' },
-      { id: 'RE-IMG-002', replanteo_id: 'RE-001', tipo: 'esquema', url_imagen: 'https://placehold.co/600x400.png', descripcion: 'Diagrama de la nueva ubicación de la CPU.', dataAiHint: 'wiring diagram' }
+      { id: 'RE-IMG-001', replanteo_id: 'RE-001', tipo: 'estado_inicial', url_imagen: 'https://placehold.co/600x400.png', descripcion: 'Vista del salpicadero antes de la instalación.' },
+      { id: 'RE-IMG-002', replanteo_id: 'RE-001', tipo: 'esquema', url_imagen: 'https://placehold.co/600x400.png', descripcion: 'Diagrama de la nueva ubicación de la CPU.' }
     ]
   },
   {
