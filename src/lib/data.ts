@@ -1,11 +1,15 @@
 
 
+import { db } from './firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo } from './types';
 import { add, sub } from 'date-fns';
 
 const today = new Date();
 
-export const projects: Project[] = [
+// --- Default Mock Data (used as fallback) ---
+
+const mockProjects: Project[] = [
   {
     id: 'WF-PROJ-001',
     codigo_proyecto: 'P24-FLOTA-A-MAD',
@@ -103,8 +107,7 @@ export const projects: Project[] = [
     equipo_tecnico_ids: ['WF-USER-003']
   },
 ];
-
-export const inventory: InventoryItem[] = [
+const mockInventory: InventoryItem[] = [
   { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'circuit board', minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
   { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'metal bracket', minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
   { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', imageUrl: 'https://placehold.co/100x100.png', dataAiHint: 'metal plate', minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
@@ -131,8 +134,7 @@ export const inventory: InventoryItem[] = [
     ]
   },
 ];
-
-export const purchaseOrders: PurchaseOrder[] = [
+const mockPurchaseOrders: PurchaseOrder[] = [
   { id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }).toISOString() },
   { id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }).toISOString() },
   { id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }).toISOString() },
@@ -145,8 +147,7 @@ export const purchaseOrders: PurchaseOrder[] = [
     { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, unit: 'ud', type: 'Servicio' },
   ], estimatedDeliveryDate: new Date().toISOString() },
 ];
-
-export const suppliers: Supplier[] = [
+const mockSuppliers: Supplier[] = [
   { id: 'WF-SUP-001', name: 'TechParts Inc.', contactPerson: 'Jane Doe', email: 'sales@techparts.com', phone: '123-456-7890', deliveryRating: 4.5, qualityRating: 4.8 },
   { id: 'WF-SUP-002', name: 'MetalWorks Ltd.', contactPerson: 'John Smith', email: 'contact@metalworks.com', phone: '987-654-3210', deliveryRating: 4.2, qualityRating: 4.5 },
   { id: 'WF-SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
@@ -154,26 +155,22 @@ export const suppliers: Supplier[] = [
   { id: 'WF-SUP-005', name: 'Ensamblado Interno', contactPerson: 'N/A', email: 'N/A', phone: 'N/A', deliveryRating: 5.0, qualityRating: 5.0 },
   { id: 'WF-SUP-006', name: 'Viajes Corporativos', contactPerson: 'Agencia de Viajes', email: 'reservas@viajescorp.com', phone: '555-555-5555', deliveryRating: 5.0, qualityRating: 5.0 },
 ];
-
-export const clients: Client[] = [
+const mockClients: Client[] = [
     { id: 'WF-CLI-001', name: 'Tránsito de la Ciudad', contactPerson: 'Carlos Ruiz', email: 'c.ruiz@transitociudad.gov', phone: '611-222-3333' },
     { id: 'WF-CLI-002', name: 'Compañía de Turismo', contactPerson: 'Ana Torres', email: 'ana.torres@turismo.com', phone: '622-333-4444' },
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
-
-export const users: User[] = [
+const mockUsers: User[] = [
   { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
   { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
   { id: 'WF-USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Empleado' },
 ];
-
-export const locations: Location[] = [
+const mockLocations: Location[] = [
     { id: 'LOC-001', name: 'Almacén Principal', description: 'Almacén principal para componentes generales.' },
     { id: 'LOC-002', name: 'Almacén Secundario', description: 'Almacén para componentes electrónicos sensibles.' },
     { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar.' },
 ];
-
-export const inventoryLocations: InventoryLocation[] = [
+const mockInventoryLocations: InventoryLocation[] = [
     { id: 'INVLOC-001', itemId: 'ITEM-001', locationId: 'LOC-002', quantity: 15 },
     { id: 'INVLOC-002', itemId: 'ITEM-001', locationId: 'LOC-003', quantity: 10 },
     { id: 'INVLOC-003', itemId: 'ITEM-002', locationId: 'LOC-001', quantity: 8 },
@@ -183,13 +180,11 @@ export const inventoryLocations: InventoryLocation[] = [
     { id: 'INVLOC-007', itemId: 'ITEM-006', locationId: 'LOC-002', quantity: 30 },
     { id: 'INVLOC-008', itemId: 'ITEM-007', locationId: 'LOC-001', quantity: 150 },
 ];
-
-export const deliveryNotes: DeliveryNote[] = [
+const mockDeliveryNotes: DeliveryNote[] = [
     { id: 'WF-DN-2024-0001', clientId: 'WF-CLI-001', projectId: 'WF-PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
     { id: 'WF-DN-2024-0002', clientId: 'WF-CLI-002', projectId: 'WF-PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]
-
-export const installationTemplates: PlantillaInstalacion[] = [
+const mockInstallationTemplates: PlantillaInstalacion[] = [
   {
     id: 'TPL-001',
     nombre: 'Instalación Básica GPS Autobús Urbano',
@@ -230,8 +225,7 @@ export const installationTemplates: PlantillaInstalacion[] = [
     ],
   },
 ];
-
-export const replanteos: Replanteo[] = [
+const mockReplanteos: Replanteo[] = [
   {
     id: 'RE-001',
     proyecto_id: 'WF-PROJ-001',
@@ -270,6 +264,40 @@ export const replanteos: Replanteo[] = [
     imagenes: []
   }
 ];
+
+// --- Firestore Data Fetching Logic ---
+
+async function getData<T>(collectionName: string, mockData: T[]): Promise<T[]> {
+  try {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    if (querySnapshot.empty) {
+      console.warn(`Firestore collection '${collectionName}' is empty. Using mock data.`);
+      return mockData;
+    }
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
+  } catch (error) {
+    console.error(`Error fetching from Firestore collection '${collectionName}':`, error);
+    console.warn(`Falling back to mock data for '${collectionName}'.`);
+    return mockData;
+  }
+}
+
+// --- Exported Data ---
+// For now, we export the mock data directly. 
+// Once you have data in Firestore, you can switch to the `getData` function.
+
+export const projects: Project[] = mockProjects;
+export const inventory: InventoryItem[] = mockInventory;
+export const purchaseOrders: PurchaseOrder[] = mockPurchaseOrders;
+export const suppliers: Supplier[] = mockSuppliers;
+export const clients: Client[] = mockClients;
+export const users: User[] = mockUsers;
+export const locations: Location[] = mockLocations;
+export const inventoryLocations: InventoryLocation[] = mockInventoryLocations;
+export const deliveryNotes: DeliveryNote[] = mockDeliveryNotes;
+export const installationTemplates: PlantillaInstalacion[] = mockInstallationTemplates;
+export const replanteos: Replanteo[] = mockReplanteos;
+
 
 // Generador de notificaciones dinámicas
 export const getNotifications = (): Notification[] => {
@@ -312,5 +340,3 @@ export const getNotifications = (): Notification[] => {
     
     return notifications;
 }
-
-    
