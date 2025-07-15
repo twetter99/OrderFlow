@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench, ClipboardList } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench, ClipboardList, ListChecks } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 import { cn } from "@/lib/utils";
@@ -20,6 +20,7 @@ const navGroups = [
       { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
       { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
       { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
+      { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
     ]
   },
   {
@@ -56,10 +57,7 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   const isLinkActive = (href: string) => {
-    if (href === "/inventory") {
-      return pathname === href;
-    }
-     if (href === "/dashboard") {
+    if (href === "/inventory" || href === "/dashboard") {
       return pathname === href;
     }
     return pathname.startsWith(href);
