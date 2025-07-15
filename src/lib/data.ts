@@ -101,20 +101,19 @@ export const projects: Project[] = [
 ];
 
 export const inventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'electronics circuit', quantity: 0, minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
-  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'metal bracket', quantity: 0, minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'connector plate', quantity: 0, minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'screws hardware', quantity: 0, minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
-  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'gps module', quantity: 0, minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
-  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'security camera', quantity: 0, minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', imageUrl: 'https://placehold.co/100x100.png', data-ai-hint: 'power cable', quantity: 0, minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
+  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
+  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
+  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', imageUrl: 'https://placehold.co/100x100.png', quantity: 0, minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
   { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', imageUrl: '', quantity: 0, minThreshold: 0, unitCost: 75, unit: 'ud', supplier: 'N/A', type: 'service' },
   {
     id: 'ITEM-100',
     sku: 'KIT-INST-BASIC',
     name: 'Kit de Instalación Básico',
     imageUrl: 'https://placehold.co/100x100.png',
-    data-ai-hint: 'electronics kit',
     quantity: 0, // La cantidad se calcula en base a los componentes
     minThreshold: 5,
     unitCost: 478, // Costo es la suma de los componentes
