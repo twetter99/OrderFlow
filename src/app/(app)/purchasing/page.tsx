@@ -1,7 +1,8 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import {
   Table,
   TableBody,
@@ -48,7 +49,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
-import type { PurchaseOrder } from "@/lib/types";
+import type { PurchaseOrder, PurchaseOrderItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
@@ -61,6 +62,7 @@ const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 
 export default function PurchasingPage() {
   const { toast } = useToast();
+  const searchParams = useSearchParams();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -70,6 +72,27 @@ export default function PurchasingPage() {
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
   const canApprove = currentUser?.role === 'Administrador';
+
+  useEffect(() => {
+    const project = searchParams.get('project');
+    const supplier = searchParams.get('supplier');
+    const itemsStr = searchParams.get('items');
+    
+    if (project && supplier && itemsStr) {
+      try {
+        const items = JSON.parse(itemsStr) as PurchaseOrderItem[];
+        const newOrder: Partial<PurchaseOrder> = {
+          project,
+          supplier,
+          items,
+          status: 'Pendiente',
+        };
+        handleAddClick(newOrder);
+      } catch (error) {
+        console.error("Error parsing items from query params", error);
+      }
+    }
+  }, [searchParams]);
 
   const handleAddClick = (initialData: Partial<PurchaseOrder> | null = null) => {
     setSelectedOrder(initialData as PurchaseOrder | null);
@@ -329,7 +352,7 @@ export default function PurchasingPage() {
         <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder && 'id' in selectedOrder ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
+              {selectedOrder && ('id' in selectedOrder || 'items' in selectedOrder) ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
             </DialogTitle>
             <DialogDescription>
               {selectedOrder

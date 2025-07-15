@@ -55,7 +55,7 @@ const formSchema = z.object({
 type PurchasingFormValues = z.infer<typeof formSchema>;
 
 interface PurchasingFormProps {
-  order?: PurchaseOrder | null;
+  order?: PurchaseOrder | Partial<PurchaseOrder> | null;
   onSave: (values: PurchasingFormValues) => void;
   onCancel: () => void;
   canApprove?: boolean;
@@ -65,10 +65,18 @@ interface PurchasingFormProps {
 }
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
-  const isReadOnly = order && !canApprove;
+  const isReadOnly = order && 'id' in order && !canApprove;
   
   const defaultValues = order
-    ? { ...order, estimatedDeliveryDate: new Date(order.estimatedDeliveryDate), total: order.total || 0 }
+    ? { 
+        project: order.project || "",
+        supplier: order.supplier || "",
+        estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
+        status: order.status || "Pendiente",
+        rejectionReason: order.rejectionReason || "",
+        items: order.items || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
+        total: order.total || 0,
+       }
     : {
         project: "",
         supplier: "",
