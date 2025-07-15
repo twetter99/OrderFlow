@@ -1,5 +1,4 @@
 
-
 export type Project = {
   id: string;
   codigo_proyecto: string;
@@ -149,4 +148,36 @@ export type PlantillaInstalacion = {
   fecha_creacion: string;
   materiales: PlantillaInstalacionMaterial[];
   herramientas: PlantillaInstalacionHerramienta[];
+};
+
+// Nuevos tipos para Informe de Replanteo
+export type ReplanteoMaterial = {
+  id: string;
+  replanteo_id: string;
+  material_id: string;
+  cantidad_prevista: number;
+  justificacion_cambio?: string;
+};
+
+export type ReplanteoImagen = {
+  id: string;
+  replanteo_id: string;
+  tipo: 'estado_inicial' | 'esquema' | 'detalle';
+  url_imagen: string;
+  descripcion: string;
+};
+
+export type Replanteo = {
+  id: string;
+  proyecto_id: string;
+  vehiculo_identificacion: string;
+  matricula: string;
+  fecha_replanteo: string;
+  tecnico_responsable_id: string;
+  plantilla_base_id: string;
+  tiempo_estimado_ajustado: number;
+  observaciones: string;
+  estado: 'Pendiente' | 'En Proceso' | 'Completado';
+  materiales: ReplanteoMaterial[];
+  imagenes: ReplanteoImagen[];
 };
