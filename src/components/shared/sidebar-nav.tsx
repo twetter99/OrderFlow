@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
 import { cn } from "@/lib/utils";
@@ -19,6 +19,7 @@ const navGroups = [
     title: "Logística",
     items: [
       { href: "/inventory", label: "Inventario", icon: Warehouse },
+      { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
       { href: "/inventory-locations", label: "Stock en Almacenes", icon: MapPin },
       { href: "/transfers", label: "Transferencias", icon: ArrowRightLeft },
       { href: "/receptions", label: "Recepciones", icon: Archive },
@@ -65,7 +66,9 @@ export function SidebarNav() {
                  <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
             )}
             {group.items.map((item) => {
-                const isActive = pathname === item.href || (pathname.startsWith(item.href) && pathname.charAt(item.href.length) === '/');
+                const isActive = item.href === '/inventory' 
+                    ? pathname === item.href 
+                    : pathname.startsWith(item.href);
                 const isDashboard = item.href === "/dashboard";
                 return (
               <Link

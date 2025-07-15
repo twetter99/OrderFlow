@@ -5,7 +5,7 @@ export type Project = {
   codigo_proyecto: string;
   name: string;
   clientId: string;
-  client: string; // This can be derived, but keeping for simplicity
+  client: string; 
   status: 'Planificado' | 'En Progreso' | 'Completado';
   tipo_flota: 'autobuses' | 'camiones' | 'furgonetas' | 'otros';
   numero_vehiculos: number;
@@ -15,13 +15,13 @@ export type Project = {
     provincia: string;
     coordenadas: { lat: number; lng: number };
   };
-  startDate: string; // Mantengo como fecha_inicio_prevista
-  endDate: string; // Mantengo como fecha_fin_prevista
-  budget: number; // Mantengo como presupuesto_total
-  spent: number; // Gasto real
+  startDate: string; 
+  endDate: string; 
+  budget: number; 
+  spent: number; 
   margen_previsto: number;
   centro_coste: string;
-  responsable_proyecto_id: string; // Foreign key to User
+  responsable_proyecto_id: string; 
 };
 
 export type InventoryItem = {
@@ -123,3 +123,31 @@ export type Notification = {
     link: string;
     isRead: boolean;
 }
+
+// Nuevos tipos para Plantillas de Instalación
+export type PlantillaInstalacionMaterial = {
+  id: string;
+  material_id: string; // Foreign key a InventoryItem
+  cantidad_estandar: number;
+  opcional: boolean;
+};
+
+export type PlantillaInstalacionHerramienta = {
+  id: string;
+  herramienta: string;
+  obligatoria: boolean;
+};
+
+export type PlantillaInstalacion = {
+  id: string;
+  nombre: string;
+  tipo_vehiculo: 'autobuses' | 'camiones' | 'furgonetas' | 'otros';
+  descripcion: string;
+  tiempo_estimado_horas: number;
+  num_tecnicos_requeridos: number;
+  activa: boolean;
+  version: number;
+  fecha_creacion: string;
+  materiales: PlantillaInstalacionMaterial[];
+  herramientas: PlantillaInstalacionHerramienta[];
+};

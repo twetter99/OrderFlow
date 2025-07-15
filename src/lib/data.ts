@@ -1,6 +1,6 @@
 
 
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion } from './types';
 import { add, sub } from 'date-fns';
 
 const today = new Date();
@@ -101,7 +101,7 @@ export const projects: Project[] = [
 ];
 
 export const inventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', quantity: 25, minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', imageUrl: 'https://placehold.co/100x100.png', quantity: 25, minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
   { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', imageUrl: 'https://placehold.co/100x100.png', quantity: 8, minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
   { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', imageUrl: 'https://placehold.co/100x100.png', quantity: 55, minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
   { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', imageUrl: 'https://placehold.co/100x100.png', quantity: 200, minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
@@ -184,6 +184,48 @@ export const deliveryNotes: DeliveryNote[] = [
     { id: 'WF-DN-2024-0001', clientId: 'WF-CLI-001', projectId: 'WF-PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
     { id: 'WF-DN-2024-0002', clientId: 'WF-CLI-002', projectId: 'WF-PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]
+
+export const installationTemplates: PlantillaInstalacion[] = [
+  {
+    id: 'TPL-001',
+    nombre: 'Instalación Básica GPS Autobús Urbano',
+    tipo_vehiculo: 'autobuses',
+    descripcion: 'Plantilla estándar para la instalación del sistema de seguimiento GPS en autobuses urbanos. Incluye la unidad central y la antena.',
+    tiempo_estimado_horas: 2.5,
+    num_tecnicos_requeridos: 1,
+    activa: true,
+    version: 1,
+    fecha_creacion: '2023-10-15T09:00:00Z',
+    materiales: [
+      { id: 'MAT-001', material_id: 'ITEM-100', cantidad_estandar: 1, opcional: false }, // Kit de Instalación Básico
+    ],
+    herramientas: [
+      { id: 'HER-001', herramienta: 'Juego de destornilladores de precisión', obligatoria: true },
+      { id: 'HER-002', herramienta: 'Multímetro digital', obligatoria: true },
+      { id: 'HER-003', herramienta: 'Taladro inalámbrico con juego de brocas', obligatoria: true },
+    ],
+  },
+  {
+    id: 'TPL-002',
+    nombre: 'Instalación Completa Seguridad Camión Larga Distancia',
+    tipo_vehiculo: 'camiones',
+    descripcion: 'Instalación completa que incluye GPS, 4 cámaras de seguridad y sistema de bloqueo remoto.',
+    tiempo_estimado_horas: 6,
+    num_tecnicos_requeridos: 2,
+    activa: true,
+    version: 2,
+    fecha_creacion: '2024-02-20T14:30:00Z',
+    materiales: [
+      { id: 'MAT-002', material_id: 'ITEM-100', cantidad_estandar: 1, opcional: false },
+      { id: 'MAT-003', material_id: 'ITEM-006', cantidad_estandar: 4, opcional: false },
+      { id: 'MAT-004', material_id: 'ITEM-007', cantidad_estandar: 20, opcional: false },
+    ],
+    herramientas: [
+      { id: 'HER-004', herramienta: 'Juego de llaves de vaso', obligatoria: true },
+      { id: 'HER-005', herramienta: 'Herramienta de crimpado de terminales', obligatoria: true },
+    ],
+  },
+];
 
 
 // Generador de notificaciones dinámicas
