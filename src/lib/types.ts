@@ -23,6 +23,7 @@ export type InventoryItem = {
   unit: string; // e.g., 'ud', 'ml', 'kg', 'h'
   supplier: string;
   type: 'simple' | 'composite' | 'service';
+  observations?: string;
   components?: {
     itemId: string;
     quantity: number;
