@@ -211,7 +211,7 @@ export default function DespatchesPage() {
             note={selectedNote}
             clients={initialClients}
             projects={initialProjects}
-            inventoryItems={inventory}
+            inventoryItems={initialInventory}
             locations={locations}
             inventoryLocations={inventoryLocations}
             onSave={handleSave}
