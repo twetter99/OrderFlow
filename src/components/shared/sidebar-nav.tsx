@@ -21,9 +21,9 @@ const navGroups = [
       { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
       { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
       { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
-      { href: "/travel-planning", label: "Planificación Desplazamientos", icon: Plane },
-      { href: "/project-tracking", label: "Seguimiento y Control", icon: Activity },
-      { href: "/documentation", label: "Documentación", icon: FileText },
+      { href: "/work-in-progress", label: "Planificación Desplazamientos", icon: Plane },
+      { href: "/work-in-progress", label: "Seguimiento y Control", icon: Activity },
+      { href: "/work-in-progress", label: "Documentación", icon: FileText },
     ]
   },
   {
