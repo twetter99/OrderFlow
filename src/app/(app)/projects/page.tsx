@@ -17,7 +17,6 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { projects as initialProjects, clients as initialClients, users as initialUsers } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
@@ -57,6 +56,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -67,6 +67,10 @@ export default function ProjectsPage() {
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
       const projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
       setProjects(projectsData);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching projects: ", error);
+      setLoading(false);
     });
     const unsubClients = onSnapshot(collection(db, "clients"), (snapshot) => {
       const clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
@@ -148,6 +152,10 @@ export default function ProjectsPage() {
     );
   };
 
+  if (loading) {
+    return <div>Cargando proyectos...</div>;
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -192,9 +200,9 @@ export default function ProjectsPage() {
             </TableHeader>
             <TableBody>
               {projects.map((project) => {
-                const progress = Math.round(
+                const progress = project.budget > 0 ? Math.round(
                   (project.spent / project.budget) * 100
-                );
+                ) : 0;
                 return (
                   <TableRow key={project.id} data-state={selectedRowIds.includes(project.id) ? "selected" : ""}>
                     <TableCell padding="checkbox">
@@ -205,7 +213,7 @@ export default function ProjectsPage() {
                       />
                     </TableCell>
                     <TableCell className="font-medium">{project.name}</TableCell>
-                    <TableCell>{project.client}</TableCell>
+                    <TableCell>{clients.find(c => c.id === project.clientId)?.name || project.client}</TableCell>
                     <TableCell className="capitalize">{project.tipo_flota}</TableCell>
                     <TableCell>{project.numero_vehiculos}</TableCell>
                     <TableCell>

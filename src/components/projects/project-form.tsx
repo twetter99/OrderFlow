@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, X } from "lucide-react";
+import { CalendarIcon, Check, Users } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -191,7 +191,7 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
-                            <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto", !field.value?.length && "text-muted-foreground")}>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto min-h-10", !field.value?.length && "text-muted-foreground")}>
                                 <div className="flex gap-1 flex-wrap">
                                     {field.value && field.value.length > 0 ? (
                                         field.value.map(userId => (
@@ -201,11 +201,11 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                                         ))
                                     ) : "Seleccionar técnicos..."}
                                 </div>
-                                <CalendarIcon className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-full p-0">
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
                             <Command>
                                 <CommandInput placeholder="Buscar técnico..." />
                                 <CommandList>
@@ -223,7 +223,7 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                                                 }}
                                             >
                                                 <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(tech.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
-                                                    <X className="h-4 w-4" />
+                                                    <Check className="h-4 w-4" />
                                                 </div>
                                                 {tech.name}
                                             </CommandItem>
