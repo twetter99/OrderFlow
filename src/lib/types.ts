@@ -81,16 +81,17 @@ export type Client = {
 };
 
 export type UserRole = 
-  | 'Administrador' 
-  | 'Jefe de Equipo / Encargado de Instalación'
+  | 'Administrador'
+  | 'Almacén'
+  | 'Empleado' // Este es un rol genérico que puede ser reemplazado por categorías más específicas
   | 'Técnico Ayudante / Auxiliar'
   | 'Técnico Instalador'
   | 'Técnico Integrador de Sistemas Embarcados'
   | 'Técnico de Puesta en Marcha y Pruebas'
   | 'Técnico de Mantenimiento'
+  | 'Jefe de Equipo / Encargado de Instalación'
   | 'Técnico de SAT (Servicio de Asistencia Técnica)'
-  | 'Técnico de Calidad / Certificación'
-  | 'Almacén';
+  | 'Técnico de Calidad / Certificación';
 
 export type User = {
   id: string;

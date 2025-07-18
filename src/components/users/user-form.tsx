@@ -22,26 +22,30 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
-const userRoles: [UserRole, ...UserRole[]] = [
-  'Técnico Ayudante / Auxiliar',
-  'Técnico Instalador',
-  'Técnico Integrador de Sistemas Embarcados',
-  'Técnico de Puesta en Marcha y Pruebas',
-  'Técnico de Mantenimiento',
-  'Jefe de Equipo / Encargado de Instalación',
-  'Técnico de SAT (Servicio de Asistencia Técnica)',
-  'Técnico de Calidad / Certificación',
-  'Administrador',
-  'Almacén'
-];
+const technicianCategories = [
+  { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
+  { name: 'Técnico Instalador', description: 'Realiza la instalación física y el conexionado de los equipos embarcados en vehículos.' },
+  { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
+  { name: 'Técnico de Puesta en Marcha y Pruebas', description: 'Encargado de configurar los equipos, ponerlos en funcionamiento y comprobar su correcto funcionamiento tras la instalación.' },
+  { name: 'Técnico de Mantenimiento', description: 'Realiza diagnósticos, reparaciones y mantenimientos preventivos y correctivos de los equipos instalados.' },
+  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
+  { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
+  { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
+] as const;
+
+const userRoles = technicianCategories.map(c => c.name);
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  role: z.enum(userRoles),
+  role: z.enum(userRoles as [string, ...string[]]).refine((val): val is UserRole => userRoles.includes(val), {
+    message: "Rol no válido",
+  }),
 });
+
 
 type UserFormValues = z.infer<typeof formSchema>;
 
@@ -126,9 +130,18 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {userRoles.map(role => (
-                        <SelectItem key={role} value={role}>{role}</SelectItem>
-                    ))}
+                    <TooltipProvider>
+                      {technicianCategories.map(category => (
+                          <Tooltip key={category.name} delayDuration={300}>
+                            <TooltipTrigger asChild>
+                               <SelectItem value={category.name}>{category.name}</SelectItem>
+                            </TooltipTrigger>
+                            <TooltipContent side="right" align="start">
+                              <p className="max-w-xs">{category.description}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                      ))}
+                    </TooltipProvider>
                   </SelectContent>
                 </Select>
                 <FormMessage />
