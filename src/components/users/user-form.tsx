@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState } from 'react';
@@ -34,7 +33,7 @@ const technicianCategories = [
   { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
   { name: 'Técnico de Puesta en Marcha y Pruebas', description: 'Encargado de configurar los equipos, ponerlos en funcionamiento y comprobar su correcto funcionamiento tras la instalación.' },
   { name: 'Técnico de Mantenimiento', description: 'Realiza diagnósticos, reparaciones y mantenimientos preventivos y correctivos de los equipos instalados.' },
-  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
+  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gesta los recursos y supervisa la ejecución de las instalaciones.' },
   { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
   { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
 ] as const;
@@ -190,7 +189,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         </FormItem>
                         )}
                     />
-                     {categoryDescription && (
+                      {categoryDescription && (
                         <div className="flex-1 mt-2 p-3 bg-muted/50 rounded-lg border text-sm text-muted-foreground animate-in fade-in-50">
                           <div className="flex items-start gap-2">
                             <Info className="h-4 w-4 mt-1 flex-shrink-0 text-primary" />
@@ -219,7 +218,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         <FormItem><FormLabel>Tarifa Extra (Laborable Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Laborable Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormMessage>
+                        <FormItem><FormLabel>Tarifa Extra (Laborable Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
                         <FormItem><FormLabel>Tarifa Extra (Festivo Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
