@@ -51,8 +51,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 
 export default function TechniciansPage() {
   const { toast } = useToast();
-  // Filtramos para mostrar solo empleados y personal de almacén como "Técnicos"
-  const [users, setUsers] = useState<User[]>(initialUsers.filter(u => u.role === 'Empleado' || u.role === 'Almacén'));
+  // Filtramos para mostrar solo los roles que no son de administrador
+  const [users, setUsers] = useState<User[]>(initialUsers.filter(u => u.role !== 'Administrador'));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
@@ -161,7 +161,7 @@ export default function TechniciansPage() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Rol</TableHead>
+                <TableHead>Categoría</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -183,8 +183,9 @@ export default function TechniciansPage() {
                       variant="outline"
                       className={cn(
                         "capitalize",
-                        user.role === "Empleado" && "bg-blue-100 text-blue-800 border-blue-200",
-                        user.role === "Almacén" && "bg-yellow-100 text-yellow-800 border-yellow-200"
+                         user.role.includes('Jefe') && "bg-purple-100 text-purple-800 border-purple-200",
+                         user.role.includes('Instalador') && "bg-blue-100 text-blue-800 border-blue-200",
+                         user.role.includes('Almacén') && "bg-yellow-100 text-yellow-800 border-yellow-200",
                       )}
                     >
                       {user.role}

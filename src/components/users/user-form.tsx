@@ -21,13 +21,26 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { User } from "@/lib/types";
+import type { User, UserRole } from "@/lib/types";
+
+const userRoles: [UserRole, ...UserRole[]] = [
+  'Técnico Ayudante / Auxiliar',
+  'Técnico Instalador',
+  'Técnico Integrador de Sistemas Embarcados',
+  'Técnico de Puesta en Marcha y Pruebas',
+  'Técnico de Mantenimiento',
+  'Jefe de Equipo / Encargado de Instalación',
+  'Técnico de SAT (Servicio de Asistencia Técnica)',
+  'Técnico de Calidad / Certificación',
+  'Administrador',
+  'Almacén'
+];
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  role: z.enum(["Administrador", "Empleado", "Almacén"]),
+  role: z.enum(userRoles),
 });
 
 type UserFormValues = z.infer<typeof formSchema>;
@@ -45,7 +58,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         name: "",
         email: "",
         phone: "",
-        role: "Empleado",
+        role: "Técnico Instalador" as const,
       };
 
   const form = useForm<UserFormValues>({
@@ -105,17 +118,17 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
             name="role"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Rol</FormLabel>
+                <FormLabel>Categoría</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecciona un rol" />
+                      <SelectValue placeholder="Selecciona una categoría" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <SelectItem value="Administrador">Administrador</SelectItem>
-                    <SelectItem value="Empleado">Empleado</SelectItem>
-                    <SelectItem value="Almacén">Almacén</SelectItem>
+                    {userRoles.map(role => (
+                        <SelectItem key={role} value={role}>{role}</SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <FormMessage />

@@ -80,12 +80,24 @@ export type Client = {
   phone: string;
 };
 
+export type UserRole = 
+  | 'Administrador' 
+  | 'Jefe de Equipo / Encargado de Instalación'
+  | 'Técnico Ayudante / Auxiliar'
+  | 'Técnico Instalador'
+  | 'Técnico Integrador de Sistemas Embarcados'
+  | 'Técnico de Puesta en Marcha y Pruebas'
+  | 'Técnico de Mantenimiento'
+  | 'Técnico de SAT (Servicio de Asistencia Técnica)'
+  | 'Técnico de Calidad / Certificación'
+  | 'Almacén';
+
 export type User = {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: 'Administrador' | 'Empleado' | 'Almacén';
+  role: UserRole;
 };
 
 export type Location = {
