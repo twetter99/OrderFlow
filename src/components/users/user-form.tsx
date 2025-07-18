@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -27,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const technicianCategories = [
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -105,9 +105,6 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
-  
-  const watchedRole = useWatch({ control: form.control, name: 'role' });
-  const selectedCategoryDescription = technicianCategories.find(c => c.name === watchedRole)?.description;
 
   function onSubmit(values: UserFormValues) {
     onSave(values);
@@ -160,37 +157,38 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     )}
                     />
                     <FormField
-                    control={form.control}
-                    name="role"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Categoría</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona una categoría" />
-                                </SelectTrigger>
-                            </FormControl>
-                             <SelectContent>
-                                {technicianCategories.map(category => (
-                                    <SelectItem
-                                    key={category.name}
-                                    value={category.name}
-                                    >
-                                    {category.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        {selectedCategoryDescription && (
-                          <FormDescription>
-                            {selectedCategoryDescription}
-                          </FormDescription>
-                        )}
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Categoría</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Selecciona una categoría" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                <TooltipProvider>
+                                  {technicianCategories.map(category => (
+                                    <Tooltip key={category.name} delayDuration={100}>
+                                        <TooltipTrigger asChild>
+                                            <SelectItem value={category.name}>
+                                                {category.name}
+                                            </SelectItem>
+                                        </TooltipTrigger>
+                                        <TooltipContent side="right" align="start">
+                                            <p className="max-w-xs">{category.description}</p>
+                                        </TooltipContent>
+                                    </Tooltip>
+                                  ))}
+                                </TooltipProvider>
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
+                      )}
+                  />
                 </div>
             </CardContent>
         </Card>
