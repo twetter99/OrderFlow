@@ -25,7 +25,6 @@ import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
-import { Info } from 'lucide-react';
 
 const technicianCategories = [
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -33,7 +32,7 @@ const technicianCategories = [
   { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
   { name: 'Técnico de Puesta en Marcha y Pruebas', description: 'Encargado de configurar los equipos, ponerlos en funcionamiento y comprobar su correcto funcionamiento tras la instalación.' },
   { name: 'Técnico de Mantenimiento', description: 'Realiza diagnósticos, reparaciones y mantenimientos preventivos y correctivos de los equipos instalados.' },
-  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gesta los recursos y supervisa la ejecución de las instalaciones.' },
+  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
   { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
   { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
 ] as const;
@@ -70,7 +69,7 @@ interface UserFormProps {
 }
 
 export function UserForm({ user, onSave, onCancel }: UserFormProps) {
-  const [categoryDescription, setCategoryDescription] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
   
   const defaultValues = user
     ? { 
@@ -157,47 +156,44 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         </FormItem>
                     )}
                     />
-                    <div className="flex items-start gap-4">
-                      <FormField
-                        control={form.control}
-                        name="role"
-                        render={({ field }) => (
-                        <FormItem className="flex-1">
-                            <FormLabel>Categoría</FormLabel>
-                            <Select 
-                              onValueChange={field.onChange} 
-                              defaultValue={field.value}
-                            >
-                                <FormControl>
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Selecciona una categoría" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent onPointerLeave={() => setCategoryDescription(null)}>
-                                  {technicianCategories.map(category => (
-                                    <SelectItem 
-                                      key={category.name} 
-                                      value={category.name}
-                                      onPointerEnter={() => setCategoryDescription(category.description)}
-                                    >
-                                        {category.name}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                      {categoryDescription && (
-                        <div className="flex-1 mt-2 p-3 bg-muted/50 rounded-lg border text-sm text-muted-foreground animate-in fade-in-50">
-                          <div className="flex items-start gap-2">
-                            <Info className="h-4 w-4 mt-1 flex-shrink-0 text-primary" />
-                            <p>{categoryDescription}</p>
-                          </div>
-                        </div>
+                    <FormField
+                      control={form.control}
+                      name="role"
+                      render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Categoría</FormLabel>
+                          <Select 
+                            onValueChange={field.onChange} 
+                            defaultValue={field.value}
+                          >
+                              <FormControl>
+                                  <SelectTrigger>
+                                      <SelectValue placeholder="Selecciona una categoría" />
+                                  </SelectTrigger>
+                              </FormControl>
+                              <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
+                                {technicianCategories.map(category => (
+                                  <SelectItem 
+                                    key={category.name} 
+                                    value={category.name}
+                                    onPointerEnter={() => setHoveredCategory(category.name)}
+                                  >
+                                    <div>
+                                      <div>{category.name}</div>
+                                      {hoveredCategory === category.name && (
+                                        <div className="text-xs text-muted-foreground whitespace-normal pt-1">
+                                          {category.description}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                          </Select>
+                          <FormMessage />
+                      </FormItem>
                       )}
-                    </div>
+                  />
                 </div>
             </CardContent>
         </Card>
