@@ -5,7 +5,7 @@
 import React, { useState } from 'react';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -26,7 +26,7 @@ import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Info } from 'lucide-react';
 
 const technicianCategories = [
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -71,10 +71,12 @@ interface UserFormProps {
 }
 
 export function UserForm({ user, onSave, onCancel }: UserFormProps) {
+  const [categoryDescription, setCategoryDescription] = useState<string | null>(null);
+  
   const defaultValues = user
     ? { 
         ...user,
-        role: user.role as UserRole, // Aseguramos el tipo
+        role: user.role as UserRole,
         rates: user.rates || {
           rateWorkHour: 0,
           rateTravelHour: 0,
@@ -156,39 +158,47 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         </FormItem>
                     )}
                     />
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
-                      <FormItem>
-                          <FormLabel>Categoría</FormLabel>
-                          <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Selecciona una categoría" />
-                                  </SelectTrigger>
-                              </FormControl>
-                              <SelectContent>
-                                <TooltipProvider>
+                    <div className="flex items-start gap-4">
+                      <FormField
+                        control={form.control}
+                        name="role"
+                        render={({ field }) => (
+                        <FormItem className="flex-1">
+                            <FormLabel>Categoría</FormLabel>
+                            <Select 
+                              onValueChange={field.onChange} 
+                              defaultValue={field.value}
+                            >
+                                <FormControl>
+                                    <SelectTrigger>
+                                        <SelectValue placeholder="Selecciona una categoría" />
+                                    </SelectTrigger>
+                                </FormControl>
+                                <SelectContent onPointerLeave={() => setCategoryDescription(null)}>
                                   {technicianCategories.map(category => (
-                                    <Tooltip key={category.name} delayDuration={100}>
-                                        <TooltipTrigger asChild>
-                                            <SelectItem value={category.name}>
-                                                {category.name}
-                                            </SelectItem>
-                                        </TooltipTrigger>
-                                        <TooltipContent side="right" align="start">
-                                            <p className="max-w-xs">{category.description}</p>
-                                        </TooltipContent>
-                                    </Tooltip>
+                                    <SelectItem 
+                                      key={category.name} 
+                                      value={category.name}
+                                      onPointerEnter={() => setCategoryDescription(category.description)}
+                                    >
+                                        {category.name}
+                                    </SelectItem>
                                   ))}
-                                </TooltipProvider>
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
-                      </FormItem>
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                     {categoryDescription && (
+                        <div className="flex-1 mt-2 p-3 bg-muted/50 rounded-lg border text-sm text-muted-foreground animate-in fade-in-50">
+                          <div className="flex items-start gap-2">
+                            <Info className="h-4 w-4 mt-1 flex-shrink-0 text-primary" />
+                            <p>{categoryDescription}</p>
+                          </div>
+                        </div>
                       )}
-                  />
+                    </div>
                 </div>
             </CardContent>
         </Card>
@@ -209,7 +219,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         <FormItem><FormLabel>Tarifa Extra (Laborable Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Laborable Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><FormLabel>Tarifa Extra (Laborable Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormMessage>
                     )} />
                       <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
                         <FormItem><FormLabel>Tarifa Extra (Festivo Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
