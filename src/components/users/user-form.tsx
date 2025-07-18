@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const technicianCategories = [
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -59,7 +60,6 @@ const formSchema = z.object({
   rates: rateSchema,
 });
 
-
 type UserFormValues = z.infer<typeof formSchema>;
 
 interface UserFormProps {
@@ -67,6 +67,95 @@ interface UserFormProps {
   onSave: (values: UserFormValues) => void;
   onCancel: () => void;
 }
+
+// Helper component for currency input
+function CurrencyInput({
+  field,
+  label,
+  tooltipText,
+}: {
+  field: any;
+  label: string;
+  tooltipText: string;
+}) {
+  const [isFocused, setIsFocused] = useState(false);
+  const [displayValue, setDisplayValue] = useState('');
+
+  const formatCurrency = (value: number | string) => {
+    const num = Number(value);
+    if (isNaN(num)) return '';
+    return new Intl.NumberFormat('es-ES', {
+      style: 'currency',
+      currency: 'EUR',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(num);
+  };
+  
+  useEffect(() => {
+    // Initialize display value
+    if (field.value !== undefined && !isFocused) {
+      setDisplayValue(formatCurrency(field.value));
+    } else if (field.value !== undefined) {
+       setDisplayValue(String(field.value));
+    }
+  }, [field.value, isFocused]);
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    setDisplayValue(field.value === undefined ? '' : String(field.value));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    setIsFocused(false);
+    const rawValue = e.target.value;
+    const numericValue = parseFloat(rawValue.replace(',', '.'));
+    if (!isNaN(numericValue)) {
+      field.onChange(numericValue);
+      setDisplayValue(formatCurrency(numericValue));
+    } else {
+      field.onChange(0);
+      setDisplayValue(formatCurrency(0));
+    }
+  };
+  
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      setDisplayValue(e.target.value);
+  }
+
+  return (
+    <div className="space-y-2">
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <FormLabel className="cursor-help">{label}</FormLabel>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>{tooltipText}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <div className="relative">
+        <FormControl>
+          <Input
+            type={isFocused ? 'number' : 'text'}
+            value={displayValue}
+            onFocus={handleFocus}
+            onBlur={handleBlur}
+            onChange={handleChange}
+            step="0.01"
+            className="pr-8"
+          />
+        </FormControl>
+        <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-muted-foreground">
+          €
+        </div>
+      </div>
+       <FormMessage />
+    </div>
+  );
+}
+
 
 export function UserForm({ user, onSave, onCancel }: UserFormProps) {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
@@ -162,10 +251,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                       render={({ field }) => (
                       <FormItem>
                           <FormLabel>Categoría</FormLabel>
-                          <Select 
-                            onValueChange={field.onChange} 
-                            defaultValue={field.value}
-                          >
+                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                   <SelectTrigger>
                                       <SelectValue placeholder="Selecciona una categoría" />
@@ -178,14 +264,12 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                                     value={category.name}
                                     onPointerEnter={() => setHoveredCategory(category.name)}
                                   >
-                                    <div>
-                                      <div>{category.name}</div>
-                                      {hoveredCategory === category.name && (
-                                        <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
+                                    <div>{category.name}</div>
+                                     {hoveredCategory === category.name && (
+                                        <div className="text-base font-normal text-foreground/80 whitespace-normal mt-1">
                                           {category.description}
                                         </div>
                                       )}
-                                    </div>
                                   </SelectItem>
                                 ))}
                               </SelectContent>
@@ -200,31 +284,37 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
 
         <Card>
             <CardHeader><CardTitle>Tabla de Tarifas (€/hora)</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                    <FormField name="rates.rateWorkHour" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Hora de Trabajo</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+            <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField name="rates.rateWorkHour" render={({ field }) => (
+                        <FormItem><CurrencyInput field={field} label="Hora de Trabajo" tooltipText="Tarifa estándar por hora de trabajo efectivo en el proyecto." /></FormItem>
                     )} />
                      <FormField name="rates.rateTravelHour" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Hora de Desplazamiento</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Hora de Desplazamiento" tooltipText="Tarifa por hora durante los desplazamientos hacia/desde el lugar de trabajo."/></FormItem>
                     )} />
                 </div>
-                <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField name="rates.rateOvertimeWeekdayDay" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Laborable Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra Laboral (Día)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario diurno." /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Laborable Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra Laboral (Noche)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario nocturno." /></FormItem>
                     )} />
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Festivo Diurna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra Festivo (Día)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario diurno." /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekendNight" render={({ field }) => (
-                        <FormItem><FormLabel>Tarifa Extra (Festivo Nocturna)</FormLabel><FormControl><Input type="number" step="0.01" {...field} /></FormControl><FormMessage /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra Festivo (Noche)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario nocturno."/></FormItem>
                     )} />
                 </div>
                  <FormField name="rates.rateNotes" render={({ field }) => (
-                    <FormItem><FormLabel>Notas sobre Tarifas</FormLabel><FormControl><Textarea placeholder="Añade cualquier observación sobre las tarifas de este técnico..." {...field} /></FormControl><FormMessage /></FormItem>
+                    <FormItem>
+                        <FormLabel>Notas sobre Tarifas</FormLabel>
+                        <FormControl><Textarea placeholder="Añade cualquier observación sobre las tarifas de este técnico..." {...field} /></FormControl>
+                        <FormMessage />
+                    </FormItem>
                 )} />
             </CardContent>
         </Card>
