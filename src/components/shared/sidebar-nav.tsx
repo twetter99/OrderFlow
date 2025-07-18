@@ -10,51 +10,44 @@ import { cn } from "@/lib/utils";
 
 const navGroups = [
   {
-    items: [
-      { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
-    ],
-  },
-  {
-    title: "Proyectos",
+    title: "OPERACIONES",
     items: [
       { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
       { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
-      { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
       { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
+      { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
       { href: "/work-in-progress", label: "Planificación Desplazamientos", icon: Plane },
-      { href: "/work-in-progress", label: "Seguimiento y Control", icon: Activity },
-      { href: "/work-in-progress", label: "Documentación", icon: FileText },
-    ]
-  },
-  {
-    title: "Logística",
-    items: [
-      { href: "/inventory", label: "Inventario", icon: Warehouse },
-      { href: "/locations", label: "Almacenes", icon: Building2 },
     ],
   },
   {
-    title: "Adquisiciones",
+    title: "GESTIÓN DE MATERIALES",
     items: [
+      { href: "/inventory", label: "Inventario", icon: Warehouse },
+      { href: "/locations", label: "Almacenes", icon: Building2 },
       { href: "/purchasing", label: "Compras", icon: ShoppingCart },
       { href: "/suppliers", label: "Proveedores", icon: Truck },
     ]
   },
   {
-    title: "Inteligencia",
+    title: "ANÁLISIS Y CONTROL",
     items: [
       { href: "/reports", label: "Reportes", icon: BarChart3 },
       { href: "/ai-assistant", label: "Asistente IA", icon: Bot },
+      { href: "/work-in-progress", label: "Seguimiento y Control", icon: Activity },
+      { href: "/work-in-progress", label: "Documentación", icon: FileText },
     ],
+  },
+  {
+    title: "ADMINISTRACIÓN",
+    items: [
+        { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
+        { href: "/clients", label: "Clientes", icon: Building2 },
+        { href: "/users", label: "Usuarios", icon: Users },
+        { href: "/settings", label: "Configuración App", icon: Settings },
+    ]
   }
 ];
 
-
-const bottomNavItems = [
-  { href: "/clients", label: "Clientes", icon: Building2 },
-  { href: "/users", label: "Usuarios", icon: Users },
-  { href: "/settings", label: "Configuración App", icon: Settings },
-];
 
 export function SidebarNav() {
   const pathname = usePathname();
@@ -106,23 +99,7 @@ export function SidebarNav() {
           </div>
         ))}
       </nav>
-      <div className="mt-auto p-2 space-y-1 border-t">
-        {bottomNavItems.map((item) => {
-            const isActive = isLinkActive(item.href);
-            return (
-                <Link
-                    key={item.href}
-                    href={item.href}
-                    className={cn(
-                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                    isActive && "bg-muted text-primary"
-                    )}
-                >
-                    <item.icon className="h-4 w-4" />
-                    <span>{item.label}</span>
-                </Link>
-        )})}
-      </div>
+      {/* El pie de página con los enlaces de administración se ha movido al grupo principal de navegación */}
     </aside>
   );
 }
