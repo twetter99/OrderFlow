@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -78,8 +78,8 @@ function CurrencyInput({
   label: string;
   tooltipText: string;
 }) {
-  const [isFocused, setIsFocused] = useState(false);
-  const [displayValue, setDisplayValue] = useState('');
+  const [isFocused, setIsFocused] = React.useState(false);
+  const [displayValue, setDisplayValue] = React.useState('');
 
   const formatCurrency = (value: number | string) => {
     const num = Number(value);
@@ -92,35 +92,43 @@ function CurrencyInput({
     }).format(num);
   };
   
-  useEffect(() => {
-    // Initialize display value
-    if (field.value !== undefined && !isFocused) {
-      setDisplayValue(formatCurrency(field.value));
-    } else if (field.value !== undefined) {
-       setDisplayValue(String(field.value));
+  React.useEffect(() => {
+    // If not focused, format the value. If value is 0, show empty to allow placeholder to appear.
+    if (!isFocused) {
+        setDisplayValue(field.value === 0 || field.value === undefined ? '' : formatCurrency(field.value));
+    } else {
+        // If focused, show the raw number value, but show empty if it's 0.
+        setDisplayValue(field.value === 0 || field.value === undefined ? '' : String(field.value));
     }
   }, [field.value, isFocused]);
 
-  const handleFocus = () => {
+  const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    setDisplayValue(field.value === undefined ? '' : String(field.value));
+    e.target.select(); // Select content on focus
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
     const rawValue = e.target.value;
+    // Allow empty input, which will be treated as 0
+    if (rawValue === '') {
+        field.onChange(0);
+        return;
+    }
     const numericValue = parseFloat(rawValue.replace(',', '.'));
     if (!isNaN(numericValue)) {
       field.onChange(numericValue);
-      setDisplayValue(formatCurrency(numericValue));
     } else {
-      field.onChange(0);
-      setDisplayValue(formatCurrency(0));
+      field.onChange(0); // If parsing fails, revert to 0
     }
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      setDisplayValue(e.target.value);
+      // Only allow numbers and one comma/dot
+      const value = e.target.value;
+      if (/^[0-9]*[,.]?[0-9]*$/.test(value)) {
+        setDisplayValue(value);
+      }
   }
 
   return (
@@ -138,12 +146,12 @@ function CurrencyInput({
       <div className="relative">
         <FormControl>
           <Input
-            type={isFocused ? 'number' : 'text'}
+            type="text" // Use text to allow formatting
             value={displayValue}
+            placeholder="0,00 €"
             onFocus={handleFocus}
             onBlur={handleBlur}
             onChange={handleChange}
-            step="0.01"
             className="pr-8"
           />
         </FormControl>
@@ -158,7 +166,7 @@ function CurrencyInput({
 
 
 export function UserForm({ user, onSave, onCancel }: UserFormProps) {
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
+  const [hoveredCategory, setHoveredCategory] = React.useState<string | null>(null);
   
   const defaultValues = user
     ? { 
@@ -266,7 +274,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                                   >
                                     <div>{category.name}</div>
                                      {hoveredCategory === category.name && (
-                                        <div className="text-base font-normal text-foreground/80 whitespace-normal mt-1">
+                                        <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
                                           {category.description}
                                         </div>
                                       )}
@@ -285,28 +293,24 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         <Card>
             <CardHeader><CardTitle>Tabla de Tarifas (€/hora)</CardTitle></CardHeader>
             <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
                      <FormField name="rates.rateWorkHour" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Hora de Trabajo" tooltipText="Tarifa estándar por hora de trabajo efectivo en el proyecto." /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Hora trabajo" tooltipText="Tarifa estándar por hora de trabajo efectivo en el proyecto." /></FormItem>
                     )} />
                      <FormField name="rates.rateTravelHour" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Hora de Desplazamiento" tooltipText="Tarifa por hora durante los desplazamientos hacia/desde el lugar de trabajo."/></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Hora desplaz." tooltipText="Tarifa por hora durante los desplazamientos hacia/desde el lugar de trabajo."/></FormItem>
                     )} />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField name="rates.rateOvertimeWeekdayDay" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra Laboral (Día)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario diurno." /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra laboral (día)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario diurno." /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra Laboral (Noche)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario nocturno." /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra laboral (noche)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario nocturno." /></FormItem>
                     )} />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra Festivo (Día)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario diurno." /></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra festivo (día)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario diurno." /></FormItem>
                     )} />
                       <FormField name="rates.rateOvertimeWeekendNight" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra Festivo (Noche)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario nocturno."/></FormItem>
+                        <FormItem><CurrencyInput field={field} label="Extra festivo (noche)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario nocturno."/></FormItem>
                     )} />
                 </div>
                  <FormField name="rates.rateNotes" render={({ field }) => (
