@@ -81,9 +81,6 @@ export type Client = {
 };
 
 export type UserRole = 
-  | 'Administrador'
-  | 'Almacén'
-  | 'Empleado' // Este es un rol genérico que puede ser reemplazado por categorías más específicas
   | 'Técnico Ayudante / Auxiliar'
   | 'Técnico Instalador'
   | 'Técnico Integrador de Sistemas Embarcados'
@@ -93,12 +90,23 @@ export type UserRole =
   | 'Técnico de SAT (Servicio de Asistencia Técnica)'
   | 'Técnico de Calidad / Certificación';
 
+export type UserRates = {
+    rateWorkHour: number;
+    rateTravelHour: number;
+    rateOvertimeWeekdayDay: number;
+    rateOvertimeWeekdayNight: number;
+    rateOvertimeWeekendDay: number;
+    rateOvertimeWeekendNight: number;
+    rateNotes?: string;
+}
+
 export type User = {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: UserRole;
+  role: UserRole | 'Administrador' | 'Almacén'; // Almacén y Admin no son categorías de técnico
+  rates?: UserRates;
 };
 
 export type Location = {

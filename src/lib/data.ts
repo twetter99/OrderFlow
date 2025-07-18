@@ -159,9 +159,21 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
-  { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
-  { id: 'WF-USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Empleado' },
+  {
+    id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador', rates: {
+        rateWorkHour: 30, rateTravelHour: 15, rateOvertimeWeekdayDay: 45, rateOvertimeWeekdayNight: 50, rateOvertimeWeekendDay: 60, rateOvertimeWeekendNight: 65,
+    }
+  },
+  {
+    id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén', rates: {
+      rateWorkHour: 20, rateTravelHour: 10, rateOvertimeWeekdayDay: 30, rateOvertimeWeekdayNight: 35, rateOvertimeWeekendDay: 40, rateOvertimeWeekendNight: 45,
+    }
+  },
+  {
+    id: 'WF-USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Técnico Instalador', rates: {
+        rateWorkHour: 25, rateTravelHour: 12, rateOvertimeWeekdayDay: 37.5, rateOvertimeWeekdayNight: 42.5, rateOvertimeWeekendDay: 50, rateOvertimeWeekendNight: 55,
+    }
+  },
 ];
 const mockLocations: Location[] = [
     { id: 'LOC-001', name: 'Almacén Principal', description: 'Almacén principal para componentes generales.' },
