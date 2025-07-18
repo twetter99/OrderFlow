@@ -28,6 +28,7 @@ import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const technicianCategories = [
+  { name: 'Operador', description: 'Personal encargado de la operación de maquinaria o sistemas específicos.' },
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
   { name: 'Técnico Instalador', description: 'Realiza la instalación física y el conexionado de los equipos embarcados en vehículos.' },
   { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
@@ -208,118 +209,118 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <Card>
-            <CardHeader><CardTitle>Información Personal</CardTitle></CardHeader>
-            <CardContent className="space-y-4">
-                <FormField
-                control={form.control}
-                name="name"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Nombre Completo</FormLabel>
-                    <FormControl>
-                        <Input placeholder="p. ej., Juan Pérez" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-                />
-                <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Correo Electrónico</FormLabel>
-                        <FormControl>
-                            <Input type="email" placeholder="p. ej., juan.perez@example.com" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Teléfono</FormLabel>
-                        <FormControl>
-                            <Input placeholder="p. ej., 600 123 456" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                      control={form.control}
-                      name="role"
-                      render={({ field }) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Card>
+              <CardHeader><CardTitle>Información Personal</CardTitle></CardHeader>
+              <CardContent className="space-y-4">
+                  <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Categoría / Rol</FormLabel>
-                           <Select onValueChange={field.onChange} defaultValue={field.value}>
-                              <FormControl>
-                                  <SelectTrigger>
-                                      <SelectValue placeholder="Selecciona una categoría" />
-                                  </SelectTrigger>
-                              </FormControl>
-                              <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
-                                {technicianCategories.map(category => (
-                                  <SelectItem 
-                                    key={category.name} 
-                                    value={category.name}
-                                    onPointerEnter={() => setHoveredCategory(category.name)}
-                                  >
-                                    <div>{category.name}</div>
-                                     {hoveredCategory === category.name && (
-                                        <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
-                                          {category.description}
-                                        </div>
-                                      )}
-                                  </SelectItem>
-                                ))}
-                              </SelectContent>
-                          </Select>
-                          <FormMessage />
+                      <FormLabel>Nombre Completo</FormLabel>
+                      <FormControl>
+                          <Input placeholder="p. ej., Juan Pérez" {...field} />
+                      </FormControl>
+                      <FormMessage />
                       </FormItem>
+                  )}
+                  />
+                  <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                          <FormItem>
+                          <FormLabel>Correo Electrónico</FormLabel>
+                          <FormControl>
+                              <Input type="email" placeholder="p. ej., juan.perez@example.com" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                          </FormItem>
                       )}
                   />
-                </div>
-            </CardContent>
-        </Card>
-
-        <Card>
-            <CardHeader><CardTitle>Tabla de Tarifas (€/hora)</CardTitle></CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
-                     <FormField name="rates.rateWorkHour" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Hora trabajo" tooltipText="Tarifa estándar por hora de trabajo efectivo en el proyecto." /></FormItem>
-                    )} />
-                     <FormField name="rates.rateTravelHour" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Hora desplaz." tooltipText="Tarifa por hora durante los desplazamientos hacia/desde el lugar de trabajo."/></FormItem>
-                    )} />
-                     <FormField name="rates.rateOvertimeWeekdayDay" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra laboral (día)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario diurno." /></FormItem>
-                    )} />
-                      <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra laboral (noche)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario nocturno." /></FormItem>
-                    )} />
-                      <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra festivo (día)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario diurno." /></FormItem>
-                    )} />
-                      <FormField name="rates.rateOvertimeWeekendNight" render={({ field }) => (
-                        <FormItem><CurrencyInput field={field} label="Extra festivo (noche)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario nocturno."/></FormItem>
-                    )} />
-                </div>
-                 <FormField name="rates.rateNotes" render={({ field }) => (
+                  <FormField
+                  control={form.control}
+                  name="phone"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Teléfono</FormLabel>
+                      <FormControl>
+                          <Input placeholder="p. ej., 600 123 456" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                      </FormItem>
+                  )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="role"
+                    render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Notas sobre Tarifas</FormLabel>
-                        <FormControl><Textarea placeholder="Añade cualquier observación sobre las tarifas de este técnico..." {...field} /></FormControl>
+                        <FormLabel>Categoría / Rol</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una categoría" />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
+                              {technicianCategories.map(category => (
+                                <SelectItem 
+                                  key={category.name} 
+                                  value={category.name}
+                                  onPointerEnter={() => setHoveredCategory(category.name)}
+                                >
+                                  <div>{category.name}</div>
+                                    {hoveredCategory === category.name && (
+                                      <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
+                                        {category.description}
+                                      </div>
+                                    )}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                        </Select>
                         <FormMessage />
                     </FormItem>
-                )} />
-            </CardContent>
-        </Card>
+                    )}
+                />
+              </CardContent>
+          </Card>
+          
+          <Card>
+              <CardHeader><CardTitle>Tabla de Tarifas (€/hora)</CardTitle></CardHeader>
+              <CardContent className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4">
+                      <FormField name="rates.rateWorkHour" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Hora trabajo" tooltipText="Tarifa estándar por hora de trabajo efectivo en el proyecto." /></FormItem>
+                      )} />
+                      <FormField name="rates.rateTravelHour" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Hora desplaz." tooltipText="Tarifa por hora durante los desplazamientos hacia/desde el lugar de trabajo."/></FormItem>
+                      )} />
+                      <FormField name="rates.rateOvertimeWeekdayDay" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Extra laboral (día)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario diurno." /></FormItem>
+                      )} />
+                        <FormField name="rates.rateOvertimeWeekdayNight" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Extra laboral (noche)" tooltipText="Tarifa para horas extra realizadas en día laborable, en horario nocturno." /></FormItem>
+                      )} />
+                        <FormField name="rates.rateOvertimeWeekendDay" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Extra festivo (día)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario diurno." /></FormItem>
+                      )} />
+                        <FormField name="rates.rateOvertimeWeekendNight" render={({ field }) => (
+                          <FormItem><CurrencyInput field={field} label="Extra festivo (noche)" tooltipText="Tarifa para horas extra realizadas en sábado, domingo o festivo, en horario nocturno."/></FormItem>
+                      )} />
+                  </div>
+                  <FormField name="rates.rateNotes" render={({ field }) => (
+                      <FormItem>
+                          <FormLabel>Notas sobre Tarifas</FormLabel>
+                          <FormControl><Textarea placeholder="Añade cualquier observación sobre las tarifas de este técnico..." {...field} /></FormControl>
+                          <FormMessage />
+                      </FormItem>
+                  )} />
+              </CardContent>
+          </Card>
+        </div>
 
 
         <div className="flex justify-end gap-2 pt-4">

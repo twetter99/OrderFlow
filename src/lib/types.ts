@@ -82,6 +82,7 @@ export type Client = {
 };
 
 export type UserRole = 
+  | 'Operador'
   | 'Técnico Ayudante / Auxiliar'
   | 'Técnico Instalador'
   | 'Técnico Integrador de Sistemas Embarcados'

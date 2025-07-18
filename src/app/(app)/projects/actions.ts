@@ -2,16 +2,15 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, runTransaction } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
-import type { Project } from '@/lib/types';
+import type { Project, User } from '@/lib/types';
 
 // Omit 'id' for creation, as Firestore generates it.
 type ProjectData = Omit<Project, 'id'>;
 
 export async function addProject(data: ProjectData) {
   try {
-    // Firestore handles date objects correctly
     const dataToSave = {
         ...data,
         startDate: new Date(data.startDate),
@@ -31,7 +30,6 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
         const projectRef = doc(db, 'projects', id);
         const dataToUpdate: any = { ...data };
 
-        // Convert date strings back to Date objects if they exist
         if (data.startDate) {
             dataToUpdate.startDate = new Date(data.startDate);
         }
@@ -69,4 +67,43 @@ export async function deleteMultipleProjects(ids: string[]) {
         console.error("Error deleting multiple projects from Firestore:", error);
         return { success: false, message: 'No se pudieron eliminar los proyectos.' };
     }
+}
+
+export async function getProjectUsers(projectId: string): Promise<{ projectManager: User | null; team: User[] }> {
+  try {
+    const projectDoc = await runTransaction(db, async (transaction) => {
+      const projectRef = doc(db, 'projects', projectId);
+      const projectSnap = await transaction.get(projectRef);
+      if (!projectSnap.exists()) {
+        throw new Error("El proyecto no existe.");
+      }
+      const projectData = projectSnap.data() as Project;
+      
+      let projectManager: User | null = null;
+      if (projectData.responsable_proyecto_id) {
+        const pmRef = doc(db, 'users', projectData.responsable_proyecto_id);
+        const pmSnap = await transaction.get(pmRef);
+        if (pmSnap.exists()) {
+          projectManager = { id: pmSnap.id, ...pmSnap.data() } as User;
+        }
+      }
+
+      const team: User[] = [];
+      if (projectData.equipo_tecnico_ids && projectData.equipo_tecnico_ids.length > 0) {
+        const teamRefs = projectData.equipo_tecnico_ids.map(id => doc(db, 'users', id));
+        const teamSnaps = await Promise.all(teamRefs.map(ref => transaction.get(ref)));
+        teamSnaps.forEach(snap => {
+          if (snap.exists()) {
+            team.push({ id: snap.id, ...snap.data() } as User);
+          }
+        });
+      }
+
+      return { projectManager, team };
+    });
+    return projectDoc;
+  } catch (e) {
+    console.error("Error getting project users:", e);
+    return { projectManager: null, team: [] };
+  }
 }

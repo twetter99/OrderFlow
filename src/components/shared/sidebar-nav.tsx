@@ -24,6 +24,7 @@ import {
     Package,
     UserCheck,
     UserCog,
+    UserSquare,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -101,6 +102,7 @@ const navGroups = [
           { href: "/clients", label: "Clientes", icon: Building2 },
           { href: "/users", label: "Todos los Usuarios", icon: Users },
           { href: "/technicians", label: "Técnicos", icon: UserCheck },
+          { href: "/operadores", label: "Operadores", icon: UserSquare },
           { href: "/project-managers", label: "Responsables de Proyecto", icon: UserCog },
           { href: "/settings", label: "Configuración App", icon: Settings },
         ]
