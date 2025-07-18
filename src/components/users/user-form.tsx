@@ -181,7 +181,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                                     <div>
                                       <div>{category.name}</div>
                                       {hoveredCategory === category.name && (
-                                        <div className="text-xs text-muted-foreground whitespace-normal pt-1">
+                                        <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
                                           {category.description}
                                         </div>
                                       )}
