@@ -61,9 +61,9 @@ export function SidebarNav() {
   const pathname = usePathname();
 
   const isLinkActive = (href: string, isParent = false) => {
-    if (href === "/dashboard") return pathname === href;
-    if (href === "/inventory") return pathname === href;
-    if (href === "/locations") return pathname === href;
+    if (href === "/dashboard" || href === "/inventory" || href === "/locations") {
+      return pathname === href;
+    }
     if (isParent) return pathname.startsWith(href);
     return pathname === href;
   };
@@ -80,15 +80,16 @@ export function SidebarNav() {
       </div>
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navGroups.map((group, index) => (
-          <div key={index} className="space-y-1">
+          <div key={group.title} className="space-y-1">
             {group.title && (
                  <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
             )}
             {group.items.map((item) => {
+              const uniqueKey = `${item.label}-${item.href}`;
               if (item.subItems) {
                 const isActive = isLinkActive(item.href, true) || isSubItemActive(item.subItems);
                  return (
-                  <Collapsible key={item.label} defaultOpen={isActive}>
+                  <Collapsible key={uniqueKey} defaultOpen={isActive}>
                     <CollapsibleTrigger className="w-full">
                        <div
                         className={cn(
@@ -107,9 +108,10 @@ export function SidebarNav() {
                        <div className="pl-8 pt-1 border-l border-dashed ml-5 my-1">
                         {item.subItems.map(subItem => {
                            const isSubActive = isLinkActive(subItem.href);
+                           const subUniqueKey = `${subItem.label}-${subItem.href}`;
                            return (
                                 <Link
-                                    key={subItem.href}
+                                    key={subUniqueKey}
                                     href={subItem.href}
                                     className={cn(
                                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm",
@@ -130,7 +132,7 @@ export function SidebarNav() {
               const isActive = isLinkActive(item.href);
               return (
                 <Link
-                  key={item.href}
+                  key={uniqueKey}
                   href={item.href}
                   className={cn(
                     "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
