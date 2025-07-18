@@ -49,7 +49,17 @@ import type { Project, Client, User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { db } from "@/lib/firebase";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
+import { addProject, updateProject, deleteProject, deleteMultipleProjects } from "./actions";
+
+// Helper to convert Firestore Timestamps to string dates
+const convertTimestamps = (project: any): Project => {
+    return {
+      ...project,
+      startDate: project.startDate instanceof Timestamp ? project.startDate.toDate().toISOString() : project.startDate,
+      endDate: project.endDate instanceof Timestamp ? project.endDate.toDate().toISOString() : project.endDate,
+    };
+};
 
 export default function ProjectsPage() {
   const { toast } = useToast();
@@ -60,22 +70,26 @@ export default function ProjectsPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<Project | null>(null);
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   
   useEffect(() => {
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
-      const projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+      const projectsData = snapshot.docs.map(doc => convertTimestamps({ id: doc.id, ...doc.data() }));
       setProjects(projectsData);
       setLoading(false);
     }, (error) => {
       console.error("Error fetching projects: ", error);
+      toast({ variant: "destructive", title: "Error de Carga", description: "No se pudieron cargar los proyectos desde Firestore." });
       setLoading(false);
     });
+
     const unsubClients = onSnapshot(collection(db, "clients"), (snapshot) => {
       const clientsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client));
       setClients(clientsData);
     });
+    
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersData);
@@ -86,7 +100,7 @@ export default function ProjectsPage() {
       unsubClients();
       unsubUsers();
     }
-  }, []);
+  }, [toast]);
 
   const handleAddClick = () => {
     setSelectedProject(null);
@@ -98,42 +112,51 @@ export default function ProjectsPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (project: Project) => {
-    setSelectedProject(project);
+  const handleDeleteTrigger = (project: Project) => {
+    setProjectToDelete(project);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
+    setProjectToDelete(null); // Ensure single delete is not triggered
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
+  const handleSave = async (values: any) => {
     const clientName = clients.find(c => c.id === values.clientId)?.name || 'Desconocido';
     const valuesToSave = { ...values, client: clientName };
 
-    if (selectedProject) {
-      // Implement update logic here
-      console.log("Updating project", selectedProject.id, valuesToSave);
-      toast({ title: "Proyecto actualizado", description: "El proyecto se ha actualizado correctamente." });
+    const result = selectedProject 
+      ? await updateProject(selectedProject.id, valuesToSave)
+      : await addProject(valuesToSave);
+
+    if (result.success) {
+      toast({ title: selectedProject ? "Proyecto actualizado" : "Proyecto creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      // Implement create logic here
-      console.log("Creating new project", valuesToSave);
-      toast({ title: "Proyecto creado", description: "El nuevo proyecto se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        // Implement bulk delete logic here
-        toast({ variant: "destructive", title: "Proyectos eliminados", description: `${selectedRowIds.length} proyectos han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedProject) {
-      // Implement single delete logic here
-      toast({ variant: "destructive", title: "Proyecto eliminado", description: "El proyecto se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    let result;
+    if (projectToDelete) {
+        result = await deleteProject(projectToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleProjects(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
-    setSelectedProject(null);
+    setProjectToDelete(null);
+    setSelectedRowIds([]);
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -153,7 +176,7 @@ export default function ProjectsPage() {
   };
 
   if (loading) {
-    return <div>Cargando proyectos...</div>;
+    return <div>Cargando proyectos desde Firestore...</div>;
   }
 
   return (
@@ -256,7 +279,7 @@ export default function ProjectsPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(project)}
+                            onClick={() => handleDeleteTrigger(project)}
                           >
                             Eliminar
                           </DropdownMenuItem>
@@ -302,7 +325,7 @@ export default function ProjectsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proyectos seleccionados.` : " el proyecto."}
+              {projectToDelete ? ` el proyecto "${projectToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} proyectos seleccionados.` : " el proyecto seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
