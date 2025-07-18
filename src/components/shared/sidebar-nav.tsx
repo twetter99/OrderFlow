@@ -21,10 +21,7 @@ import {
     Activity, 
     FileText, 
     ChevronDown,
-    GanttChartSquare,
     Package,
-    BarChartHorizontal,
-    UserCog
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -35,7 +32,6 @@ import React from "react";
 const navGroups = [
   {
     title: "OPERACIONES",
-    icon: GanttChartSquare,
     items: [
       { 
         label: "Proyectos", 
@@ -58,11 +54,10 @@ const navGroups = [
   },
   {
     title: "GESTIÓN DE MATERIALES",
-    icon: Package,
     items: [
       { 
         label: "Logística",
-        icon: Warehouse,
+        icon: Package,
         subItems: [
           { href: "/inventory", label: "Inventario", icon: Warehouse },
           { href: "/locations", label: "Almacenes", icon: Building2 },
@@ -80,7 +75,6 @@ const navGroups = [
   },
   {
     title: "ANÁLISIS Y CONTROL",
-    icon: BarChartHorizontal,
     items: [
       {
         label: "Inteligencia",
@@ -96,7 +90,6 @@ const navGroups = [
   },
   {
     title: "ADMINISTRACIÓN",
-    icon: UserCog,
     items: [
       {
         label: "Sistema",
@@ -130,7 +123,7 @@ export function SidebarNav() {
         {navGroups.map((group, index) => (
           <div key={group.title} className="space-y-1">
             {group.title && (
-                 <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
+                 <h2 className="px-3 py-2 text-sm font-semibold text-muted-foreground tracking-wider uppercase">{group.title}</h2>
             )}
             {group.items.map((item) => {
               const uniqueKey = `${item.label}`;
