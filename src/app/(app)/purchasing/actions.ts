@@ -1,0 +1,56 @@
+
+'use server';
+
+import { db } from '@/lib/firebase';
+import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { revalidatePath } from 'next/cache';
+
+export async function addPurchaseOrder(data: any) {
+  try {
+    // Ensure date objects are correctly handled by Firestore
+    const dataToSave = {
+        ...data,
+        date: new Date(data.date),
+        estimatedDeliveryDate: new Date(data.estimatedDeliveryDate),
+    };
+    await addDoc(collection(db, 'purchaseOrders'), dataToSave);
+    revalidatePath('/purchasing');
+    return { success: true, message: 'Pedido de compra añadido correctamente.' };
+  } catch (error) {
+    console.error("Error adding purchase order to Firestore:", error);
+    return { success: false, message: 'No se pudo añadir el pedido de compra.' };
+  }
+}
+
+export async function updatePurchaseOrder(id: string, data: any) {
+    try {
+        const poRef = doc(db, 'purchaseOrders', id);
+        const dataToUpdate: any = { ...data };
+
+        // Convert date strings back to Date objects if they exist
+        if (data.date && typeof data.date === 'string') {
+            dataToUpdate.date = new Date(data.date);
+        }
+        if (data.estimatedDeliveryDate && typeof data.estimatedDeliveryDate === 'string') {
+            dataToUpdate.estimatedDeliveryDate = new Date(data.estimatedDeliveryDate);
+        }
+
+        await updateDoc(poRef, dataToUpdate);
+        revalidatePath('/purchasing');
+        return { success: true, message: 'Pedido de compra actualizado correctamente.' };
+    } catch (error) {
+        console.error("Error updating purchase order in Firestore:", error);
+        return { success: false, message: 'No se pudo actualizar el pedido de compra.' };
+    }
+}
+
+export async function deletePurchaseOrder(id: string) {
+    try {
+        await deleteDoc(doc(db, 'purchaseOrders', id));
+        revalidatePath('/purchasing');
+        return { success: true, message: 'Pedido de compra eliminado correctamente.' };
+    } catch (error) {
+        console.error("Error deleting purchase order from Firestore:", error);
+        return { success: false, message: 'No se pudo eliminar el pedido de compra.' };
+    }
+}

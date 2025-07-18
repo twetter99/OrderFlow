@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { users as initialUsers } from "@/lib/data";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,14 +47,37 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { addUser, updateUser, deleteUser, deleteMultipleUsers } from "./actions";
 
 export default function UsersPage() {
   const { toast } = useToast();
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+        const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setUsers(usersData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching users: ", error);
+        toast({
+          variant: "destructive",
+          title: "Error de Carga",
+          description: "No se pudieron cargar los usuarios desde Firestore.",
+        });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const handleAddClick = () => {
     setSelectedUser(null);
@@ -67,44 +89,48 @@ export default function UsersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (user: User) => {
-    setSelectedUser(user);
+  const handleDeleteTrigger = (user: User) => {
+    setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
+    setUserToDelete(null); // Ensure single delete is not triggered
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
-    if (selectedUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id ? { ...u, ...values, id: u.id } : u
-        )
-      );
-      toast({ title: "Usuario actualizado", description: "El usuario se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedUser 
+      ? await updateUser(selectedUser.id, values) 
+      : await addUser(values);
+
+    if (result.success) {
+      toast({ title: selectedUser ? "Usuario actualizado" : "Usuario creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      setUsers([
-        ...users,
-        { ...values, id: `WF-USER-${String(users.length + 1).padStart(3, '0')}` },
-      ]);
-      toast({ title: "Usuario creado", description: "El nuevo usuario se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setUsers(users.filter((u) => !selectedRowIds.includes(u.id)));
-        toast({ variant: "destructive", title: "Usuarios eliminados", description: `${selectedRowIds.length} usuarios han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedUser) {
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
-      toast({ variant: "destructive", title: "Usuario eliminado", description: "El usuario se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    let result;
+    if (userToDelete) {
+        result = await deleteUser(userToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleUsers(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
+    setUserToDelete(null);
+    setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -123,6 +149,10 @@ export default function UsersPage() {
     );
   };
 
+  if (loading) {
+    return <div>Cargando usuarios desde Firestore...</div>;
+  }
+  
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -182,8 +212,10 @@ export default function UsersPage() {
                       className={cn(
                         "capitalize",
                         user.role === "Administrador" && "bg-primary/10 text-primary border-primary/20",
-                        user.role === "Empleado" && "bg-blue-100 text-blue-800 border-blue-200",
-                        user.role === "Almacén" && "bg-yellow-100 text-yellow-800 border-yellow-200"
+                        user.role === "Almacén" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                        // Fallback for technician roles
+                        user.role.includes("Técnico") && "bg-blue-100 text-blue-800 border-blue-200",
+                        user.role.includes("Jefe") && "bg-purple-100 text-purple-800 border-purple-200",
                       )}
                     >
                       {user.role}
@@ -205,7 +237,7 @@ export default function UsersPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(user)}
+                            onClick={() => handleDeleteTrigger(user)}
                           >
                             Eliminar
                           </DropdownMenuItem>
@@ -248,7 +280,7 @@ export default function UsersPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} usuarios seleccionados.` : " el usuario."}
+              {userToDelete ? ` el usuario "${userToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} usuarios seleccionados.` : " el usuario seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

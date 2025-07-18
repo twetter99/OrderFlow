@@ -39,6 +39,7 @@ export type InventoryItem = {
     itemId: string;
     quantity: number;
   }[];
+  quantity?: number; // Should be calculated, not stored
 };
 
 export type PurchaseOrderItem = {
@@ -88,7 +89,8 @@ export type UserRole =
   | 'Técnico de Mantenimiento'
   | 'Jefe de Equipo / Encargado de Instalación'
   | 'Técnico de SAT (Servicio de Asistencia Técnica)'
-  | 'Técnico de Calidad / Certificación';
+  | 'Técnico de Calidad / Certificación'
+  | 'Almacén';
 
 export type UserRates = {
     rateWorkHour: number;
@@ -105,7 +107,7 @@ export type User = {
   name: string;
   email: string;
   phone: string;
-  role: UserRole | 'Administrador' | 'Almacén'; // Almacén y Admin no son categorías de técnico
+  role: UserRole | 'Administrador';
   rates?: UserRates;
 };
 

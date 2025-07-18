@@ -1,3 +1,6 @@
+
+"use client";
+
 import {
   Table,
   TableBody,
@@ -14,10 +17,10 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { purchaseOrders } from "@/lib/data"
+import type { PurchaseOrder } from "@/lib/types";
 import { cn } from "@/lib/utils"
 
-export function RecentOrdersTable() {
+export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: PurchaseOrder[] }) {
   // Sort by date descending to get the most recent orders
   const recentOrders = [...purchaseOrders].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 

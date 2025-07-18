@@ -36,6 +36,8 @@ const technicianCategories = [
   { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
   { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
   { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
+  { name: 'Almacén', description: 'Gestiona la recepción, almacenamiento y despacho de mercancías en el almacén.' },
+  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades del sistema, incluyendo la gestión de usuarios y proyectos.' },
 ] as const;
 
 const userRoles = technicianCategories.map(c => c.name);
@@ -54,7 +56,7 @@ const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  role: z.enum(userRoles as [string, ...string[]]).refine((val): val is UserRole => userRoles.includes(val), {
+  role: z.enum(userRoles as [string, ...string[]]).refine((val): val is UserRole | 'Administrador' => userRoles.includes(val), {
     message: "Rol no válido",
   }),
   rates: rateSchema,
@@ -93,24 +95,21 @@ function CurrencyInput({
   };
   
   React.useEffect(() => {
-    // If not focused, format the value. If value is 0, show empty to allow placeholder to appear.
     if (!isFocused) {
         setDisplayValue(field.value === 0 || field.value === undefined ? '' : formatCurrency(field.value));
     } else {
-        // If focused, show the raw number value, but show empty if it's 0.
         setDisplayValue(field.value === 0 || field.value === undefined ? '' : String(field.value));
     }
   }, [field.value, isFocused]);
 
   const handleFocus = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(true);
-    e.target.select(); // Select content on focus
+    e.target.select();
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
     setIsFocused(false);
     const rawValue = e.target.value;
-    // Allow empty input, which will be treated as 0
     if (rawValue === '') {
         field.onChange(0);
         return;
@@ -119,12 +118,11 @@ function CurrencyInput({
     if (!isNaN(numericValue)) {
       field.onChange(numericValue);
     } else {
-      field.onChange(0); // If parsing fails, revert to 0
+      field.onChange(0);
     }
   };
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      // Only allow numbers and one comma/dot
       const value = e.target.value;
       if (/^[0-9]*[,.]?[0-9]*$/.test(value)) {
         setDisplayValue(value);
@@ -146,7 +144,7 @@ function CurrencyInput({
       <div className="relative">
         <FormControl>
           <Input
-            type="text" // Use text to allow formatting
+            type="text"
             value={displayValue}
             placeholder="0,00 €"
             onFocus={handleFocus}
@@ -171,7 +169,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
   const defaultValues = user
     ? { 
         ...user,
-        role: user.role as UserRole,
+        role: user.role as UserRole | 'Administrador',
         rates: user.rates || {
           rateWorkHour: 0,
           rateTravelHour: 0,
@@ -258,7 +256,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                       name="role"
                       render={({ field }) => (
                       <FormItem>
-                          <FormLabel>Categoría</FormLabel>
+                          <FormLabel>Categoría / Rol</FormLabel>
                            <Select onValueChange={field.onChange} defaultValue={field.value}>
                               <FormControl>
                                   <SelectTrigger>

@@ -1,3 +1,6 @@
+
+"use client";
+
 import {
   Card,
   CardContent,
@@ -6,9 +9,9 @@ import {
   CardTitle,
 } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { projects } from "@/lib/data"
+import type { Project } from "@/lib/types";
 
-export function ActiveProjectsList() {
+export function ActiveProjectsList({ projects }: { projects: Project[] }) {
   const activeProjects = projects.filter(p => p.status === 'En Progreso');
 
   return (

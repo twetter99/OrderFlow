@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { users as initialUsers } from "@/lib/data";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,15 +47,36 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { addUser, updateUser, deleteUser, deleteMultipleUsers } from "../users/actions";
 
 export default function TechniciansPage() {
   const { toast } = useToast();
-  // Filtramos para mostrar solo los roles que no son de administrador
-  const [users, setUsers] = useState<User[]>(initialUsers.filter(u => u.role !== 'Administrador'));
+  const [technicians, setTechnicians] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    // Query for users that are NOT administrators
+    const q = query(collection(db, "users"), where("role", "!=", "Administrador"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const techsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setTechnicians(techsData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching technicians: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los técnicos." });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const handleAddClick = () => {
     setSelectedUser(null);
@@ -68,50 +88,53 @@ export default function TechniciansPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (user: User) => {
-    setSelectedUser(user);
+  const handleDeleteTrigger = (user: User) => {
+    setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
+    setUserToDelete(null);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
-    // Aquí iría la lógica para guardar en la base de datos (Firestore)
-    // Por ahora, actualizamos el estado local.
-    if (selectedUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id ? { ...u, ...values, id: u.id } : u
-        )
-      );
-      toast({ title: "Técnico actualizado", description: "El técnico se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedUser 
+      ? await updateUser(selectedUser.id, values) 
+      : await addUser(values);
+
+    if (result.success) {
+      toast({ title: selectedUser ? "Técnico actualizado" : "Técnico creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      const newUser = { ...values, id: `WF-USER-${String(initialUsers.length + 1).padStart(3, '0')}` };
-      setUsers([...users, newUser]);
-      // También deberíamos añadirlo a la lista global de usuarios en una app real
-      toast({ title: "Técnico creado", description: "El nuevo técnico se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setUsers(users.filter((u) => !selectedRowIds.includes(u.id)));
-        toast({ variant: "destructive", title: "Técnicos eliminados", description: `${selectedRowIds.length} técnicos han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedUser) {
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
-      toast({ variant: "destructive", title: "Técnico eliminado", description: "El técnico se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    let result;
+    if (userToDelete) {
+        result = await deleteUser(userToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleUsers(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
+    setUserToDelete(null);
+    setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedRowIds(users.map(u => u.id));
+      setSelectedRowIds(technicians.map(u => u.id));
     } else {
       setSelectedRowIds([]);
     }
@@ -124,6 +147,10 @@ export default function TechniciansPage() {
         : [...prev, rowId]
     );
   };
+
+  if (loading) {
+    return <div>Cargando técnicos desde Firestore...</div>
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -153,7 +180,7 @@ export default function TechniciansPage() {
               <TableRow>
                  <TableHead padding="checkbox" className="w-[50px]">
                   <Checkbox
-                    checked={selectedRowIds.length === users.length && users.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    checked={selectedRowIds.length === technicians.length && technicians.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
                     onCheckedChange={(checked) => handleSelectAll(checked)}
                     aria-label="Seleccionar todo"
                   />
@@ -166,7 +193,7 @@ export default function TechniciansPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {technicians.map((user) => (
                 <TableRow key={user.id} data-state={selectedRowIds.includes(user.id) ? "selected" : ""}>
                    <TableCell padding="checkbox">
                     <Checkbox
@@ -207,7 +234,7 @@ export default function TechniciansPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(user)}
+                            onClick={() => handleDeleteTrigger(user)}
                           >
                             Eliminar
                           </DropdownMenuItem>
@@ -250,7 +277,7 @@ export default function TechniciansPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} técnicos seleccionados.` : " el técnico."}
+              {userToDelete ? ` el técnico "${userToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} técnicos seleccionados.` : " el técnico seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

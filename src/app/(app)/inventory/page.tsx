@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -17,7 +16,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { inventory as initialInventory, suppliers as initialSuppliers, inventoryLocations } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2 } from "lucide-react";
 import {
@@ -46,16 +44,23 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { InventoryForm } from "@/components/inventory/inventory-form";
-import type { InventoryItem, Supplier } from "@/lib/types";
+import type { InventoryItem, Supplier, InventoryLocation } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { SupplierForm } from "@/components/suppliers/supplier-form";
 import { ItemDetailsModal } from "@/components/inventory/item-details-modal";
 import { Checkbox } from "@/components/ui/checkbox";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { addInventoryItem, updateInventoryItem, deleteInventoryItem, deleteMultipleInventoryItems } from "./actions";
+import { addSupplier } from "../suppliers/actions";
 
 export default function InventoryPage() {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
-  const [suppliers, setSuppliers] = useState<Supplier[]>(initialSuppliers);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
@@ -63,30 +68,47 @@ export default function InventoryPage() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
+  useEffect(() => {
+    const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
+        setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
+        setLoading(false);
+    });
+    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => {
+        setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)));
+    });
+    const unsubInvLocations = onSnapshot(collection(db, "inventoryLocations"), (snapshot) => {
+        setInventoryLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
+    });
+
+    return () => {
+        unsubInventory();
+        unsubSuppliers();
+        unsubInvLocations();
+    }
+  }, []);
+
   const inventoryWithCalculations = useMemo(() => {
     return inventory.map(item => {
-      // Calcular la cantidad total de todas las ubicaciones
       const totalQuantity = inventoryLocations
         .filter(loc => loc.itemId === item.id)
         .reduce((sum, loc) => sum + loc.quantity, 0);
       
       let buildableQuantity = totalQuantity;
       if (item.type === 'composite') {
-        // Calcular la cantidad construible basada en los componentes
         buildableQuantity = Math.min(
           ...(item.components?.map(c => {
+            const componentItem = inventory.find(i => i.id === c.itemId);
             const componentTotalQuantity = inventoryLocations
               .filter(loc => loc.itemId === c.itemId)
               .reduce((sum, loc) => sum + loc.quantity, 0);
-            return Math.floor(componentTotalQuantity / c.quantity);
+            return componentItem ? Math.floor(componentTotalQuantity / c.quantity) : 0;
           }) || [0])
         );
       }
       
-      // Asignar la cantidad calculada al item para visualización
       return { ...item, quantity: totalQuantity, buildableQuantity };
     });
-  }, [inventory]);
+  }, [inventory, inventoryLocations]);
 
 
   const handleAddClick = () => {
@@ -99,12 +121,13 @@ export default function InventoryPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (item: InventoryItem) => {
+  const handleDeleteTrigger = (item: InventoryItem) => {
     setSelectedItem(item);
     setIsDeleteDialogOpen(true);
   };
   
   const handleBulkDeleteClick = () => {
+    setSelectedItem(null);
     setIsDeleteDialogOpen(true);
   };
 
@@ -113,33 +136,38 @@ export default function InventoryPage() {
     setIsDetailsModalOpen(true);
   };
 
-  const handleSave = (values: any) => {
-    if (selectedItem && 'id' in selectedItem) {
-      setInventory(
-        inventory.map((p) =>
-          p.id === selectedItem.id ? { ...p, ...values, id: p.id } : p
-        )
-      );
-      toast({ title: "Artículo actualizado", description: "El artículo del inventario se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedItem
+      ? await updateInventoryItem(selectedItem.id, values)
+      : await addInventoryItem(values);
+
+    if (result.success) {
+      toast({ title: selectedItem ? "Artículo actualizado" : "Artículo creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-       const newItem = { ...values, id: `ITEM-${String(inventory.length + 1).padStart(3, '0')}` };
-       setInventory([...inventory, newItem]);
-      toast({ title: "Artículo creado", description: "El nuevo artículo se ha añadido al inventario. Recuerda añadir stock desde una recepción o desde la página de un almacén." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setInventory(inventory.filter((item) => !selectedRowIds.includes(item.id)));
-        toast({ variant: "destructive", title: "Artículos eliminados", description: `${selectedRowIds.length} artículos han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedItem) {
-      setInventory(inventory.filter((p) => p.id !== selectedItem.id));
-      toast({ variant: "destructive", title: "Artículo eliminado", description: "El artículo se ha eliminado del inventario." });
+  const confirmDelete = async () => {
+    let result;
+    if (selectedItem) {
+        result = await deleteInventoryItem(selectedItem.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleInventoryItems(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
     setSelectedItem(null);
+    setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -158,20 +186,26 @@ export default function InventoryPage() {
     );
   };
 
-
   const handleAddNewSupplier = () => {
     setIsModalOpen(false);
     setIsSupplierModalOpen(true);
   };
 
-  const handleSaveSupplier = (values: any) => {
-    const newSupplier = { ...values, id: `SUP-${String(suppliers.length + 1).padStart(3, '0')}` };
-    setSuppliers([...suppliers, newSupplier]);
-    toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
-    setIsSupplierModalOpen(false);
-    setIsModalOpen(true);
+  const handleSaveSupplier = async (values: any) => {
+    const result = await addSupplier(values);
+    if (result.success) {
+      toast({ title: "Proveedor creado", description: "El nuevo proveedor se ha creado correctamente." });
+      setIsSupplierModalOpen(false);
+      setIsModalOpen(true);
+    } else {
+      toast({ variant: "destructive", title: "Error", description: result.message });
+    }
   };
   
+  if (loading) {
+      return <div>Cargando inventario desde Firestore...</div>
+  }
+
   return (
     <div className="flex flex-col gap-8">
        <div className="flex items-center justify-between">
@@ -217,6 +251,7 @@ export default function InventoryPage() {
             <TableBody>
               {inventoryWithCalculations.map((item) => {
                 const isPhysical = item.type === 'simple' || item.type === 'composite';
+                // @ts-ignore
                 const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
                 const isLowStock = isPhysical && quantityToShow < item.minThreshold;
                 
@@ -288,7 +323,7 @@ export default function InventoryPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(item)}
+                            onClick={() => handleDeleteTrigger(item)}
                           >
                             Eliminar
                           </DropdownMenuItem>

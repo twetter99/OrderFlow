@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders, users, suppliers, inventory, projects } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye } from "lucide-react";
 import {
@@ -49,26 +48,63 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
-import type { PurchaseOrder, PurchaseOrderItem } from "@/lib/types";
+import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "./actions";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
 
+const convertTimestamps = (order: any): PurchaseOrder => {
+    return {
+      ...order,
+      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
+      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
+    };
+};
+
 export function PurchasingClientPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Partial<PurchaseOrder> | null>(null);
+  const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+
+  useEffect(() => {
+    const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
+        setPurchaseOrders(snapshot.docs.map(doc => convertTimestamps({ id: doc.id, ...doc.data() })));
+        setLoading(false);
+    });
+    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier))));
+    const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
+    const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
+    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))));
+
+    return () => {
+        unsubPO();
+        unsubSuppliers();
+        unsubInventory();
+        unsubProjects();
+        unsubUsers();
+    };
+  }, []);
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
   const canApprove = currentUser?.role === 'Administrador';
@@ -92,11 +128,10 @@ export function PurchasingClientPage() {
         console.error("Error parsing items from query params", error);
       }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
 
   const handleAddClick = (initialData: Partial<PurchaseOrder> | null = null) => {
-    setSelectedOrder(initialData as PurchaseOrder | null);
+    setSelectedOrder(initialData);
     setIsModalOpen(true);
   };
 
@@ -105,8 +140,8 @@ export function PurchasingClientPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (order: PurchaseOrder) => {
-    setSelectedOrder(order);
+  const handleDeleteTrigger = (order: PurchaseOrder) => {
+    setOrderToDelete(order);
     setIsDeleteDialogOpen(true);
   };
 
@@ -152,32 +187,35 @@ export function PurchasingClientPage() {
     }
   };
 
-  const handleSave = (values: any) => {
-    if (selectedOrder && 'id' in selectedOrder) {
-      setPurchaseOrders(
-        purchaseOrders.map((p) =>
-          p.id === selectedOrder.id ? { ...p, ...values, id: p.id, date: new Date().toISOString() } : p
-        )
-      );
-      toast({ title: "Pedido actualizado", description: "El pedido de compra se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const newId = `WF-PO-2024-${String(purchaseOrders.length + 1).padStart(3, '0')}`;
+    const dataToSave = selectedOrder && 'id' in selectedOrder 
+      ? values 
+      : { ...values, id: newId, date: new Date().toISOString() };
+
+    const result = selectedOrder && 'id' in selectedOrder
+      ? await updatePurchaseOrder(selectedOrder.id as string, dataToSave)
+      : await addPurchaseOrder(dataToSave);
+      
+    if (result.success) {
+      toast({ title: selectedOrder && 'id' in selectedOrder ? "Pedido actualizado" : "Pedido creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      setPurchaseOrders([
-        ...purchaseOrders,
-        { ...values, id: `WF-PO-2024-${String(purchaseOrders.length + 1).padStart(3, '0')}`, date: new Date().toISOString() },
-      ]);
-      toast({ title: "Pedido creado", description: "El nuevo pedido de compra se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
-    setSelectedOrder(null);
   };
 
-  const confirmDelete = () => {
-    if (selectedOrder) {
-      setPurchaseOrders(purchaseOrders.filter((p) => p.id !== selectedOrder.id));
-      toast({ variant: "destructive", title: "Pedido eliminado", description: "El pedido de compra se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    if (orderToDelete) {
+      const result = await deletePurchaseOrder(orderToDelete.id);
+      if (result.success) {
+          toast({ variant: "destructive", title: "Pedido eliminado", description: result.message });
+      } else {
+          toast({ variant: "destructive", title: "Error", description: result.message });
+      }
     }
     setIsDeleteDialogOpen(false);
-    setSelectedOrder(null);
+    setOrderToDelete(null);
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
@@ -329,7 +367,7 @@ export function PurchasingClientPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(order)}
+                            onClick={() => handleDeleteTrigger(order)}
                           >
                             Eliminar
                           </DropdownMenuItem>

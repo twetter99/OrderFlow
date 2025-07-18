@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -15,7 +15,6 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { users as initialUsers } from "@/lib/data";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,15 +47,35 @@ import { useToast } from "@/hooks/use-toast";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { db } from "@/lib/firebase";
+import { addUser, updateUser, deleteUser, deleteMultipleUsers } from "../users/actions";
 
 export default function ProjectManagersPage() {
   const { toast } = useToast();
-  // Filtramos para mostrar solo a los administradores como "Responsables de Proyecto"
-  const [users, setUsers] = useState<User[]>(initialUsers.filter(u => u.role === 'Administrador'));
+  const [managers, setManagers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const q = query(collection(db, "users"), where("role", "==", "Administrador"));
+    
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+        const managersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+        setManagers(managersData);
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching project managers: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los responsables de proyecto." });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
 
   const handleAddClick = () => {
     setSelectedUser(null);
@@ -68,48 +87,53 @@ export default function ProjectManagersPage() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteClick = (user: User) => {
-    setSelectedUser(user);
+  const handleDeleteTrigger = (user: User) => {
+    setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
+    setUserToDelete(null);
     setIsDeleteDialogOpen(true);
   };
 
-  const handleSave = (values: any) => {
-    // En una app real, aquí se guardaría en Firestore
-    if (selectedUser) {
-      setUsers(
-        users.map((u) =>
-          u.id === selectedUser.id ? { ...u, ...values, id: u.id } : u
-        )
-      );
-      toast({ title: "Responsable actualizado", description: "El responsable se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedUser 
+      ? await updateUser(selectedUser.id, values) 
+      : await addUser({ ...values, role: 'Administrador' });
+
+    if (result.success) {
+      toast({ title: selectedUser ? "Responsable actualizado" : "Responsable creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      const newUser = { ...values, id: `WF-USER-${String(initialUsers.length + 1).padStart(3, '0')}` };
-      setUsers([...users, newUser]);
-      toast({ title: "Responsable creado", description: "El nuevo responsable se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
-    if (selectedRowIds.length > 0) {
-        setUsers(users.filter((u) => !selectedRowIds.includes(u.id)));
-        toast({ variant: "destructive", title: "Responsables eliminados", description: `${selectedRowIds.length} responsables han sido eliminados.` });
-        setSelectedRowIds([]);
-    } else if (selectedUser) {
-      setUsers(users.filter((u) => u.id !== selectedUser.id));
-      toast({ variant: "destructive", title: "Responsable eliminado", description: "El responsable se ha eliminado correctamente." });
+  const confirmDelete = async () => {
+    let result;
+    if (userToDelete) {
+        result = await deleteUser(userToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultipleUsers(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
-    setSelectedUser(null);
+    setUserToDelete(null);
+    setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedRowIds(users.map(u => u.id));
+      setSelectedRowIds(managers.map(u => u.id));
     } else {
       setSelectedRowIds([]);
     }
@@ -122,6 +146,10 @@ export default function ProjectManagersPage() {
         : [...prev, rowId]
     );
   };
+  
+  if (loading) {
+      return <div>Cargando responsables desde Firestore...</div>
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -151,7 +179,7 @@ export default function ProjectManagersPage() {
               <TableRow>
                  <TableHead padding="checkbox" className="w-[50px]">
                   <Checkbox
-                    checked={selectedRowIds.length === users.length && users.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    checked={selectedRowIds.length === managers.length && managers.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
                     onCheckedChange={(checked) => handleSelectAll(checked)}
                     aria-label="Seleccionar todo"
                   />
@@ -164,7 +192,7 @@ export default function ProjectManagersPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {users.map((user) => (
+              {managers.map((user) => (
                 <TableRow key={user.id} data-state={selectedRowIds.includes(user.id) ? "selected" : ""}>
                    <TableCell padding="checkbox">
                     <Checkbox
@@ -200,7 +228,7 @@ export default function ProjectManagersPage() {
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteClick(user)}
+                            onClick={() => handleDeleteTrigger(user)}
                           >
                             Eliminar
                           </DropdownMenuItem>
@@ -223,7 +251,7 @@ export default function ProjectManagersPage() {
             <DialogDescription>
               {selectedUser
                 ? "Edita la información del responsable."
-                : "Rellena los detalles para crear un nuevo responsable."}
+                : "Rellena los detalles para crear un nuevo responsable (se asignará rol de Administrador)."}
             </DialogDescription>
           </DialogHeader>
           <UserForm
@@ -243,7 +271,7 @@ export default function ProjectManagersPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} responsables seleccionados.` : " el responsable."}
+              {userToDelete ? ` el responsable "${userToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} responsables seleccionados.` : " el responsable seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
