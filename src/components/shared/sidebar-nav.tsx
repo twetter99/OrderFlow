@@ -22,6 +22,8 @@ import {
     FileText, 
     ChevronDown,
     Package,
+    UserCheck,
+    UserCog,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -97,7 +99,9 @@ const navGroups = [
         subItems: [
           { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
           { href: "/clients", label: "Clientes", icon: Building2 },
-          { href: "/users", label: "Usuarios", icon: Users },
+          { href: "/users", label: "Todos los Usuarios", icon: Users },
+          { href: "/technicians", label: "Técnicos", icon: UserCheck },
+          { href: "/project-managers", label: "Responsables de Proyecto", icon: UserCog },
           { href: "/settings", label: "Configuración App", icon: Settings },
         ]
       }
