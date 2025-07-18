@@ -41,6 +41,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Badge } from "@/components/ui/badge";
+import React from "react";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
@@ -115,7 +116,8 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
     });
   }
 
-  const technicians = users.filter(u => u.role === 'Empleado' || u.role === 'Almacén');
+  const projectManagers = React.useMemo(() => users.filter(u => u.role === 'Administrador'), [users]);
+  const technicians = React.useMemo(() => users.filter(u => u.role !== 'Administrador'), [users]);
 
   return (
     <Form {...form}>
@@ -168,14 +170,14 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Responsable del Proyecto</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={projectManagers.length === 0}>
                             <FormControl>
                             <SelectTrigger>
-                                <SelectValue placeholder="Selecciona un responsable" />
+                                <SelectValue placeholder={projectManagers.length === 0 ? "No hay responsables disponibles" : "Selecciona un responsable"} />
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                                {projectManagers.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -199,7 +201,7 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                                                 {users.find(u => u.id === userId)?.name}
                                             </Badge>
                                         ))
-                                    ) : "Seleccionar técnicos..."}
+                                    ) : technicians.length === 0 ? "No hay técnicos disponibles" : "Seleccionar técnicos..."}
                                 </div>
                                 <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                             </Button>
@@ -225,7 +227,10 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                                                 <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(tech.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
                                                     <Check className="h-4 w-4" />
                                                 </div>
-                                                {tech.name}
+                                                <div className="flex flex-col">
+                                                    <span>{tech.name}</span>
+                                                    <span className="text-xs text-muted-foreground">{tech.role}</span>
+                                                </div>
                                             </CommandItem>
                                         ))}
                                     </CommandGroup>
@@ -501,3 +506,5 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
     </Form>
   );
 }
+
+    
