@@ -22,7 +22,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const technicianCategories = [
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -130,18 +129,11 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    <TooltipProvider>
                       {technicianCategories.map(category => (
-                          <Tooltip key={category.name} delayDuration={300}>
-                            <TooltipTrigger asChild>
-                               <SelectItem value={category.name}>{category.name}</SelectItem>
-                            </TooltipTrigger>
-                            <TooltipContent side="right" align="start">
-                              <p className="max-w-xs">{category.description}</p>
-                            </TooltipContent>
-                          </Tooltip>
+                         <SelectItem key={category.name} value={category.name} title={category.description}>
+                            {category.name}
+                         </SelectItem>
                       ))}
-                    </TooltipProvider>
                   </SelectContent>
                 </Select>
                 <FormMessage />
