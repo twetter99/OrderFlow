@@ -123,7 +123,7 @@ export function SidebarNav() {
         {navGroups.map((group, index) => (
           <div key={group.title} className="space-y-1">
             {group.title && (
-                 <h2 className="px-3 py-2 text-sm font-semibold text-muted-foreground tracking-wider uppercase">{group.title}</h2>
+                 <h2 className="px-4 py-2 font-semibold text-primary tracking-wider uppercase">{group.title}</h2>
             )}
             {group.items.map((item) => {
               const uniqueKey = `${item.label}`;
