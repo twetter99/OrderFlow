@@ -3,20 +3,28 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, MapPin, Archive, Send, BarChart3, ArrowRightLeft, Wrench, ClipboardList, ListChecks, Plane, Activity, FileText } from "lucide-react";
+import { Bot, FolderKanban, LayoutDashboard, Settings, ShoppingCart, Truck, Users, Warehouse, Building2, BarChart3, Wrench, ClipboardList, ListChecks, Plane, Activity, FileText, ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
+import React from "react";
+
 
 const navGroups = [
   {
     title: "OPERACIONES",
     items: [
-      { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
-      { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
-      { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
-      { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
-      { href: "/work-in-progress", label: "Planificación Desplazamientos", icon: Plane },
+      { 
+        href: "/projects", 
+        label: "Gestión de Proyectos", 
+        icon: FolderKanban,
+        subItems: [
+            { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
+            { href: "/resource-planning", label: "Planificación de Recursos", icon: ListChecks },
+            { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
+        ]
+      },
+       { href: "/work-in-progress", label: "Planificación Desplazamientos", icon: Plane },
     ],
   },
   {
@@ -52,21 +60,17 @@ const navGroups = [
 export function SidebarNav() {
   const pathname = usePathname();
 
-  const isLinkActive = (href: string) => {
-    // Exact match for dashboard
-    if (href === "/dashboard") {
-      return pathname === href;
-    }
-    // Exact match for /inventory to avoid conflict with other /inventory-* routes
-    if (href === "/inventory") {
-        return pathname === href;
-    }
-    // Exact match for /locations to avoid conflict with other /locations/* routes
-    if (href === "/locations") {
-        return pathname === href;
-    }
-    return pathname.startsWith(href);
+  const isLinkActive = (href: string, isParent = false) => {
+    if (href === "/dashboard") return pathname === href;
+    if (href === "/inventory") return pathname === href;
+    if (href === "/locations") return pathname === href;
+    if (isParent) return pathname.startsWith(href);
+    return pathname === href;
   };
+  
+  const isSubItemActive = (subItems: any[]) => {
+    return subItems.some(sub => pathname.startsWith(sub.href));
+  }
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-card">
@@ -81,25 +85,66 @@ export function SidebarNav() {
                  <h2 className="px-4 text-xs font-semibold text-muted-foreground tracking-wider uppercase pt-2 pb-1">{group.title}</h2>
             )}
             {group.items.map((item) => {
-                const isActive = isLinkActive(item.href);
-                return (
-              <Link
-                key={`${item.href}-${item.label}`}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
-                  isActive && "bg-muted text-primary"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                <span>{item.label}</span>
-              </Link>
+              if (item.subItems) {
+                const isActive = isLinkActive(item.href, true) || isSubItemActive(item.subItems);
+                 return (
+                  <Collapsible key={item.label} defaultOpen={isActive}>
+                    <CollapsibleTrigger className="w-full">
+                       <div
+                        className={cn(
+                          "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                           isActive && "bg-muted text-primary"
+                        )}
+                      >
+                         <div className="flex items-center gap-3">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                         </div>
+                         <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>
+                      </div>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                       <div className="pl-8 pt-1 border-l border-dashed ml-5 my-1">
+                        {item.subItems.map(subItem => {
+                           const isSubActive = isLinkActive(subItem.href);
+                           return (
+                                <Link
+                                    key={subItem.href}
+                                    href={subItem.href}
+                                    className={cn(
+                                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm",
+                                    isSubActive && "text-primary"
+                                    )}
+                                >
+                                <subItem.icon className="h-4 w-4" />
+                                <span>{subItem.label}</span>
+                                </Link>
+                           )
+                        })}
+                       </div>
+                    </CollapsibleContent>
+                  </Collapsible>
+                );
+              }
+
+              const isActive = isLinkActive(item.href);
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary",
+                    isActive && "bg-muted text-primary"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
             )})}
              {index < navGroups.length -1 && <Separator className="my-2" />}
           </div>
         ))}
       </nav>
-      {/* El pie de página con los enlaces de administración se ha movido al grupo principal de navegación */}
     </aside>
   );
 }
