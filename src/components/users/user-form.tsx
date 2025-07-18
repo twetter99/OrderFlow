@@ -25,7 +25,6 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 
@@ -107,7 +106,8 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
     defaultValues,
   });
   
-  const [tooltipContent, setTooltipContent] = useState('');
+  const watchedRole = useWatch({ control: form.control, name: 'role' });
+  const selectedCategoryDescription = technicianCategories.find(c => c.name === watchedRole)?.description;
 
   function onSubmit(values: UserFormValues) {
     onSave(values);
@@ -167,33 +167,26 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         <FormLabel>Categoría</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
-                                <SelectTrigger onPointerLeave={() => setTooltipContent('')}>
+                                <SelectTrigger>
                                     <SelectValue placeholder="Selecciona una categoría" />
                                 </SelectTrigger>
                             </FormControl>
                              <SelectContent>
-                                <TooltipProvider>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div>
-                                        {technicianCategories.map(category => (
-                                          <SelectItem
-                                            key={category.name}
-                                            value={category.name}
-                                            onPointerEnter={() => setTooltipContent(category.description)}
-                                          >
-                                            {category.name}
-                                          </SelectItem>
-                                        ))}
-                                      </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="right" align="start">
-                                      <p className="max-w-xs">{tooltipContent}</p>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              </SelectContent>
+                                {technicianCategories.map(category => (
+                                    <SelectItem
+                                    key={category.name}
+                                    value={category.name}
+                                    >
+                                    {category.name}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
                         </Select>
+                        {selectedCategoryDescription && (
+                          <FormDescription>
+                            {selectedCategoryDescription}
+                          </FormDescription>
+                        )}
                         <FormMessage />
                     </FormItem>
                     )}
