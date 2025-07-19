@@ -99,8 +99,8 @@ const navGroups = [
         subItems: [
           { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
           { href: "/clients", label: "Clientes", icon: Building2 },
-          { href: "/users", label: "Usuarios (Técnicos, Roles...)", icon: Users },
-          { href: "/operadores", label: "Operadores", icon: UserCog },
+          { href: "/operadores", label: "Operadores (Técnicos)", icon: UserCog },
+          { href: "/users", label: "Usuarios y Permisos", icon: Users },
           { href: "/approval-flows", label: "Flujos de Aprobación", icon: Network },
           { href: "/settings", label: "Configuración App", icon: Settings },
         ]

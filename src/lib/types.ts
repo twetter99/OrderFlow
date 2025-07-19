@@ -88,19 +88,8 @@ export type UserRole =
   | 'Solicitante'
   | 'Supervisor'
   | 'Validador'
-  | 'Técnico Instalador'
   | 'Almacén'
   | 'Administrador';
-
-export type UserRates = {
-    rateWorkHour: number;
-    rateTravelHour: number;
-    rateOvertimeWeekdayDay: number;
-    rateOvertimeWeekdayNight: number;
-    rateOvertimeWeekendDay: number;
-    rateOvertimeWeekendNight: number;
-    rateNotes?: string;
-}
 
 export type User = {
   id: string;
@@ -108,7 +97,6 @@ export type User = {
   email: string;
   phone: string;
   role: UserRole;
-  rates?: UserRates;
 };
 
 export type Location = {
@@ -206,7 +194,17 @@ export type Replanteo = {
   imagenes: ReplanteoImagen[];
 };
 
-// Nuevo tipo para Operadores
+// Tipo para Operadores (Técnicos) con sus tarifas
+export type OperadorRates = {
+    rateWorkHour?: number;
+    rateTravelHour?: number;
+    rateOvertimeWeekdayDay?: number;
+    rateOvertimeWeekdayNight?: number;
+    rateOvertimeWeekendDay?: number;
+    rateOvertimeWeekendNight?: number;
+    rateNotes?: string;
+}
+
 export type Operador = {
   id: string;
   name: string;
@@ -215,4 +213,5 @@ export type Operador = {
   email?: string;
   address?: string;
   notes?: string;
+  rates?: OperadorRates;
 };

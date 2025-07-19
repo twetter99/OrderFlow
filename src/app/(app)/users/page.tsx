@@ -157,9 +157,9 @@ export default function UsersPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Usuarios y Roles</h1>
+          <h1 className="text-3xl font-bold font-headline">Usuarios y Permisos</h1>
           <p className="text-muted-foreground">
-            Gestiona los roles y permisos de los usuarios del sistema.
+            Gestiona los roles de aprobación y las cuentas de acceso al sistema.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -213,7 +213,6 @@ export default function UsersPage() {
                         "capitalize",
                         user.role === "Administrador" && "bg-primary/10 text-primary border-primary/20",
                         user.role === "Almacén" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-                        user.role === 'Técnico Instalador' && "bg-teal-100 text-teal-800 border-teal-200",
                         user.role === 'Solicitante' && "bg-blue-100 text-blue-800 border-blue-200",
                         user.role === 'Supervisor' && "bg-orange-100 text-orange-800 border-orange-200",
                         user.role === 'Validador' && "bg-purple-100 text-purple-800 border-purple-200",
@@ -253,7 +252,7 @@ export default function UsersPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedUser ? "Editar Usuario" : "Añadir Nuevo Usuario"}

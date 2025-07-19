@@ -151,9 +151,9 @@ export default function OperadoresPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Operadores</h1>
+          <h1 className="text-3xl font-bold font-headline">Operadores (Técnicos)</h1>
           <p className="text-muted-foreground">
-            Gestiona los operadores, empresas o autónomos externos.
+            Gestiona el personal técnico, sus datos y sus tarifas por hora.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -232,15 +232,15 @@ export default function OperadoresPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {selectedOperador ? "Editar Operador" : "Añadir Nuevo Operador"}
             </DialogTitle>
             <DialogDescription>
               {selectedOperador
-                ? "Edita la información del operador."
-                : "Rellena los detalles para crear un nuevo operador."}
+                ? "Edita la información y tarifas del operador."
+                : "Rellena los detalles para crear un nuevo operador/técnico."}
             </DialogDescription>
           </DialogHeader>
           <OperadorForm
