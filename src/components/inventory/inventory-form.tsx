@@ -39,6 +39,14 @@ const formSchema = z.object({
     itemId: z.string().min(1, "Selecciona un componente."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
   })).optional(),
+}).refine(data => {
+    if (data.type === 'composite') {
+        return data.components && data.components.length > 0;
+    }
+    return true;
+}, {
+    message: "Un kit debe tener al menos un componente.",
+    path: ["components"],
 });
 
 
@@ -342,7 +350,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                                         </FormControl>
                                                         <SelectContent>
                                                             {simpleInventoryItems.map(i => (
-                                                                <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>
+                                                                <SelectItem key={i.id} value={i.id}>{i.name} ({i.sku})</SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
@@ -376,6 +384,15 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                         <PlusCircle className="mr-2 h-4 w-4"/>
                         Añadir Componente
                     </Button>
+                     <FormField
+                        control={form.control}
+                        name="components"
+                        render={() => (
+                            <FormItem>
+                                <FormMessage className="pt-2" />
+                            </FormItem>
+                        )}
+                        />
                     <div className="text-right font-bold mt-4">
                         Costo Total del Kit: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(kitCost)}
                     </div>
