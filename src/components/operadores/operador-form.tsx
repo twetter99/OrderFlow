@@ -19,10 +19,10 @@ import type { Operador } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
-  cif: z.string().min(1, "El CIF/código es obligatorio."),
-  phone: z.string().min(1, "El teléfono es obligatorio."),
-  email: z.string().email("Debe ser un correo electrónico válido."),
-  address: z.string().min(1, "La dirección es obligatoria."),
+  cif: z.string().optional(),
+  phone: z.string().optional(),
+  email: z.string().email("Debe ser un correo electrónico válido.").optional().or(z.literal('')),
+  address: z.string().optional(),
   notes: z.string().optional(),
 });
 
