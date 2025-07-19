@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, runTransaction } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, runTransaction, Timestamp } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import type { Project, User } from '@/lib/types';
 
@@ -13,8 +13,8 @@ export async function addProject(data: ProjectData) {
   try {
     const dataToSave = {
         ...data,
-        startDate: new Date(data.startDate),
-        endDate: new Date(data.endDate),
+        startDate: Timestamp.fromDate(new Date(data.startDate)),
+        endDate: Timestamp.fromDate(new Date(data.endDate)),
     };
     await addDoc(collection(db, 'projects'), dataToSave);
     revalidatePath('/projects');
@@ -31,10 +31,10 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
         const dataToUpdate: any = { ...data };
 
         if (data.startDate) {
-            dataToUpdate.startDate = new Date(data.startDate);
+            dataToUpdate.startDate = Timestamp.fromDate(new Date(data.startDate));
         }
         if (data.endDate) {
-            dataToUpdate.endDate = new Date(data.endDate);
+            dataToUpdate.endDate = Timestamp.fromDate(new Date(data.endDate));
         }
 
         await updateDoc(projectRef, dataToUpdate);

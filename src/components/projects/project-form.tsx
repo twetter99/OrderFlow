@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { Project, Client, User } from "@/lib/types";
+import type { Project, Client, User, Operador } from "@/lib/types";
 import { Calendar } from "@/components/ui/calendar";
 import {
   Popover,
@@ -29,7 +29,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Check, Users } from "lucide-react";
+import { CalendarIcon, Check, Users, UserSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -47,18 +47,11 @@ const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   clientId: z.string().min(1, "El cliente es obligatorio."),
   status: z.enum(["Planificado", "En Progreso", "Completado"]),
-  tipo_flota: z.enum(['autobuses', 'camiones', 'furgonetas', 'otros']),
-  numero_vehiculos: z.coerce.number().int().min(1, "Debe haber al menos un vehículo."),
+  operador_ids: z.array(z.string()).min(1, "Debes seleccionar al menos un operador."),
   responsable_proyecto_id: z.string().min(1, "Debes asignar un responsable."),
   equipo_tecnico_ids: z.array(z.string()).optional(),
   
   centro_coste: z.string().min(1, "El centro de coste es obligatorio."),
-  
-  localizacion_base: z.object({
-    direccion: z.string().min(1, "La dirección es obligatoria."),
-    ciudad: z.string().min(1, "La ciudad es obligatoria."),
-    provincia: z.string().min(1, "La provincia es obligatoria."),
-  }),
 
   startDate: z.date({ required_error: "La fecha de inicio es obligatoria." }),
   endDate: z.date({ required_error: "La fecha de fin es obligatoria." }),
@@ -74,11 +67,12 @@ interface ProjectFormProps {
   project?: Project | null;
   clients: Client[];
   users: User[];
+  operadores: Operador[];
   onSave: (values: ProjectFormValues) => void;
   onCancel: () => void;
 }
 
-export function ProjectForm({ project, clients, users, onSave, onCancel }: ProjectFormProps) {
+export function ProjectForm({ project, clients, users, operadores, onSave, onCancel }: ProjectFormProps) {
   const defaultValues = project
     ? {
         ...project,
@@ -86,17 +80,16 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
         endDate: new Date(project.endDate),
         margen_previsto: project.margen_previsto * 100, // Convert to percentage for display
         equipo_tecnico_ids: project.equipo_tecnico_ids || [],
+        operador_ids: project.operador_ids || [],
       }
     : {
         name: "",
         clientId: "",
         status: "Planificado",
-        tipo_flota: "autobuses",
-        numero_vehiculos: 1,
+        operador_ids: [],
         responsable_proyecto_id: "",
         equipo_tecnico_ids: [],
         centro_coste: "",
-        localizacion_base: { direccion: "", ciudad: "", provincia: "" },
         startDate: new Date(),
         endDate: new Date(),
         budget: 0,
@@ -160,9 +153,70 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
             />
         </div>
 
+        {/* Operator Assignment */}
+        <div className="space-y-4 p-4 border rounded-lg">
+             <h3 className="text-lg font-medium">Asignación de Operador(es)</h3>
+             <FormField
+                control={form.control}
+                name="operador_ids"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Operadores</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto min-h-10", !field.value?.length && "text-muted-foreground")}>
+                                <div className="flex gap-1 flex-wrap">
+                                    {field.value && field.value.length > 0 ? (
+                                        field.value.map(operadorId => (
+                                            <Badge variant="secondary" key={operadorId}>
+                                                {operadores.find(o => o.id === operadorId)?.name}
+                                            </Badge>
+                                        ))
+                                    ) : operadores.length === 0 ? "No hay operadores creados" : "Seleccionar operadores..."}
+                                </div>
+                                <UserSquare className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command>
+                                <CommandInput placeholder="Buscar operador..." />
+                                <CommandList>
+                                    <CommandEmpty>No se encontraron operadores. <Link href="/operadores" className="text-primary underline">Crea uno nuevo</Link>.</CommandEmpty>
+                                    <CommandGroup>
+                                        {operadores.map(op => (
+                                            <CommandItem
+                                                key={op.id}
+                                                onSelect={() => {
+                                                    const selected = field.value || [];
+                                                    const newSelection = selected.includes(op.id)
+                                                        ? selected.filter(id => id !== op.id)
+                                                        : [...selected, op.id];
+                                                    field.onChange(newSelection);
+                                                }}
+                                            >
+                                                <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(op.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}>
+                                                    <Check className="h-4 w-4" />
+                                                </div>
+                                                <span>{op.name}</span>
+                                            </CommandItem>
+                                        ))}
+                                    </CommandGroup>
+                                </CommandList>
+                            </Command>
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                    </FormItem>
+                )}
+                />
+        </div>
+
+
         {/* Team Assignment */}
         <div className="space-y-4 p-4 border rounded-lg">
-             <h3 className="text-lg font-medium">Asignación de Equipo</h3>
+             <h3 className="text-lg font-medium">Asignación de Equipo Interno</h3>
              <div className="grid grid-cols-2 gap-4">
                  <FormField
                     control={form.control}
@@ -243,90 +297,6 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
                   )}
                 />
              </div>
-        </div>
-
-        {/* Fleet and Location Info */}
-        <div className="space-y-4 p-4 border rounded-lg">
-            <h3 className="text-lg font-medium">Flota y Localización</h3>
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="tipo_flota"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Tipo de Flota</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Tipo de flota" />
-                            </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="autobuses">Autobuses</SelectItem>
-                                <SelectItem value="camiones">Camiones</SelectItem>
-                                <SelectItem value="furgonetas">Furgonetas</SelectItem>
-                                <SelectItem value="otros">Otros</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="numero_vehiculos"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nº de Vehículos</FormLabel>
-                        <FormControl>
-                        <Input type="number" placeholder="50" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-            </div>
-            <FormField
-                control={form.control}
-                name="localizacion_base.direccion"
-                render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Dirección Base</FormLabel>
-                        <FormControl>
-                        <Input placeholder="Calle Ficticia, 123" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <div className="grid grid-cols-2 gap-4">
-                 <FormField
-                    control={form.control}
-                    name="localizacion_base.ciudad"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Ciudad</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Madrid" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                 <FormField
-                    control={form.control}
-                    name="localizacion_base.provincia"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Provincia</FormLabel>
-                            <FormControl>
-                            <Input placeholder="Madrid" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
         </div>
 
         {/* Dates and Status */}
@@ -506,5 +476,3 @@ export function ProjectForm({ project, clients, users, onSave, onCancel }: Proje
     </Form>
   );
 }
-
-    

@@ -1,4 +1,5 @@
 
+import { Timestamp } from "firebase/firestore";
 
 export type Project = {
   id: string;
@@ -7,14 +8,7 @@ export type Project = {
   clientId: string;
   client: string; 
   status: 'Planificado' | 'En Progreso' | 'Completado';
-  tipo_flota: 'autobuses' | 'camiones' | 'furgonetas' | 'otros';
-  numero_vehiculos: number;
-  localizacion_base: {
-    direccion: string;
-    ciudad: string;
-    provincia: string;
-    coordenadas: { lat: number; lng: number };
-  };
+  operador_ids: string[];
   startDate: string; 
   endDate: string; 
   budget: number; 
@@ -56,8 +50,8 @@ export type PurchaseOrder = {
   project: string;
   supplier: string;
   status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Rechazado';
-  date: string;
-  estimatedDeliveryDate: string;
+  date: string | Timestamp;
+  estimatedDeliveryDate: string | Timestamp;
   total: number;
   items: PurchaseOrderItem[];
   rejectionReason?: string;
@@ -210,9 +204,9 @@ export type Replanteo = {
 export type Operador = {
   id: string;
   name: string;
-  cif: string;
-  phone: string;
-  email: string;
-  address: string;
+  cif?: string;
+  phone?: string;
+  email?: string;
+  address?: string;
   notes?: string;
 };

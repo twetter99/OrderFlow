@@ -45,7 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProjectForm } from "@/components/projects/project-form";
-import type { Project, Client, User } from "@/lib/types";
+import type { Project, Client, User, Operador } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { db } from "@/lib/firebase";
@@ -66,6 +66,7 @@ export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [operadores, setOperadores] = useState<Operador[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -94,11 +95,17 @@ export default function ProjectsPage() {
       const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
       setUsers(usersData);
     });
+
+    const unsubOperadores = onSnapshot(collection(db, "operadores"), (snapshot) => {
+        const operadoresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Operador));
+        setOperadores(operadoresData);
+    });
     
     return () => {
       unsubProjects();
       unsubClients();
       unsubUsers();
+      unsubOperadores();
     }
   }, [toast]);
 
@@ -214,8 +221,7 @@ export default function ProjectsPage() {
                 </TableHead>
                 <TableHead>Nombre del Proyecto</TableHead>
                 <TableHead>Cliente</TableHead>
-                <TableHead>Tipo Flota</TableHead>
-                <TableHead>Nº Vehículos</TableHead>
+                <TableHead>Operadores</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead>Progreso</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -226,6 +232,7 @@ export default function ProjectsPage() {
                 const progress = project.budget > 0 ? Math.round(
                   (project.spent / project.budget) * 100
                 ) : 0;
+                const assignedOperators = project.operador_ids?.map(id => operadores.find(o => o.id === id)?.name).filter(Boolean);
                 return (
                   <TableRow key={project.id} data-state={selectedRowIds.includes(project.id) ? "selected" : ""}>
                     <TableCell padding="checkbox">
@@ -237,8 +244,7 @@ export default function ProjectsPage() {
                     </TableCell>
                     <TableCell className="font-medium">{project.name}</TableCell>
                     <TableCell>{clients.find(c => c.id === project.clientId)?.name || project.client}</TableCell>
-                    <TableCell className="capitalize">{project.tipo_flota}</TableCell>
-                    <TableCell>{project.numero_vehiculos}</TableCell>
+                    <TableCell>{assignedOperators?.join(', ') || 'N/A'}</TableCell>
                     <TableCell>
                       <Badge
                         variant="outline"
@@ -310,6 +316,7 @@ export default function ProjectsPage() {
             project={selectedProject}
             clients={clients}
             users={users}
+            operadores={operadores}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
