@@ -28,20 +28,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-const technicianCategories = [
-  { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
-  { name: 'Técnico Instalador', description: 'Realiza la instalación física y el conexionado de los equipos embarcados en vehículos.' },
-  { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
-  { name: 'Técnico de Puesta en Marcha y Pruebas', description: 'Encargado de configurar los equipos, ponerlos en funcionamiento y comprobar su correcto funcionamiento tras la instalación.' },
-  { name: 'Técnico de Mantenimiento', description: 'Realiza diagnósticos, reparaciones y mantenimientos preventivos y correctivos de los equipos instalados.' },
-  { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
-  { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
-  { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
+const approvalRoles = [
+  { name: 'Solicitante', description: 'Puede crear y enviar pedidos para aprobación.' },
+  { name: 'Supervisor', description: 'Puede revisar y aprobar o rechazar pedidos asignados.' },
+  { name: 'Validador', description: 'Puede dar la autorización final a pedidos ya aprobados por un supervisor.' },
   { name: 'Almacén', description: 'Gestiona la recepción, almacenamiento y despacho de mercancías en el almacén.' },
-  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades del sistema, incluyendo la gestión de usuarios y proyectos.' },
+  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades del sistema.' },
 ] as const;
 
-const userRoles = technicianCategories.map(c => c.name);
+const userRoles = approvalRoles.map(c => c.name);
 
 const rateSchema = z.object({
   rateWorkHour: z.coerce.number().min(0, "La tarifa debe ser positiva"),
@@ -57,7 +52,7 @@ const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  role: z.enum(userRoles as [string, ...string[]]).refine((val): val is UserRole | 'Administrador' => userRoles.includes(val), {
+  role: z.enum(userRoles as [string, ...string[]]).refine((val): val is UserRole => userRoles.includes(val), {
     message: "Rol no válido",
   }),
   rates: rateSchema,
@@ -170,7 +165,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
   const defaultValues = user
     ? { 
         ...user,
-        role: user.role as UserRole | 'Administrador',
+        role: user.role as UserRole,
         rates: user.rates || {
           rateWorkHour: 0,
           rateTravelHour: 0,
@@ -185,7 +180,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         name: "",
         email: "",
         phone: "",
-        role: "Técnico Instalador" as const,
+        role: "Solicitante" as const,
         rates: {
           rateWorkHour: 0,
           rateTravelHour: 0,
@@ -257,15 +252,15 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     name="role"
                     render={({ field }) => (
                     <FormItem>
-                        <FormLabel>Categoría / Rol</FormLabel>
+                        <FormLabel>Rol de Aprobación</FormLabel>
                           <Select onValueChange={field.onChange} defaultValue={field.value}>
                             <FormControl>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Selecciona una categoría" />
+                                    <SelectValue placeholder="Selecciona un rol" />
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
-                              {technicianCategories.map(category => (
+                              {approvalRoles.map(category => (
                                 <SelectItem 
                                   key={category.name} 
                                   value={category.name}

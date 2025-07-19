@@ -9,7 +9,7 @@ export type Project = {
   clientId: string;
   client: string; 
   status: 'Planificado' | 'En Progreso' | 'Completado';
-  operador_ids: string[];
+  operador_ids?: string[];
   startDate: string; 
   endDate: string; 
   budget?: number; 
@@ -17,7 +17,7 @@ export type Project = {
   margen_previsto?: number;
   centro_coste: string;
   responsable_proyecto_id?: string; 
-  equipo_tecnico_ids: string[];
+  equipo_tecnico_ids?: string[];
 };
 
 export type InventoryItem = {
@@ -77,15 +77,11 @@ export type Client = {
 };
 
 export type UserRole = 
-  | 'Técnico Ayudante / Auxiliar'
-  | 'Técnico Instalador'
-  | 'Técnico Integrador de Sistemas Embarcados'
-  | 'Técnico de Puesta en Marcha y Pruebas'
-  | 'Técnico de Mantenimiento'
-  | 'Jefe de Equipo / Encargado de Instalación'
-  | 'Técnico de SAT (Servicio de Asistencia Técnica)'
-  | 'Técnico de Calidad / Certificación'
-  | 'Almacén';
+  | 'Solicitante'
+  | 'Supervisor'
+  | 'Validador'
+  | 'Almacén'
+  | 'Administrador';
 
 export type UserRates = {
     rateWorkHour: number;
@@ -102,7 +98,7 @@ export type User = {
   name: string;
   email: string;
   phone: string;
-  role: UserRole | 'Administrador';
+  role: UserRole;
   rates?: UserRates;
 };
 

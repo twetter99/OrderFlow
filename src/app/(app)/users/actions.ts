@@ -9,8 +9,6 @@ export async function addUser(data: any) {
   try {
     await addDoc(collection(db, 'users'), data);
     revalidatePath('/users');
-    revalidatePath('/technicians');
-    revalidatePath('/project-managers');
     return { success: true, message: 'Usuario añadido correctamente.' };
   } catch (error) {
     console.error("Error adding user to Firestore:", error);
@@ -23,8 +21,6 @@ export async function updateUser(id: string, data: any) {
         const userRef = doc(db, 'users', id);
         await updateDoc(userRef, data);
         revalidatePath('/users');
-        revalidatePath('/technicians');
-        revalidatePath('/project-managers');
         return { success: true, message: 'Usuario actualizado correctamente.' };
     } catch (error) {
         console.error("Error updating user in Firestore:", error);
@@ -36,8 +32,6 @@ export async function deleteUser(id: string) {
     try {
         await deleteDoc(doc(db, 'users', id));
         revalidatePath('/users');
-        revalidatePath('/technicians');
-        revalidatePath('/project-managers');
         return { success: true, message: 'Usuario eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting user from Firestore:", error);
@@ -50,8 +44,6 @@ export async function deleteMultipleUsers(ids: string[]) {
         const deletePromises = ids.map(id => deleteDoc(doc(db, 'users', id)));
         await Promise.all(deletePromises);
         revalidatePath('/users');
-        revalidatePath('/technicians');
-        revalidatePath('/project-managers');
         return { success: true, message: 'Usuarios eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple users from Firestore:", error);
