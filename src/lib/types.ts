@@ -1,4 +1,5 @@
 
+
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -11,11 +12,11 @@ export type Project = {
   operador_ids: string[];
   startDate: string; 
   endDate: string; 
-  budget: number; 
-  spent: number; 
-  margen_previsto: number;
+  budget?: number; 
+  spent?: number; 
+  margen_previsto?: number;
   centro_coste: string;
-  responsable_proyecto_id: string; 
+  responsable_proyecto_id?: string; 
   equipo_tecnico_ids: string[];
 };
 

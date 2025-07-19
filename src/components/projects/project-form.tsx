@@ -50,7 +50,7 @@ const formSchema = z.object({
   clientId: z.string().min(1, "El cliente es obligatorio."),
   status: z.enum(["Planificado", "En Progreso", "Completado"]),
   operador_ids: z.array(z.string()).min(1, "Debes seleccionar al menos un operador."),
-  responsable_proyecto_id: z.string().min(1, "Debes asignar un responsable."),
+  responsable_proyecto_id: z.string().optional(),
   equipo_tecnico_ids: z.array(z.string()).optional(),
   
   centro_coste: z.string().min(1, "El centro de coste es obligatorio."),
@@ -58,9 +58,9 @@ const formSchema = z.object({
   startDate: z.date({ required_error: "La fecha de inicio es obligatoria." }),
   endDate: z.date({ required_error: "La fecha de fin es obligatoria." }),
   
-  budget: z.coerce.number().positive("El presupuesto debe ser un número positivo."),
-  spent: z.coerce.number().nonnegative("El gasto no puede ser negativo."),
-  margen_previsto: z.coerce.number().min(0, "El margen no puede ser negativo."),
+  budget: z.coerce.number().nonnegative("El presupuesto no puede ser negativo.").optional(),
+  spent: z.coerce.number().nonnegative("El gasto no puede ser negativo.").optional(),
+  margen_previsto: z.coerce.number().min(0, "El margen no puede ser negativo.").optional(),
 });
 
 type ProjectFormValues = z.infer<typeof formSchema>;
@@ -97,23 +97,26 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
         ...project,
         startDate: new Date(project.startDate),
         endDate: new Date(project.endDate),
-        margen_previsto: project.margen_previsto * 100, // Convert to percentage for display
+        margen_previsto: project.margen_previsto ? project.margen_previsto * 100 : undefined, // Convert to percentage for display
         equipo_tecnico_ids: project.equipo_tecnico_ids || [],
         operador_ids: project.operador_ids || [],
+        budget: project.budget || undefined,
+        spent: project.spent || undefined,
+        responsable_proyecto_id: project.responsable_proyecto_id || undefined,
       }
     : {
         name: "",
         clientId: "",
         status: "Planificado" as const,
         operador_ids: [],
-        responsable_proyecto_id: "",
+        responsable_proyecto_id: undefined,
         equipo_tecnico_ids: [],
         centro_coste: "",
         startDate: new Date(),
         endDate: new Date(),
-        budget: 0,
-        spent: 0,
-        margen_previsto: 15,
+        budget: undefined,
+        spent: undefined,
+        margen_previsto: undefined,
       };
 
   const form = useForm<ProjectFormValues>({
@@ -135,7 +138,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
   function onSubmit(values: ProjectFormValues) {
     onSave({
       ...values,
-      margen_previsto: values.margen_previsto / 100 // Convert back to decimal before saving
+      margen_previsto: values.margen_previsto ? values.margen_previsto / 100 : undefined // Convert back to decimal before saving
     });
   }
 
@@ -253,7 +256,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                     name="responsable_proyecto_id"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Responsable del Proyecto</FormLabel>
+                        <FormLabel>Responsable del Proyecto (Opcional)</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={projectManagers.length === 0}>
                             <FormControl>
                             <SelectTrigger>
@@ -273,7 +276,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                   name="equipo_tecnico_ids"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Equipo Técnico</FormLabel>
+                      <FormLabel>Equipo Técnico (Opcional)</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
                           <FormControl>
@@ -438,7 +441,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
         
         {/* Financial Info */}
          <div className="space-y-4 p-4 border rounded-lg">
-            <h3 className="text-lg font-medium">Información Financiera</h3>
+            <h3 className="text-lg font-medium">Información Financiera (Opcional)</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <FormField
                     control={form.control}
@@ -447,7 +450,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                     <FormItem>
                         <FormLabel>Presupuesto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="50000" {...field} />
+                        <Input type="number" placeholder="50000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -460,7 +463,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                     <FormItem>
                         <FormLabel>Gasto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="23000" {...field} />
+                        <Input type="number" placeholder="23000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -473,7 +476,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                     <FormItem>
                         <FormLabel>Margen Previsto (%)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="15" {...field} />
+                        <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>

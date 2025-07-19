@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -11,11 +12,17 @@ type ProjectData = Omit<Project, 'id'>;
 
 export async function addProject(data: ProjectData) {
   try {
-    const dataToSave = {
+    const dataToSave: any = {
         ...data,
         startDate: Timestamp.fromDate(new Date(data.startDate)),
         endDate: Timestamp.fromDate(new Date(data.endDate)),
     };
+    // Ensure optional fields are not saved as null, but rather not saved at all if empty
+    if (!data.responsable_proyecto_id) delete dataToSave.responsable_proyecto_id;
+    if (data.budget === undefined) delete dataToSave.budget;
+    if (data.spent === undefined) delete dataToSave.spent;
+    if (data.margen_previsto === undefined) delete dataToSave.margen_previsto;
+
     await addDoc(collection(db, 'projects'), dataToSave);
     revalidatePath('/projects');
     return { success: true, message: 'Proyecto añadido correctamente.' };
@@ -36,6 +43,11 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
         if (data.endDate) {
             dataToUpdate.endDate = Timestamp.fromDate(new Date(data.endDate));
         }
+        // Ensure optional fields are not saved as null, but rather not saved at all if empty
+        if (!data.responsable_proyecto_id) delete dataToUpdate.responsable_proyecto_id;
+        if (data.budget === undefined) delete dataToUpdate.budget;
+        if (data.spent === undefined) delete dataToUpdate.spent;
+        if (data.margen_previsto === undefined) delete dataToUpdate.margen_previsto;
 
         await updateDoc(projectRef, dataToUpdate);
         revalidatePath('/projects');
