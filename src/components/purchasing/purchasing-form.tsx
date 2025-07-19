@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "../ui/calendar";
 import { ItemCombobox } from "./item-combobox";
+import React from "react";
 
 const formSchema = z.object({
   project: z.string().min(1, "El proyecto es obligatorio."),
@@ -101,12 +102,13 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const status = useWatch({ control: form.control, name: "status" });
   const watchedItems = useWatch({ control: form.control, name: "items" });
   const watchedSupplier = useWatch({ control: form.control, name: "supplier" });
-
-  const total = watchedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
-  form.setValue('total', total);
+  
+  const total = React.useMemo(() => {
+    return watchedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
+  }, [watchedItems]);
 
   function onSubmit(values: PurchasingFormValues) {
-    onSave(values);
+    onSave({ ...values, total }); // Pass the calculated total on submit
   }
 
   return (
