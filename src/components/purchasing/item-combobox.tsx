@@ -28,15 +28,17 @@ interface ItemComboboxProps {
 }
 
 export function ItemCombobox({ inventoryItems, value, onChange, disabled }: ItemComboboxProps) {
-  const [open, setOpen] = React.useState(false)
+  const [open, setOpen] = React.useState(false);
 
-  const handleSelect = (selectedItem: InventoryItem) => {
-    onChange(selectedItem);
+  const handleSelect = (item: InventoryItem) => {
+    onChange(item);
     setOpen(false);
   };
   
-  const handleCreateNew = (itemName: string) => {
-     onChange({ name: itemName, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+  const handleCreateNew = (inputValue: string) => {
+     if (inputValue.trim()) {
+        onChange({ name: inputValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+     }
      setOpen(false);
   }
 
@@ -63,17 +65,16 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
           />
           <CommandList>
             <CommandEmpty>
-                <div 
-                    onClick={() => {
-                        const input = document.querySelector('[cmdk-input]');
-                        if(input instanceof HTMLInputElement) {
-                            handleCreateNew(input.value);
-                        }
+                <CommandItem
+                    onSelect={(currentValue) => {
+                        handleCreateNew(currentValue);
                     }}
-                    className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none"
+                    value={
+                        (document.querySelector('[cmdk-input]') as HTMLInputElement)?.value
+                    }
                  >
-                    Crear nuevo artículo
-                </div>
+                    Crear nuevo artículo: "{(document.querySelector('[cmdk-input]') as HTMLInputElement)?.value}"
+                </CommandItem>
             </CommandEmpty>
             <CommandGroup>
               {inventoryItems.map((item) => (
