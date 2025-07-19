@@ -1,9 +1,10 @@
 
+
 "use client";
 
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, useWatch } from "react-hook-form";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -73,6 +74,15 @@ interface ProjectFormProps {
   onCancel: () => void;
 }
 
+// Función para generar el centro de coste
+const generateCostCenterCode = (projectName: string): string => {
+    if (!projectName) return '';
+    const words = projectName.split(' ').filter(word => word.length > 2); // Filtra palabras cortas
+    const initials = words.map(word => word[0]).join('');
+    return `CC-${initials.toUpperCase()}`;
+};
+
+
 export function ProjectForm({ project, clients, users, operadores, onSave, onCancel }: ProjectFormProps) {
   const defaultValues = project
     ? {
@@ -102,6 +112,17 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  const projectName = useWatch({ control: form.control, name: 'name' });
+
+  React.useEffect(() => {
+    // Solo generamos el código si es un proyecto nuevo
+    if (!project) {
+        const generatedCode = generateCostCenterCode(projectName);
+        form.setValue('centro_coste', generatedCode, { shouldValidate: true });
+    }
+  }, [projectName, form, project]);
+
 
   function onSubmit(values: ProjectFormValues) {
     onSave({
@@ -457,7 +478,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
                     <FormItem>
                         <FormLabel>Centro de Coste</FormLabel>
                         <FormControl>
-                        <Input placeholder="CC-INST-VEH" {...field} />
+                        <Input placeholder="Se genera automáticamente" {...field} disabled />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
