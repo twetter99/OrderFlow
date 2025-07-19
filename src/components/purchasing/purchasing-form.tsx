@@ -252,7 +252,9 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                             form.setValue(`items.${index}.price`, selectedItem.unitCost);
                                                             form.setValue(`items.${index}.itemId`, selectedItem.id);
                                                             form.setValue(`items.${index}.unit`, selectedItem.unit);
-                                                            form.setValue(`items.${index}.type`, selectedItem.type || 'Material');
+                                                            
+                                                            const purchaseItemType = selectedItem.type === 'service' ? 'Servicio' : 'Material';
+                                                            form.setValue(`items.${index}.type`, purchaseItemType);
                                                         }}
                                                         disabled={isReadOnly}
                                                    />
