@@ -22,7 +22,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { PlusCircle, Trash2 } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { Textarea } from "../ui/textarea";
 
 const formSchema = z.object({
@@ -102,14 +102,16 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     }, 0);
   }, [itemType, watchedComponents, inventoryItems]);
   
-  if (itemType === 'composite') {
-      form.setValue('unitCost', kitCost, { shouldValidate: true });
-      form.setValue('unit', 'ud', { shouldValidate: true });
-  }
+  useEffect(() => {
+    if (itemType === 'composite') {
+        form.setValue('unitCost', kitCost, { shouldValidate: true });
+        form.setValue('unit', 'ud', { shouldValidate: true });
+    }
+    if (itemType === 'service') {
+        form.setValue('unit', 'ud', { shouldValidate: true });
+    }
+  }, [itemType, kitCost, form]);
 
-  if (itemType === 'service') {
-      form.setValue('unit', 'ud', { shouldValidate: true });
-  }
 
   function onSubmit(values: InventoryFormValues) {
     const finalValues: any = { ...values };
@@ -145,9 +147,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                   onValueChange={(value) => {
                     if (isEditing) return; // Don't allow changing type when editing
                     field.onChange(value);
-                    if (value === 'service' || value === 'composite') {
-                      form.setValue('unit', 'ud', { shouldValidate: true });
-                    }
                   }}
                   defaultValue={field.value}
                   className="flex space-x-4"
