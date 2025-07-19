@@ -29,19 +29,16 @@ interface ItemComboboxProps {
 
 export function ItemCombobox({ inventoryItems, value, onChange, disabled }: ItemComboboxProps) {
   const [open, setOpen] = React.useState(false)
-  const [inputValue, setInputValue] = React.useState(value || '')
 
-  React.useEffect(() => {
-    setInputValue(value || '');
-  }, [value]);
-
-  const handleSelect = (currentValue: string) => {
-    const selectedItem = inventoryItems.find(item => item.name.toLowerCase() === currentValue.toLowerCase());
-    if (selectedItem) {
-      onChange(selectedItem);
-    }
+  const handleSelect = (selectedItem: InventoryItem) => {
+    onChange(selectedItem);
     setOpen(false);
   };
+  
+  const handleCreateNew = (itemName: string) => {
+     onChange({ name: itemName, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+     setOpen(false);
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -60,27 +57,30 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>
-        <Command shouldFilter={false}>
+        <Command>
           <CommandInput 
             placeholder="Buscar o crear artículo..." 
-            value={inputValue}
-            onValueChange={setInputValue}
           />
           <CommandList>
             <CommandEmpty>
-                <CommandItem onSelect={() => {
-                    onChange({ name: inputValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
-                    setOpen(false);
-                }}>
-                    Crear nuevo artículo: "{inputValue}"
-                </CommandItem>
+                <div 
+                    onClick={() => {
+                        const input = document.querySelector('[cmdk-input]');
+                        if(input instanceof HTMLInputElement) {
+                            handleCreateNew(input.value);
+                        }
+                    }}
+                    className="relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none"
+                 >
+                    Crear nuevo artículo
+                </div>
             </CommandEmpty>
             <CommandGroup>
-              {inventoryItems.filter(item => item.name.toLowerCase().includes(inputValue.toLowerCase())).map((item) => (
+              {inventoryItems.map((item) => (
                 <CommandItem
                   key={item.id}
                   value={item.name}
-                  onSelect={handleSelect}
+                  onSelect={() => handleSelect(item)}
                   className="flex justify-between items-start gap-2"
                 >
                     <div className="flex items-start gap-2">
