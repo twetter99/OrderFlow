@@ -29,9 +29,11 @@ interface ItemComboboxProps {
 
 export function ItemCombobox({ inventoryItems, value, onChange, disabled }: ItemComboboxProps) {
   const [open, setOpen] = React.useState(false);
+  const [searchValue, setSearchValue] = React.useState("");
 
   const handleSelect = (item: InventoryItem) => {
     onChange(item);
+    setSearchValue(""); // Reset search value
     setOpen(false);
   };
   
@@ -39,11 +41,17 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
      if (inputValue.trim()) {
         onChange({ name: inputValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
      }
+     setSearchValue(""); // Reset search value
      setOpen(false);
   }
 
   return (
-    <Popover open={open} onOpenChange={setOpen}>
+    <Popover open={open} onOpenChange={(isOpen) => {
+        setOpen(isOpen);
+        if (!isOpen) {
+            setSearchValue(""); // Reset search on close
+        }
+    }}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -61,21 +69,20 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>
         <Command>
           <CommandInput 
-            placeholder="Buscar o crear artículo..." 
+            placeholder="Buscar o crear artículo..."
+            value={searchValue}
+            onValueChange={setSearchValue}
           />
           <CommandList>
-            <CommandEmpty>
-                <CommandItem
-                    onSelect={(currentValue) => {
-                        handleCreateNew(currentValue);
-                    }}
-                    value={
-                        (document.querySelector('[cmdk-input]') as HTMLInputElement)?.value
-                    }
-                 >
-                    Crear nuevo artículo: "{(document.querySelector('[cmdk-input]') as HTMLInputElement)?.value}"
-                </CommandItem>
-            </CommandEmpty>
+            {searchValue.trim() && (
+                <CommandEmpty>
+                    <CommandItem
+                        onSelect={() => handleCreateNew(searchValue)}
+                    >
+                        Crear nuevo artículo: "{searchValue}"
+                    </CommandItem>
+                </CommandEmpty>
+            )}
             <CommandGroup>
               {inventoryItems.map((item) => (
                 <CommandItem
