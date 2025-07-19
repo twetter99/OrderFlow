@@ -104,11 +104,11 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   
   useEffect(() => {
     if (itemType === 'composite') {
-        form.setValue('unitCost', kitCost, { shouldValidate: true });
-        form.setValue('unit', 'ud', { shouldValidate: true });
+        form.setValue('unitCost', kitCost);
+        form.setValue('unit', 'ud');
     }
     if (itemType === 'service') {
-        form.setValue('unit', 'ud', { shouldValidate: true });
+        form.setValue('unit', 'ud');
     }
   }, [itemType, kitCost, form]);
 
@@ -324,6 +324,8 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <CardTitle>Componentes del Kit</CardTitle>
                 </CardHeader>
                 <CardContent>
+                    {simpleInventoryItems.length > 0 ? (
+                    <>
                     <Table>
                         <TableHeader>
                             <TableRow>
@@ -395,6 +397,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <div className="text-right font-bold mt-4">
                         Costo Total del Kit: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(kitCost)}
                     </div>
+                    </>
+                    ) : (
+                        <p className="text-sm text-muted-foreground text-center p-4">
+                            No hay artículos simples definidos. Por favor, añade primero artículos simples para poder crear un kit.
+                        </p>
+                    )}
                 </CardContent>
             </Card>
         )}
