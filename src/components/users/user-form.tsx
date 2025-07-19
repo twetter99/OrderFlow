@@ -28,15 +28,16 @@ import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
-const approvalRoles = [
+const userRoleDefinitions = [
   { name: 'Solicitante', description: 'Puede crear y enviar pedidos para aprobación.' },
   { name: 'Supervisor', description: 'Puede revisar y aprobar o rechazar pedidos asignados.' },
-  { name: 'Validador', description: 'Puede dar la autorización final a pedidos ya aprobados por un supervisor.' },
-  { name: 'Almacén', description: 'Gestiona la recepción, almacenamiento y despacho de mercancías en el almacén.' },
-  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades del sistema.' },
+  { name: 'Validador', description: 'Puede dar la autorización final a pedidos ya aprobados.' },
+  { name: 'Técnico Instalador', description: 'Personal técnico que realiza las instalaciones en campo.' },
+  { name: 'Almacén', description: 'Gestiona la recepción y el despacho de mercancías.' },
+  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades.' },
 ] as const;
 
-const userRoles = approvalRoles.map(c => c.name);
+const userRoles = userRoleDefinitions.map(c => c.name);
 
 const rateSchema = z.object({
   rateWorkHour: z.coerce.number().min(0, "La tarifa debe ser positiva"),
@@ -66,7 +67,6 @@ interface UserFormProps {
   onCancel: () => void;
 }
 
-// Helper component for currency input
 function CurrencyInput({
   field,
   label,
@@ -260,7 +260,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
-                              {approvalRoles.map(category => (
+                              {userRoleDefinitions.map(category => (
                                 <SelectItem 
                                   key={category.name} 
                                   value={category.name}

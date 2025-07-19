@@ -155,16 +155,6 @@ export function SidebarNav() {
                          const isSubActive = pathname === subItem.href || (subItem.href === '/users' && ['/approval-flows'].includes(pathname));
                          const subUniqueKey = `${subItem.label}-${subItem.href}`;
 
-                         // Hide old routes that are being removed/changed
-                         if (['/technicians', '/project-managers'].includes(subItem.href)) {
-                           return null;
-                         }
-
-                         // Special handling for the new page, if you want it to appear active under 'Sistema'
-                         if (subItem.href === '/approval-flows' && pathname === '/project-managers') {
-                           return null; // This will be the new page, but we link to it directly
-                         }
-
                          return (
                               <Link
                                   key={subUniqueKey}

@@ -18,6 +18,14 @@ export type Project = {
   centro_coste: string;
   responsable_proyecto_id?: string; 
   equipo_tecnico_ids?: string[];
+  numero_vehiculos: number;
+  tipo_flota: 'autobuses' | 'camiones' | 'furgonetas' | 'otros';
+  localizacion_base: {
+    direccion: string;
+    ciudad: string;
+    provincia: string;
+    coordenadas: { lat: number; lng: number };
+  };
 };
 
 export type InventoryItem = {
@@ -80,6 +88,7 @@ export type UserRole =
   | 'Solicitante'
   | 'Supervisor'
   | 'Validador'
+  | 'Técnico Instalador'
   | 'Almacén'
   | 'Administrador';
 

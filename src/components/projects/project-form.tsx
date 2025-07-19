@@ -74,19 +74,11 @@ interface ProjectFormProps {
   onCancel: () => void;
 }
 
-// Función para generar el centro de coste con el nuevo formato xx-xxxx-xx
 const generateCostCenterCode = (projectName: string): string => {
     if (!projectName) return '';
-
-    // 1. Generar número aleatorio de 2 dígitos (01-99)
     const randomNumber = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
-
-    // 2. Obtener 4 primeras letras del proyecto
     const projectPart = projectName.replace(/\s+/g, '').toUpperCase().substring(0, 4).padEnd(4, 'X');
-
-    // 3. Obtener últimos 2 dígitos del año actual
     const yearPart = new Date().getFullYear().toString().slice(-2);
-
     return `${randomNumber}-${projectPart}-${yearPart}`;
 };
 
@@ -127,7 +119,6 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
   const projectName = useWatch({ control: form.control, name: 'name' });
 
   React.useEffect(() => {
-    // Solo generamos el código si es un proyecto nuevo
     if (!project) {
         const generatedCode = generateCostCenterCode(projectName);
         form.setValue('centro_coste', generatedCode, { shouldValidate: true });
@@ -143,12 +134,11 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
   }
 
   const projectManagers = React.useMemo(() => users.filter(u => u.role === 'Administrador'), [users]);
-  const technicians = React.useMemo(() => users.filter(u => u.role !== 'Administrador'), [users]);
+  const technicians = React.useMemo(() => users.filter(u => u.role === 'Técnico Instalador'), [users]);
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-        {/* Project and Client Info */}
         <div className="space-y-4 p-4 border rounded-lg">
             <h3 className="text-lg font-medium">Información General</h3>
             <FormField
@@ -186,7 +176,6 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
             />
         </div>
 
-        {/* Operator Assignment */}
         <div className="space-y-4 p-4 border rounded-lg">
              <h3 className="text-lg font-medium">Asignación de Operador(es)</h3>
              <FormField
@@ -247,7 +236,6 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
         </div>
 
 
-        {/* Team Assignment */}
         <div className="space-y-4 p-4 border rounded-lg">
              <h3 className="text-lg font-medium">Asignación de Equipo Interno</h3>
              <div className="grid grid-cols-2 gap-4">
@@ -332,8 +320,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
              </div>
         </div>
 
-        {/* Dates and Status */}
-         <div className="space-y-4 p-4 border rounded-lg">
+        <div className="space-y-4 p-4 border rounded-lg">
             <h3 className="text-lg font-medium">Plazos y Estado</h3>
             <div className="grid grid-cols-3 gap-4">
                 <FormField
@@ -439,8 +426,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
             </div>
          </div>
         
-        {/* Financial Info */}
-         <div className="space-y-4 p-4 border rounded-lg">
+        <div className="space-y-4 p-4 border rounded-lg">
             <h3 className="text-lg font-medium">Información Financiera (Opcional)</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <FormField
