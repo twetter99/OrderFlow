@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -28,7 +29,6 @@ import { Textarea } from '../ui/textarea';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 
 const technicianCategories = [
-  { name: 'Operador', description: 'Personal encargado de la operación de maquinaria o sistemas específicos.' },
   { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
   { name: 'Técnico Instalador', description: 'Realiza la instalación física y el conexionado de los equipos embarcados en vehículos.' },
   { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
@@ -272,11 +272,11 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                                   onPointerEnter={() => setHoveredCategory(category.name)}
                                 >
                                   <div>{category.name}</div>
-                                    {hoveredCategory === category.name && (
-                                      <div className="text-sm font-normal text-foreground/80 whitespace-normal mt-1">
-                                        {category.description}
-                                      </div>
-                                    )}
+                                  {hoveredCategory === category.name && (
+                                    <div className="whitespace-normal text-base font-normal text-foreground/80 mt-1">
+                                      {category.description}
+                                    </div>
+                                  )}
                                 </SelectItem>
                               ))}
                             </SelectContent>

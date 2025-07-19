@@ -82,7 +82,6 @@ export type Client = {
 };
 
 export type UserRole = 
-  | 'Operador'
   | 'Técnico Ayudante / Auxiliar'
   | 'Técnico Instalador'
   | 'Técnico Integrador de Sistemas Embarcados'
@@ -205,4 +204,15 @@ export type Replanteo = {
   estado: 'Pendiente' | 'En Proceso' | 'Completado';
   materiales: ReplanteoMaterial[];
   imagenes: ReplanteoImagen[];
+};
+
+// Nuevo tipo para Operadores
+export type Operador = {
+  id: string;
+  name: string;
+  cif: string;
+  phone: string;
+  email: string;
+  address: string;
+  notes?: string;
 };

@@ -41,31 +41,27 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { UserForm } from "@/components/users/user-form";
-import type { User } from "@/lib/types";
+import { OperadorForm } from "@/components/operadores/operador-form";
+import type { Operador } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
-import { collection, onSnapshot, query, where } from "firebase/firestore";
+import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addUser, updateUser, deleteUser, deleteMultipleUsers } from "../users/actions";
+import { addOperador, updateOperador, deleteOperador, deleteMultipleOperadores } from "./actions";
 
 export default function OperadoresPage() {
   const { toast } = useToast();
-  const [operadores, setOperadores] = useState<User[]>([]);
+  const [operadores, setOperadores] = useState<Operador[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<User | null>(null);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [operadorToDelete, setOperadorToDelete] = useState<Operador | null>(null);
+  const [selectedOperador, setSelectedOperador] = useState<Operador | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   
   useEffect(() => {
-    const q = query(collection(db, "users"), where("role", "==", "Operador"));
-    
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-        const operadoresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
+    const unsubscribe = onSnapshot(collection(db, "operadores"), (snapshot) => {
+        const operadoresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Operador));
         setOperadores(operadoresData);
         setLoading(false);
     }, (error) => {
@@ -78,32 +74,32 @@ export default function OperadoresPage() {
   }, [toast]);
 
   const handleAddClick = () => {
-    setSelectedUser(null);
+    setSelectedOperador(null);
     setIsModalOpen(true);
   };
 
-  const handleEditClick = (user: User) => {
-    setSelectedUser(user);
+  const handleEditClick = (operador: Operador) => {
+    setSelectedOperador(operador);
     setIsModalOpen(true);
   };
 
-  const handleDeleteTrigger = (user: User) => {
-    setUserToDelete(user);
+  const handleDeleteTrigger = (operador: Operador) => {
+    setOperadorToDelete(operador);
     setIsDeleteDialogOpen(true);
   };
 
   const handleBulkDeleteClick = () => {
-    setUserToDelete(null);
+    setOperadorToDelete(null);
     setIsDeleteDialogOpen(true);
   };
 
   const handleSave = async (values: any) => {
-    const result = selectedUser 
-      ? await updateUser(selectedUser.id, values) 
-      : await addUser({ ...values, role: 'Operador' });
+    const result = selectedOperador 
+      ? await updateOperador(selectedOperador.id, values) 
+      : await addOperador(values);
 
     if (result.success) {
-      toast({ title: selectedUser ? "Operador actualizado" : "Operador creado", description: result.message });
+      toast({ title: selectedOperador ? "Operador actualizado" : "Operador creado", description: result.message });
       setIsModalOpen(false);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.message });
@@ -112,10 +108,10 @@ export default function OperadoresPage() {
 
   const confirmDelete = async () => {
     let result;
-    if (userToDelete) {
-        result = await deleteUser(userToDelete.id);
+    if (operadorToDelete) {
+        result = await deleteOperador(operadorToDelete.id);
     } else if (selectedRowIds.length > 0) {
-        result = await deleteMultipleUsers(selectedRowIds);
+        result = await deleteMultipleOperadores(selectedRowIds);
     } else {
         return;
     }
@@ -127,13 +123,13 @@ export default function OperadoresPage() {
     }
     
     setIsDeleteDialogOpen(false);
-    setUserToDelete(null);
+    setOperadorToDelete(null);
     setSelectedRowIds([]);
   };
   
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedRowIds(operadores.map(u => u.id));
+      setSelectedRowIds(operadores.map(o => o.id));
     } else {
       setSelectedRowIds([]);
     }
@@ -157,7 +153,7 @@ export default function OperadoresPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Operadores</h1>
           <p className="text-muted-foreground">
-            Gestiona los usuarios con rol de operador.
+            Gestiona los operadores, empresas o autónomos externos.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -185,33 +181,26 @@ export default function OperadoresPage() {
                   />
                 </TableHead>
                 <TableHead>Nombre</TableHead>
+                <TableHead>Código/CIF</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Rol</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {operadores.map((user) => (
-                <TableRow key={user.id} data-state={selectedRowIds.includes(user.id) ? "selected" : ""}>
+              {operadores.map((operador) => (
+                <TableRow key={operador.id} data-state={selectedRowIds.includes(operador.id) ? "selected" : ""}>
                    <TableCell padding="checkbox">
                     <Checkbox
-                      checked={selectedRowIds.includes(user.id)}
-                      onCheckedChange={() => handleRowSelect(user.id)}
-                      aria-label={`Seleccionar usuario ${user.name}`}
+                      checked={selectedRowIds.includes(operador.id)}
+                      onCheckedChange={() => handleRowSelect(operador.id)}
+                      aria-label={`Seleccionar operador ${operador.name}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{user.name}</TableCell>
-                  <TableCell>{user.email}</TableCell>
-                  <TableCell>{user.phone}</TableCell>
-                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn("capitalize", "bg-sky-100 text-sky-800 border-sky-200")}
-                    >
-                      {user.role}
-                    </Badge>
-                  </TableCell>
+                  <TableCell className="font-medium">{operador.name}</TableCell>
+                  <TableCell>{operador.cif}</TableCell>
+                  <TableCell>{operador.email}</TableCell>
+                  <TableCell>{operador.phone}</TableCell>
                   <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -223,12 +212,12 @@ export default function OperadoresPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleEditClick(user)}>
+                          <DropdownMenuItem onClick={() => handleEditClick(operador)}>
                             Editar
                           </DropdownMenuItem>
                           <DropdownMenuItem
                             className="text-red-600"
-                            onClick={() => handleDeleteTrigger(user)}
+                            onClick={() => handleDeleteTrigger(operador)}
                           >
                             Eliminar
                           </DropdownMenuItem>
@@ -243,19 +232,19 @@ export default function OperadoresPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedUser ? "Editar Operador" : "Añadir Nuevo Operador"}
+              {selectedOperador ? "Editar Operador" : "Añadir Nuevo Operador"}
             </DialogTitle>
             <DialogDescription>
-              {selectedUser
+              {selectedOperador
                 ? "Edita la información del operador."
-                : "Rellena los detalles para crear un nuevo operador (se asignará rol de Operador)."}
+                : "Rellena los detalles para crear un nuevo operador."}
             </DialogDescription>
           </DialogHeader>
-          <UserForm
-            user={selectedUser}
+          <OperadorForm
+            operador={selectedOperador}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
@@ -271,7 +260,7 @@ export default function OperadoresPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {userToDelete ? ` el operador "${userToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} operadores seleccionados.` : " el operador seleccionado.")}
+              {operadorToDelete ? ` el operador "${operadorToDelete.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} operadores seleccionados.` : " el operador seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
