@@ -74,12 +74,20 @@ interface ProjectFormProps {
   onCancel: () => void;
 }
 
-// Función para generar el centro de coste
+// Función para generar el centro de coste con el nuevo formato xx-xxxx-xx
 const generateCostCenterCode = (projectName: string): string => {
     if (!projectName) return '';
-    const words = projectName.split(' ').filter(word => word.length > 2); // Filtra palabras cortas
-    const initials = words.map(word => word[0]).join('');
-    return `CC-${initials.toUpperCase()}`;
+
+    // 1. Generar número aleatorio de 2 dígitos (01-99)
+    const randomNumber = String(Math.floor(Math.random() * 99) + 1).padStart(2, '0');
+
+    // 2. Obtener 4 primeras letras del proyecto
+    const projectPart = projectName.replace(/\s+/g, '').toUpperCase().substring(0, 4).padEnd(4, 'X');
+
+    // 3. Obtener últimos 2 dígitos del año actual
+    const yearPart = new Date().getFullYear().toString().slice(-2);
+
+    return `${randomNumber}-${projectPart}-${yearPart}`;
 };
 
 
@@ -96,7 +104,7 @@ export function ProjectForm({ project, clients, users, operadores, onSave, onCan
     : {
         name: "",
         clientId: "",
-        status: "Planificado",
+        status: "Planificado" as const,
         operador_ids: [],
         responsable_proyecto_id: "",
         equipo_tecnico_ids: [],
