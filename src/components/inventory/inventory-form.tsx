@@ -33,7 +33,7 @@ const formSchema = z.object({
   observations: z.string().optional(),
   // Campos opcionales según el tipo
   minThreshold: z.coerce.number().optional(),
-  unitCost: z.coerce.number().positive("El costo unitario debe ser positivo."),
+  unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
   supplier: z.string().optional(),
   components: z.array(z.object({
     itemId: z.string().min(1, "Selecciona un componente."),
@@ -64,7 +64,7 @@ interface InventoryFormProps {
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
   const defaultValues = item
-    ? { ...item, minThreshold: item.minThreshold || 0 }
+    ? { ...item, minThreshold: item.minThreshold || 0, unitCost: item.unitCost || 0 }
     : {
         type: 'simple' as const,
         sku: "",
@@ -103,31 +103,33 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   }, [itemType, watchedComponents, inventoryItems]);
   
   useEffect(() => {
-    if (itemType === 'composite') {
-        form.setValue('unitCost', kitCost);
-        form.setValue('unit', 'ud');
-    }
     if (itemType === 'service') {
         form.setValue('unit', 'ud');
     }
-  }, [itemType, kitCost, form]);
+     if (itemType === 'composite') {
+        form.setValue('unit', 'ud');
+    }
+  }, [itemType, form]);
 
 
   function onSubmit(values: InventoryFormValues) {
     const finalValues: any = { ...values };
     
-    // Elimina el campo quantity si existe, ya que ahora se gestiona por ubicación.
-    delete finalValues.quantity;
-
+    if (values.type === 'composite') {
+        finalValues.unitCost = kitCost; // Ensure calculated cost is saved
+        finalValues.supplier = 'Ensamblado Interno';
+        finalValues.unit = 'ud';
+    }
+    
     if (values.type === 'service') {
         finalValues.minThreshold = 0;
         finalValues.supplier = 'N/A';
         finalValues.unit = 'ud';
     }
-    if (values.type === 'composite') {
-        finalValues.supplier = 'Ensamblado Interno';
-        finalValues.unit = 'ud';
-    }
+
+    // El campo quantity se gestiona por ubicación, no en el item maestro.
+    delete finalValues.quantity;
+
     onSave(finalValues);
   }
 
