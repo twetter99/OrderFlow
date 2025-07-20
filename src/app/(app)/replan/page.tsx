@@ -5,12 +5,12 @@ import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
 import { replanteos as initialReplanteos } from "@/lib/data";
-import type { Replanteo } from "@/lib/types";
+import type { Replanteo, Technician } from "@/lib/types";
 import { ReplanCard } from "@/components/replan/replan-card";
 import { useToast } from "@/hooks/use-toast";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { ReplanForm } from "@/components/replan/replan-form";
-import { projects, installationTemplates, users, inventory } from "@/lib/data";
+import { projects, installationTemplates, technicians, inventory } from "@/lib/data";
 
 
 export default function ReplanPage() {
@@ -87,7 +87,7 @@ export default function ReplanPage() {
             replan={selectedReplan}
             projects={projects}
             templates={installationTemplates}
-            users={users}
+            technicians={technicians}
             inventoryItems={inventory}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
@@ -97,5 +97,3 @@ export default function ReplanPage() {
     </div>
   );
 }
-
-    

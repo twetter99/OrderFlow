@@ -2,7 +2,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador } from './types';
 import { add, sub } from 'date-fns';
 
 const today = new Date();
@@ -32,7 +32,8 @@ const mockProjects: Project[] = [
     margen_previsto: 0.15,
     centro_coste: 'CC-INST-VEH',
     responsable_proyecto_id: 'WF-USER-001',
-    equipo_tecnico_ids: ['WF-USER-002', 'WF-USER-003']
+    equipo_tecnico_ids: ['WF-TECH-001', 'WF-TECH-002'],
+    operador_ids: ['WF-OP-001']
   },
   {
     id: 'WF-PROJ-002',
@@ -56,7 +57,7 @@ const mockProjects: Project[] = [
     margen_previsto: 0.20,
     centro_coste: 'CC-PROY-ESP',
     responsable_proyecto_id: 'WF-USER-001',
-    equipo_tecnico_ids: ['WF-USER-003']
+    equipo_tecnico_ids: ['WF-TECH-001']
   },
   {
     id: 'WF-PROJ-003',
@@ -79,7 +80,7 @@ const mockProjects: Project[] = [
     spent: 0,
     margen_previsto: 0.18,
     centro_coste: 'CC-SEGURIDAD',
-    responsable_proyecto_id: 'WF-USER-003',
+    responsable_proyecto_id: 'WF-USER-001',
     equipo_tecnico_ids: []
   },
   {
@@ -103,8 +104,8 @@ const mockProjects: Project[] = [
     spent: 9800,
     margen_previsto: 0.12,
     centro_coste: 'CC-MANT',
-    responsable_proyecto_id: 'WF-USER-003',
-    equipo_tecnico_ids: ['WF-USER-003']
+    responsable_proyecto_id: 'WF-USER-001',
+    equipo_tecnico_ids: ['WF-TECH-002']
   },
 ];
 const mockInventory: InventoryItem[] = [
@@ -159,21 +160,28 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  {
-    id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador', rates: {
-        rateWorkHour: 30, rateTravelHour: 15, rateOvertimeWeekdayDay: 45, rateOvertimeWeekdayNight: 50, rateOvertimeWeekendDay: 60, rateOvertimeWeekendNight: 65,
-    }
-  },
-  {
-    id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén', rates: {
-      rateWorkHour: 20, rateTravelHour: 10, rateOvertimeWeekdayDay: 30, rateOvertimeWeekdayNight: 35, rateOvertimeWeekendDay: 40, rateOvertimeWeekendNight: 45,
-    }
-  },
-  {
-    id: 'WF-USER-003', name: 'Employee User', email: 'employee@orderflow.com', phone: '777-888-9999', role: 'Técnico Instalador', rates: {
-        rateWorkHour: 25, rateTravelHour: 12, rateOvertimeWeekdayDay: 37.5, rateOvertimeWeekdayNight: 42.5, rateOvertimeWeekendDay: 50, rateOvertimeWeekendNight: 55,
-    }
-  },
+  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
+  { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
+  { id: 'WF-USER-003', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', role: 'Solicitante' },
+];
+const mockTechnicians: Technician[] = [
+    { id: 'WF-TECH-001', name: 'Mario García', email: 'm.garcia@tecnicos.com', phone: '655-444-333', specialty: 'Electrónica' },
+    { id: 'WF-TECH-002', name: 'Laura Jimenez', email: 'l.jimenez@tecnicos.com', phone: '655-111-222', specialty: 'GPS y Comunicaciones' },
+];
+const mockOperadores: Operador[] = [
+    {
+      id: 'WF-OP-001',
+      name: 'Instalaciones Electrónicas Avanzadas S.L.',
+      cif: 'B-12345678',
+      phone: '911 23 45 67',
+      email: 'facturacion@iea-sl.com',
+      address: 'Calle de la Innovación, 1, 28010 Madrid',
+      notes: 'Operador principal para proyectos en la comunidad de Madrid.',
+      rates: {
+          rateWorkHour: 55, rateTravelHour: 25, rateOvertimeWeekdayDay: 70, rateOvertimeWeekdayNight: 80, rateOvertimeWeekendDay: 90, rateOvertimeWeekendNight: 100,
+          rateNotes: "Tarifas actualizadas a 1 de Enero de 2024."
+      }
+    },
 ];
 const mockLocations: Location[] = [
     { id: 'LOC-001', name: 'Almacén Principal', description: 'Almacén principal para componentes generales.' },
@@ -242,7 +250,7 @@ const mockReplanteos: Replanteo[] = [
     vehiculo_identificacion: 'Autobús #345',
     matricula: '1234 ABC',
     fecha_replanteo: '2024-07-10',
-    tecnico_responsable_id: 'WF-USER-003',
+    tecnico_responsable_id: 'WF-TECH-001',
     plantilla_base_id: 'TPL-001',
     tiempo_estimado_ajustado: 3.0,
     observaciones: 'El espacio para la CPU es reducido, se necesita un soporte de montaje modificado. Se requiere cableado adicional.',
@@ -263,7 +271,7 @@ const mockReplanteos: Replanteo[] = [
     vehiculo_identificacion: 'Autobús #346',
     matricula: '1235 ABC',
     fecha_replanteo: '2024-07-11',
-    tecnico_responsable_id: 'WF-USER-003',
+    tecnico_responsable_id: 'WF-TECH-002',
     plantilla_base_id: 'TPL-001',
     tiempo_estimado_ajustado: 2.5,
     observaciones: 'Instalación estándar. Sin desviaciones.',
@@ -302,6 +310,8 @@ export const purchaseOrders: PurchaseOrder[] = mockPurchaseOrders;
 export const suppliers: Supplier[] = mockSuppliers;
 export const clients: Client[] = mockClients;
 export const users: User[] = mockUsers;
+export const technicians: Technician[] = mockTechnicians;
+export const operadores: Operador[] = mockOperadores;
 export const locations: Location[] = mockLocations;
 export const inventoryLocations: InventoryLocation[] = mockInventoryLocations;
 export const deliveryNotes: DeliveryNote[] = mockDeliveryNotes;

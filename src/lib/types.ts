@@ -99,6 +99,14 @@ export type User = {
   role: UserRole;
 };
 
+export type Technician = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    specialty: string;
+}
+
 export type Location = {
   id: string;
   name: string;

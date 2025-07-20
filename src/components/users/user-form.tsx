@@ -32,7 +32,7 @@ const userRoleDefinitions = [
   { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades.' },
 ] as const;
 
-const userRoles = userRoleDefinitions.map(c => c.name) as [string, ...string[]];
+const userRoles = userRoleDefinitions.map(c => c.name) as [UserRole, ...UserRole[]];
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),

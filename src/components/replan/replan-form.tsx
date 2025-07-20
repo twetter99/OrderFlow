@@ -22,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { Replanteo, Project, PlantillaInstalacion, User, InventoryItem } from "@/lib/types";
+import type { Replanteo, Project, PlantillaInstalacion, Technician, InventoryItem } from "@/lib/types";
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Calendar } from "../ui/calendar";
@@ -61,13 +61,13 @@ interface ReplanFormProps {
   replan?: Replanteo | null;
   projects: Project[];
   templates: PlantillaInstalacion[];
-  users: User[];
+  technicians: Technician[];
   inventoryItems: InventoryItem[];
   onSave: (values: ReplanFormValues) => void;
   onCancel: () => void;
 }
 
-export function ReplanForm({ replan, projects, templates, users, inventoryItems, onSave, onCancel }: ReplanFormProps) {
+export function ReplanForm({ replan, projects, templates, technicians, inventoryItems, onSave, onCancel }: ReplanFormProps) {
 
   const physicalItems = inventoryItems.filter(i => i.type !== 'service');
 
@@ -149,7 +149,7 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
                     <FormItem className="flex flex-col"><FormLabel>Fecha</FormLabel><Popover><PopoverTrigger asChild><FormControl><Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>{field.value ? (format(field.value, "PPP", { locale: es })) : (<span>Elige una fecha</span>)}<CalendarIcon className="ml-auto h-4 w-4 opacity-50" /></Button></FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus /></PopoverContent></Popover><FormMessage /></FormItem>
                 )}/>
                 <FormField control={form.control} name="tecnico_responsable_id" render={({ field }) => (
-                    <FormItem><FormLabel>Técnico Responsable</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona..."/></SelectTrigger></FormControl><SelectContent>{users.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
+                    <FormItem><FormLabel>Técnico Responsable</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue placeholder="Selecciona..."/></SelectTrigger></FormControl><SelectContent>{technicians.map(t => <SelectItem key={t.id} value={t.id}>{t.name}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
                  )}/>
                 <FormField control={form.control} name="estado" render={({ field }) => (
                     <FormItem><FormLabel>Estado</FormLabel><Select onValueChange={field.onChange} defaultValue={field.value}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent><SelectItem value="Pendiente">Pendiente</SelectItem><SelectItem value="En Proceso">En Proceso</SelectItem><SelectItem value="Completado">Completado</SelectItem></SelectContent></Select><FormMessage/></FormItem>
@@ -197,7 +197,9 @@ export function ReplanForm({ replan, projects, templates, users, inventoryItems,
 
 
         <div className="flex justify-end gap-2 pt-4">
-          <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
+          <Button type="button" variant="ghost" onClick={onCancel}>
+            Cancelar
+          </Button>
           <Button type="submit">Guardar Informe</Button>
         </div>
       </form>

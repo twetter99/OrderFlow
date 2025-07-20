@@ -45,7 +45,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { ProjectForm } from "@/components/projects/project-form";
-import type { Project, Client, User, Operador } from "@/lib/types";
+import type { Project, Client, User, Operador, Technician } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { db } from "@/lib/firebase";
@@ -67,6 +67,7 @@ export default function ProjectsPage() {
   const [clients, setClients] = useState<Client[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [operadores, setOperadores] = useState<Operador[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -100,12 +101,18 @@ export default function ProjectsPage() {
         const operadoresData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Operador));
         setOperadores(operadoresData);
     });
+
+    const unsubTechnicians = onSnapshot(collection(db, "technicians"), (snapshot) => {
+        const techniciansData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician));
+        setTechnicians(techniciansData);
+    });
     
     return () => {
       unsubProjects();
       unsubClients();
       unsubUsers();
       unsubOperadores();
+      unsubTechnicians();
     }
   }, [toast]);
 
@@ -317,6 +324,7 @@ export default function ProjectsPage() {
             clients={clients}
             users={users}
             operadores={operadores}
+            technicians={technicians}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
