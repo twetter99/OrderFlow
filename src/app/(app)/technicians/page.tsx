@@ -150,7 +150,7 @@ export default function TechniciansPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Técnicos</h1>
           <p className="text-muted-foreground">
-            Gestiona el personal técnico de campo.
+            Gestiona el personal técnico de campo y sus tarifas por hora.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -229,14 +229,14 @@ export default function TechniciansPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
               {selectedTechnician ? "Editar Técnico" : "Añadir Nuevo Técnico"}
             </DialogTitle>
             <DialogDescription>
               {selectedTechnician
-                ? "Edita la información del técnico."
+                ? "Edita la información y tarifas del técnico."
                 : "Rellena los detalles para crear un nuevo técnico."}
             </DialogDescription>
           </DialogHeader>

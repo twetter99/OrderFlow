@@ -99,12 +99,24 @@ export type User = {
   role: UserRole;
 };
 
+export type OperadorRates = {
+    rateWorkHour?: number;
+    rateTravelHour?: number;
+    rateOvertimeWeekdayDay?: number;
+    rateOvertimeWeekdayNight?: number;
+    rateOvertimeWeekendDay?: number;
+    rateOvertimeWeekendNight?: number;
+    rateNotes?: string;
+}
+
 export type Technician = {
     id: string;
     name: string;
     email: string;
-    phone: string;
+    phone?: string;
     specialty: string;
+    notes?: string;
+    rates?: OperadorRates;
 }
 
 export type Location = {
@@ -203,15 +215,6 @@ export type Replanteo = {
 };
 
 // Tipo para Operadores (Técnicos) con sus tarifas
-export type OperadorRates = {
-    rateWorkHour?: number;
-    rateTravelHour?: number;
-    rateOvertimeWeekdayDay?: number;
-    rateOvertimeWeekdayNight?: number;
-    rateOvertimeWeekendDay?: number;
-    rateOvertimeWeekendNight?: number;
-    rateNotes?: string;
-}
 
 export type Operador = {
   id: string;
