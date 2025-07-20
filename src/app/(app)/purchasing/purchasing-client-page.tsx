@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -78,14 +79,15 @@ const APPROVAL_PIN = '0707';
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
-      id: order.id,
-      orderNumber: order.orderNumber || order.id,
+      orderNumber: order.orderNumber,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
       statusHistory: order.statusHistory?.map((h: any) => ({
         ...h,
         date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      })) || []
+      })) || [],
+      // Ensure the id is always the firestore doc id
+      id: order.id
     };
 };
 
@@ -121,7 +123,7 @@ export function PurchasingClientPage() {
   const [idFilter, setIdFilter] = useState('');
   const [supplierFilter, setSupplierFilter] = useState('');
   const [projectFilter, setProjectFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
 
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,7 +149,8 @@ export function PurchasingClientPage() {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id });
+            // IMPORTANT: Use doc.id as the primary id
+            return convertTimestamps({ ...data, id: doc.id, orderNumber: data.orderNumber || data.id });
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -181,7 +184,7 @@ export function PurchasingClientPage() {
     if (projectFilter) {
         filteredOrders = filteredOrders.filter(order => projectMap.get(order.project)?.toLowerCase().includes(projectFilter.toLowerCase()));
     }
-    if (statusFilter) {
+    if (statusFilter && statusFilter !== 'all') {
         filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
     }
     
@@ -517,7 +520,7 @@ export function PurchasingClientPage() {
                         <SelectValue placeholder="Todos los estados" />
                     </SelectTrigger>
                     <SelectContent>
-                        <SelectItem value="">Todos los estados</SelectItem>
+                        <SelectItem value="all">Todos los estados</SelectItem>
                         {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
                             <SelectItem key={status} value={status}>{status}</SelectItem>
                         ))}
@@ -783,3 +786,6 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+
+    
