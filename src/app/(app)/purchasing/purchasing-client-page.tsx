@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,6 +71,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -78,7 +79,6 @@ const APPROVAL_PIN = '0707';
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
-      orderNumber: order.orderNumber,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
       statusHistory: order.statusHistory?.map((h: any) => ({
@@ -118,6 +118,13 @@ export function PurchasingClientPage() {
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
 
+  const [filters, setFilters] = useState({
+    orderNumber: '',
+    supplier: '',
+    project: '',
+    status: 'all',
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -141,8 +148,7 @@ export function PurchasingClientPage() {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
-            // IMPORTANT: Use doc.id as the primary id
-            return convertTimestamps({ ...data, id: doc.id, orderNumber: data.orderNumber || data.id });
+            return convertTimestamps({ ...data, id: doc.id });
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -165,34 +171,39 @@ export function PurchasingClientPage() {
     
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
     
-    let filteredOrders = purchaseOrders.filter(order => order.status !== 'Almacenada');
-    
-    const ordersWithProjectName = filteredOrders.map(order => ({
-        ...order,
-        projectName: projectMap.get(order.project) || order.project,
-    }));
+    let filteredOrders = purchaseOrders
+        .filter(order => order.status !== 'Almacenada')
+        .map(order => ({
+            ...order,
+            projectName: projectMap.get(order.project) || order.project,
+        }))
+        .filter(order => {
+            return (
+                (order.orderNumber || order.id).toLowerCase().includes(filters.orderNumber.toLowerCase()) &&
+                order.supplier.toLowerCase().includes(filters.supplier.toLowerCase()) &&
+                (order.projectName || '').toLowerCase().includes(filters.project.toLowerCase()) &&
+                (filters.status === 'all' || order.status === filters.status)
+            )
+        });
 
-
-    return ordersWithProjectName.sort((a, b) => {
+    return filteredOrders.sort((a, b) => {
             const first = a[sortDescriptor.column as keyof typeof a];
             const second = b[sortDescriptor.column as keyof typeof b];
             let cmp = 0;
 
             if (first === undefined || first === null) cmp = -1;
             else if (second === undefined || second === null) cmp = 1;
-            else if (typeof first === 'string' && typeof second === 'string') {
-                 if (sortDescriptor.column === 'estimatedDeliveryDate' || sortDescriptor.column === 'date') {
-                    cmp = new Date(first).getTime() - new Date(second).getTime();
-                } else {
-                    cmp = first.localeCompare(second);
-                }
-            } else if (typeof first === 'number' && typeof second === 'number') {
-                cmp = first - second;
+            else if (sortDescriptor.column === 'total') {
+                cmp = Number(first) - Number(second);
+            } else if (sortDescriptor.column === 'estimatedDeliveryDate' || sortDescriptor.column === 'date') {
+                cmp = new Date(first as string).getTime() - new Date(second as string).getTime();
+            } else {
+                 cmp = String(first).localeCompare(String(second));
             }
 
             return sortDescriptor.direction === 'descending' ? -cmp : cmp;
         });
-  }, [purchaseOrders, projects, sortDescriptor]);
+  }, [purchaseOrders, projects, sortDescriptor, filters]);
 
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
@@ -218,6 +229,10 @@ export function PurchasingClientPage() {
       }
     }
   }, [searchParams]);
+
+  const handleFilterChange = (filterName: keyof typeof filters, value: string) => {
+    setFilters(prev => ({ ...prev, [filterName]: value }));
+  };
 
   const handleAddClick = (initialData: Partial<PurchaseOrder> | null = null) => {
     setSelectedOrder(initialData);
@@ -415,8 +430,10 @@ export function PurchasingClientPage() {
   };
 
   const getSortIcon = (column: SortDescriptor['column']) => {
-    if (sortDescriptor.column !== column) return null;
-    return sortDescriptor.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+    if (sortDescriptor.column === column) {
+      return sortDescriptor.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
   };
 
   return (
@@ -479,6 +496,34 @@ export function PurchasingClientPage() {
             </div>
         </CardHeader>
         <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+            <div className="space-y-2">
+              <Label htmlFor="filter-id">ID de Orden</Label>
+              <Input id="filter-id" placeholder="Buscar por ID..." value={filters.orderNumber} onChange={(e) => handleFilterChange('orderNumber', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="filter-supplier">Proveedor</Label>
+              <Input id="filter-supplier" placeholder="Buscar por proveedor..." value={filters.supplier} onChange={(e) => handleFilterChange('supplier', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="filter-project">Proyecto</Label>
+              <Input id="filter-project" placeholder="Buscar por proyecto..." value={filters.project} onChange={(e) => handleFilterChange('project', e.target.value)} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="filter-status">Estado</Label>
+              <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
+                <SelectTrigger id="filter-status">
+                  <SelectValue placeholder="Selecciona un estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos los Estados</SelectItem>
+                  {ALL_STATUSES.map(status => (
+                    <SelectItem key={status} value={status}>{status}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+        </div>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -498,6 +543,11 @@ export function PurchasingClientPage() {
                 <TableHead>
                     <Button variant="ghost" onClick={() => onSortChange('supplier')}>
                         Proveedor {getSortIcon('supplier')}
+                    </Button>
+                </TableHead>
+                 <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('projectName')}>
+                        Proyecto {getSortIcon('projectName')}
                     </Button>
                 </TableHead>
                 <TableHead>
@@ -532,6 +582,7 @@ export function PurchasingClientPage() {
                   </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
+                  <TableCell>{order.projectName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge
@@ -631,7 +682,7 @@ export function PurchasingClientPage() {
               )})}
               {activePurchaseOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra que coincidan con los filtros.
                     </TableCell>
                 </TableRow>
@@ -732,5 +783,7 @@ export function PurchasingClientPage() {
   )
 }
 
+
+    
 
     
