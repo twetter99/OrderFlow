@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -79,6 +80,8 @@ const APPROVAL_PIN = '0707';
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
+      id: order.id,
+      orderNumber: order.orderNumber || order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
       statusHistory: order.statusHistory?.map((h: any) => ({
@@ -135,8 +138,7 @@ export function PurchasingClientPage() {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Aseguramos que el ID del documento de Firestore sobreescriba cualquier otro campo 'id'.
-            return convertTimestamps({ ...data, id: doc.id, orderNumber: data.orderNumber || doc.id });
+            return convertTimestamps({ ...data, id: doc.id });
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -434,35 +436,6 @@ const handlePinSubmit = async () => {
             </div>
         </CardHeader>
         <CardContent>
-        <div className="flex items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
-            <Input 
-                placeholder="Filtrar por ID..."
-                value={idFilter}
-                onChange={(e) => setIdFilter(e.target.value)}
-                className="max-w-sm"
-            />
-            <Input 
-                placeholder="Filtrar por proveedor..."
-                value={supplierFilter}
-                onChange={(e) => setSupplierFilter(e.target.value)}
-                className="max-w-sm"
-            />
-             <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-[180px]">
-                    <SelectValue placeholder="Filtrar por estado..." />
-                </SelectTrigger>
-                <SelectContent>
-                    <SelectItem value="all">Todos los Estados</SelectItem>
-                    {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
-                        <SelectItem key={status} value={status}>{status}</SelectItem>
-                    ))}
-                </SelectContent>
-            </Select>
-            <Button variant="ghost" onClick={clearFilters}>
-                <FilterX className="mr-2 h-4 w-4" />
-                Limpiar
-            </Button>
-        </div>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -479,7 +452,46 @@ const handlePinSubmit = async () => {
                 <TableHead>Estado</TableHead>
                 <TableHead>Entrega Estimada</TableHead>
                 <TableHead>Total</TableHead>
-                <TableHead className="text-right">Acciones</TableHead>
+                <TableHead className="text-right">
+                    <Button variant="ghost" size="sm" onClick={clearFilters}>
+                        <FilterX className="h-4 w-4" />
+                    </Button>
+                </TableHead>
+              </TableRow>
+              <TableRow className="bg-muted/50 hover:bg-muted/50">
+                  <TableHead></TableHead>
+                  <TableHead>
+                      <Input 
+                          placeholder="Filtrar por ID..."
+                          value={idFilter}
+                          onChange={(e) => setIdFilter(e.target.value)}
+                          className="h-8"
+                      />
+                  </TableHead>
+                  <TableHead>
+                      <Input 
+                          placeholder="Filtrar por proveedor..."
+                          value={supplierFilter}
+                          onChange={(e) => setSupplierFilter(e.target.value)}
+                          className="h-8"
+                      />
+                  </TableHead>
+                  <TableHead>
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="h-8">
+                              <SelectValue placeholder="Estado..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                              <SelectItem value="all">Todos</SelectItem>
+                              {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
+                                  <SelectItem key={status} value={status}>{status}</SelectItem>
+                              ))}
+                          </SelectContent>
+                      </Select>
+                  </TableHead>
+                  <TableHead></TableHead>
+                  <TableHead></TableHead>
+                  <TableHead></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -695,3 +707,4 @@ const handlePinSubmit = async () => {
     </div>
   )
 }
+
