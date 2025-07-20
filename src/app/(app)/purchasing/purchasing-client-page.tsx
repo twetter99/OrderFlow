@@ -71,7 +71,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -118,13 +117,6 @@ export function PurchasingClientPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Estados para filtros
-  const [idFilter, setIdFilter] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
-  const [projectFilter, setProjectFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -174,19 +166,6 @@ export function PurchasingClientPage() {
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
     
     let filteredOrders = purchaseOrders.filter(order => order.status !== 'Almacenada');
-
-    if (idFilter) {
-        filteredOrders = filteredOrders.filter(order => order.orderNumber?.toLowerCase().includes(idFilter.toLowerCase()));
-    }
-    if (supplierFilter) {
-        filteredOrders = filteredOrders.filter(order => order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()));
-    }
-    if (projectFilter) {
-        filteredOrders = filteredOrders.filter(order => projectMap.get(order.project)?.toLowerCase().includes(projectFilter.toLowerCase()));
-    }
-    if (statusFilter && statusFilter !== 'all') {
-        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
-    }
     
     const ordersWithProjectName = filteredOrders.map(order => ({
         ...order,
@@ -213,7 +192,7 @@ export function PurchasingClientPage() {
 
             return sortDescriptor.direction === 'descending' ? -cmp : cmp;
         });
-  }, [purchaseOrders, projects, idFilter, supplierFilter, projectFilter, statusFilter, sortDescriptor]);
+  }, [purchaseOrders, projects, sortDescriptor]);
 
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
@@ -500,34 +479,6 @@ export function PurchasingClientPage() {
             </div>
         </CardHeader>
         <CardContent>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
-            <div className="space-y-2">
-                <Label htmlFor="filter-id">ID de Orden</Label>
-                <Input id="filter-id" placeholder="Filtrar por ID..." value={idFilter} onChange={(e) => setIdFilter(e.target.value)} />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="filter-supplier">Proveedor</Label>
-                <Input id="filter-supplier" placeholder="Filtrar por proveedor..." value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)} />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="filter-project">Proyecto</Label>
-                <Input id="filter-project" placeholder="Filtrar por proyecto..." value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="filter-status">Estado</Label>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger id="filter-status">
-                        <SelectValue placeholder="Todos los estados" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        <SelectItem value="all">Todos los estados</SelectItem>
-                        {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
-                            <SelectItem key={status} value={status}>{status}</SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
-            </div>
-        </div>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -547,11 +498,6 @@ export function PurchasingClientPage() {
                 <TableHead>
                     <Button variant="ghost" onClick={() => onSortChange('supplier')}>
                         Proveedor {getSortIcon('supplier')}
-                    </Button>
-                </TableHead>
-                 <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('projectName')}>
-                        Proyecto {getSortIcon('projectName')}
                     </Button>
                 </TableHead>
                 <TableHead>
@@ -586,7 +532,6 @@ export function PurchasingClientPage() {
                   </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{(order as any).projectName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge
@@ -686,7 +631,7 @@ export function PurchasingClientPage() {
               )})}
               {activePurchaseOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra que coincidan con los filtros.
                     </TableCell>
                 </TableRow>
