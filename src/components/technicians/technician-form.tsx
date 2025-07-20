@@ -48,8 +48,8 @@ const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   specialty: z.string().min(1, "La especialidad es obligatoria."),
   category: z.enum(technicianCategories, { required_error: "La categoría es obligatoria."}),
-  phone: z.string().optional(),
-  email: z.string().email("Debe ser un correo electrónico válido.").optional().or(z.literal('')),
+  phone: z.string().min(1, "El teléfono es obligatorio."),
+  email: z.string().email("Debe ser un correo electrónico válido."),
   notes: z.string().optional(),
   rates: rateSchema.optional(),
 });
@@ -272,7 +272,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                     name="phone"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Teléfono (Opcional)</FormLabel>
+                        <FormLabel>Teléfono</FormLabel>
                         <FormControl>
                             <Input placeholder="Número de contacto" {...field} />
                         </FormControl>
@@ -285,7 +285,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                     name="email"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Email (Opcional)</FormLabel>
+                        <FormLabel>Email</FormLabel>
                         <FormControl>
                             <Input type="email" placeholder="Correo electrónico" {...field} />
                         </FormControl>
