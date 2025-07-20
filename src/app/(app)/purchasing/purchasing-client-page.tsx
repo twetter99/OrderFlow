@@ -63,13 +63,22 @@ import { db } from "@/lib/firebase";
 import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+} from "@/components/ui/input-otp"
+import { REGEXP_ONLY_DIGITS } from "input-otp";
+
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
-// Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
+const APPROVAL_PIN = '0707';
 
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
+      id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
       statusHistory: order.statusHistory?.map((h: any) => ({
@@ -106,6 +115,11 @@ export function PurchasingClientPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [pinValue, setPinValue] = useState('');
+  
+  const [orderToProcess, setOrderToProcess] = useState<{ id: string; status: PurchaseOrder['status'] } | null>(null);
+  
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Partial<PurchaseOrder> | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
@@ -115,8 +129,7 @@ export function PurchasingClientPage() {
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id });
+            return convertTimestamps({ id: doc.id, ...doc.data() });
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -213,6 +226,12 @@ export function PurchasingClientPage() {
             title: "Transición de Estado No Válida",
             description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}".`,
         });
+        return;
+    }
+    
+    if (newStatus === 'Aprobada') {
+        setOrderToProcess({ id, status: newStatus });
+        setIsPinModalOpen(true);
         return;
     }
 
@@ -316,7 +335,25 @@ export function PurchasingClientPage() {
     }
     return { text: 'En Plazo', color: 'bg-green-100 text-green-800 border-green-200' };
 };
-  
+
+const handlePinSubmit = async () => {
+    if (pinValue === APPROVAL_PIN && orderToProcess) {
+      const { id, status } = orderToProcess;
+      const result = await updatePurchaseOrderStatus(id, status);
+      if (result.success) {
+        toast({ title: 'Pedido Aprobado', description: result.message });
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: result.message });
+      }
+      setIsPinModalOpen(false);
+      setPinValue('');
+      setOrderToProcess(null);
+    } else {
+      toast({ variant: 'destructive', title: 'PIN Incorrecto', description: 'El PIN introducido no es válido.' });
+      setPinValue('');
+    }
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -554,6 +591,28 @@ export function PurchasingClientPage() {
                 </DialogDescription>
             </DialogHeader>
             {selectedOrder && <OrderStatusHistory history={selectedOrder.statusHistory || []} />}
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isPinModalOpen} onOpenChange={setIsPinModalOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Verificación Requerida</DialogTitle>
+            <DialogDescription>
+              Introduce el PIN de 4 dígitos para aprobar este pedido.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col items-center justify-center gap-4 py-4">
+            <InputOTP maxLength={4} value={pinValue} onChange={setPinValue} pattern={REGEXP_ONLY_DIGITS}>
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+                <InputOTPSlot index={3} />
+              </InputOTPGroup>
+            </InputOTP>
+            <Button type="button" onClick={handlePinSubmit} disabled={pinValue.length < 4}>Confirmar Aprobación</Button>
+          </div>
         </DialogContent>
       </Dialog>
       
