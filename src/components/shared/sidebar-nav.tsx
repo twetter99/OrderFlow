@@ -23,8 +23,9 @@ import {
     ChevronDown,
     Package,
     UserCog,
-    Network,
     HardHat,
+    Network,
+    ShieldCheck,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -102,6 +103,7 @@ const navGroups = [
           { href: "/clients", label: "Clientes", icon: Building2 },
           { href: "/operadores", label: "Operadores", icon: UserCog },
           { href: "/technicians", label: "Técnicos", icon: HardHat },
+          { href: "/supervisores", label: "Supervisores", icon: ShieldCheck },
           { href: "/users", label: "Usuarios y Permisos", icon: Users },
           { href: "/approval-flows", label: "Flujos de Aprobación", icon: Network },
           { href: "/settings", label: "Configuración App", icon: Settings },
