@@ -109,7 +109,15 @@ export type OperadorRates = {
     rateNotes?: string;
 }
 
-export type TechnicianCategory = 'Oficial de Primera' | 'Oficial de Segunda' | 'Ayudante';
+export type TechnicianCategory = 
+ | 'Técnico Ayudante / Auxiliar'
+ | 'Técnico Instalador'
+ | 'Técnico Integrador de Sistemas Embarcados'
+ | 'Técnico de Puesta en Marcha y Pruebas'
+ | 'Técnico de Mantenimiento'
+ | 'Jefe de Equipo / Encargado de Instalación'
+ | 'Técnico de SAT (Servicio de Asistencia Técnica)'
+ | 'Técnico de Calidad / Certificación';
 
 export type Technician = {
     id: string;

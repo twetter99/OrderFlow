@@ -22,9 +22,14 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const technicianCategoryDefinitions = [
-    { name: 'Oficial de Primera', description: 'Técnico experto, capaz de liderar instalaciones complejas y solucionar problemas.' },
-    { name: 'Oficial de Segunda', description: 'Técnico con experiencia, realiza instalaciones estándar de forma autónoma.' },
-    { name: 'Ayudante', description: 'Técnico en formación, asiste a los oficiales y realiza tareas supervisadas.' },
+    { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
+    { name: 'Técnico Instalador', description: 'Realiza la instalación física y el conexionado de los equipos embarcados en vehículos.' },
+    { name: 'Técnico Integrador de Sistemas Embarcados', description: 'Especialista en la integración y configuración conjunta de varios sistemas embarcados.' },
+    { name: 'Técnico de Puesta en Marcha y Pruebas', description: 'Encargado de configurar los equipos, ponerlos en funcionamiento y comprobar su correcto funcionamiento tras la instalación.' },
+    { name: 'Técnico de Mantenimiento', description: 'Realiza diagnósticos, reparaciones y mantenimientos preventivos y correctivos de los equipos instalados.' },
+    { name: 'Jefe de Equipo / Encargado de Instalación', description: 'Coordina al equipo técnico, gestiona los recursos y supervisa la ejecución de las instalaciones.' },
+    { name: 'Técnico de SAT (Servicio de Asistencia Técnica)', description: 'Atiende incidencias técnicas, realiza soporte post-instalación y resuelve averías en campo o de forma remota.' },
+    { name: 'Técnico de Calidad / Certificación', description: 'Verifica y certifica que las instalaciones cumplen con los estándares y protocolos de calidad establecidos.' },
 ] as const;
 
 const technicianCategories = technicianCategoryDefinitions.map(c => c.name) as [TechnicianCategory, ...TechnicianCategory[]];
@@ -170,7 +175,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
     : {
         name: "",
         specialty: "General",
-        category: 'Ayudante',
+        category: 'Técnico Ayudante / Auxiliar',
         phone: "",
         email: "",
         notes: "",
@@ -234,7 +239,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                                                     value={category.name}
                                                     onPointerEnter={() => setHoveredCategory(category.name)}
                                                 >
-                                                    <div>{category.name}</div>
+                                                    <div className="whitespace-normal text-sm">{category.name}</div>
                                                     {hoveredCategory === category.name && (
                                                     <div className="whitespace-normal text-xs text-muted-foreground mt-1">
                                                         {category.description}
