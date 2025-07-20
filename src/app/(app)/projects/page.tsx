@@ -229,8 +229,8 @@ export default function ProjectsPage() {
             </TableHeader>
             <TableBody>
               {projects.map((project) => {
-                const progress = project.budget && project.budget > 0 && project.spent ? Math.round(
-                  (project.spent / project.budget) * 100
+                const progress = (project.budget ?? 0) > 0 && project.spent ? Math.round(
+                  (project.spent / project.budget!) * 100
                 ) : 0;
                 const assignedOperators = project.operador_ids?.map(id => operadores.find(o => o.id === id)?.name).filter(Boolean);
                 return (
