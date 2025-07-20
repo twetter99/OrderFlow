@@ -4,7 +4,7 @@
 import React from 'react';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useFieldArray } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -17,6 +17,15 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Operador } from "@/lib/types";
+import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
+import { PlusCircle, Trash2 } from 'lucide-react';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
+
+const depotSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(1, "El nombre de la cochera es obligatorio."),
+  address: z.string().min(1, "La dirección es obligatoria."),
+});
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
@@ -25,6 +34,7 @@ const formSchema = z.object({
   email: z.string().email("Debe ser un correo electrónico válido.").optional().or(z.literal('')),
   address: z.string().optional(),
   notes: z.string().optional(),
+  depots: z.array(depotSchema).optional(),
 });
 
 type OperadorFormValues = z.infer<typeof formSchema>;
@@ -37,7 +47,7 @@ interface OperadorFormProps {
 
 export function OperadorForm({ operador, onSave, onCancel }: OperadorFormProps) {
   const defaultValues: Partial<Operador> = operador
-    ? { ...operador, notes: operador.notes || '' }
+    ? { ...operador, notes: operador.notes || '', depots: operador.depots || [] }
     : {
         name: "",
         cif: "",
@@ -45,12 +55,19 @@ export function OperadorForm({ operador, onSave, onCancel }: OperadorFormProps) 
         email: "",
         address: "",
         notes: "",
+        depots: [],
       };
 
   const form = useForm<OperadorFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  const { fields, append, remove } = useFieldArray({
+    control: form.control,
+    name: "depots",
+  });
+
 
   function onSubmit(values: OperadorFormValues) {
     onSave(values);
@@ -118,7 +135,7 @@ export function OperadorForm({ operador, onSave, onCancel }: OperadorFormProps) 
         name="address"
         render={({ field }) => (
             <FormItem>
-            <FormLabel>Dirección (Opcional)</FormLabel>
+            <FormLabel>Dirección Fiscal (Opcional)</FormLabel>
             <FormControl>
                 <Input placeholder="Domicilio social o sede principal" {...field} />
             </FormControl>
@@ -126,6 +143,69 @@ export function OperadorForm({ operador, onSave, onCancel }: OperadorFormProps) 
             </FormItem>
         )}
         />
+
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">Cocheras / Bases Operativas</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[40%]">Nombre de la Cochera</TableHead>
+                  <TableHead className="w-[60%]">Dirección</TableHead>
+                  <TableHead />
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {fields.map((field, index) => (
+                  <TableRow key={field.id}>
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`depots.${index}.name`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl><Input placeholder="Ej: Cochera Central" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <FormField
+                        control={form.control}
+                        name={`depots.${index}.address`}
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl><Input placeholder="Ej: Calle de la Logística, 42" {...field} /></FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </TableCell>
+                    <TableCell>
+                      <Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}>
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-4"
+              onClick={() => append({ name: '', address: '' })}
+            >
+              <PlusCircle className="mr-2 h-4 w-4" />
+              Añadir Cochera
+            </Button>
+          </CardContent>
+        </Card>
+
         <FormField
         control={form.control}
         name="notes"

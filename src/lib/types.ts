@@ -225,6 +225,12 @@ export type Replanteo = {
   imagenes: ReplanteoImagen[];
 };
 
+export type OperadorDepot = {
+  id?: string;
+  name: string;
+  address: string;
+};
+
 // Tipo para Operadores (dueños de flotas)
 export type Operador = {
   id: string;
@@ -232,6 +238,7 @@ export type Operador = {
   cif?: string;
   phone?: string;
   email?: string;
-  address?: string;
+  address?: string; // Dirección fiscal
   notes?: string;
+  depots?: OperadorDepot[]; // Cocheras / Bases operativas
 };
