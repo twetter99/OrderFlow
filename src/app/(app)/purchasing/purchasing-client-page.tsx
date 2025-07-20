@@ -75,6 +75,17 @@ const convertTimestamps = (order: any): PurchaseOrder => {
 
 const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Rechazado", "Enviada al Proveedor", "Recibida", "Almacenada"];
 
+// Lógica de la máquina de estados
+const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
+    'Pendiente de Aprobación': ['Aprobada', 'Rechazado'],
+    'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Puede volver a pendiente?
+    'Enviada al Proveedor': ['Recibida'],
+    'Recibida': ['Almacenada'],
+    'Almacenada': [],
+    'Rechazado': ['Pendiente de Aprobación'], // Puede volver a pendiente si se corrige
+};
+
+
 export function PurchasingClientPage() {
   const { toast } = useToast();
   const searchParams = useSearchParams();
@@ -94,9 +105,6 @@ export function PurchasingClientPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        // La corrección clave está aquí: { ...doc.data(), id: doc.id }
-        // Esto asegura que el ID del documento de Firestore siempre sobrescriba
-        // cualquier campo "id" que pueda existir en los datos.
         const ordersData = snapshot.docs.map(doc => convertTimestamps({ ...doc.data(), id: doc.id }));
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -171,8 +179,17 @@ export function PurchasingClientPage() {
     window.location.href = `mailto:${supplierInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
   
-  const handleStatusChange = async (id: string, status: PurchaseOrder['status']) => {
-    const result = await updatePurchaseOrderStatus(id, status);
+  const handleStatusChange = async (id: string, currentStatus: PurchaseOrder['status'], newStatus: PurchaseOrder['status']) => {
+    if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(newStatus)) {
+        toast({
+            variant: "destructive",
+            title: "Transición de Estado No Válida",
+            description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}".`,
+        });
+        return;
+    }
+
+    const result = await updatePurchaseOrderStatus(id, newStatus);
     if (result.success) {
       toast({ title: 'Estado Actualizado', description: result.message });
     } else {
@@ -385,7 +402,7 @@ export function PurchasingClientPage() {
                                 {ALL_STATUSES.map(status => (
                                     <DropdownMenuItem 
                                         key={status} 
-                                        onClick={() => handleStatusChange(order.id, status)}
+                                        onClick={() => handleStatusChange(order.id, order.status, status)}
                                         disabled={order.status === status}
                                     >
                                         {status}
@@ -475,5 +492,7 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+    
 
     
