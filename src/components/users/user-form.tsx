@@ -24,22 +24,15 @@ import {
 import { Input } from "@/components/ui/input";
 import type { User, UserRole } from "@/lib/types";
 
-const userRoleDefinitions = [
-  { name: 'Solicitante', description: 'Puede crear y enviar pedidos para aprobación.' },
-  { name: 'Supervisor', description: 'Puede revisar y aprobar o rechazar pedidos asignados.' },
-  { name: 'Validador', description: 'Puede dar la autorización final a pedidos ya aprobados.' },
-  { name: 'Almacén', description: 'Gestiona la recepción y el despacho de mercancías.' },
-  { name: 'Administrador', description: 'Tiene acceso completo a todas las funcionalidades.' },
-] as const;
-
-const userRoles = userRoleDefinitions.map(c => c.name) as [UserRole, ...UserRole[]];
+// Roles genéricos para una futura gestión de permisos de acceso
+const systemRoles = ["Administrador", "Miembro del Equipo", "Solo Lectura"] as const;
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  role: z.enum(userRoles).refine((val): val is UserRole => (userRoles as readonly string[]).includes(val), {
-    message: "Rol no válido",
+  role: z.enum(systemRoles, {
+    errorMap: () => ({ message: "Debes seleccionar un nivel de acceso." }),
   }),
 });
 
@@ -53,7 +46,6 @@ interface UserFormProps {
 
 
 export function UserForm({ user, onSave, onCancel }: UserFormProps) {
-  const [hoveredCategory, setHoveredCategory] = React.useState<string | null>(null);
   
   const defaultValues = user
     ? { 
@@ -64,7 +56,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         name: "",
         email: "",
         phone: "",
-        role: "Solicitante" as const,
+        role: "Miembro del Equipo" as const,
       };
 
   const form = useForm<UserFormValues>({
@@ -97,7 +89,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
             name="email"
             render={({ field }) => (
                 <FormItem>
-                <FormLabel>Correo Electrónico</FormLabel>
+                <FormLabel>Correo Electrónico de Acceso</FormLabel>
                 <FormControl>
                     <Input type="email" placeholder="p. ej., juan.perez@example.com" {...field} />
                 </FormControl>
@@ -110,7 +102,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         name="phone"
         render={({ field }) => (
             <FormItem>
-            <FormLabel>Teléfono</FormLabel>
+            <FormLabel>Teléfono de Contacto</FormLabel>
             <FormControl>
                 <Input placeholder="p. ej., 600 123 456" {...field} />
             </FormControl>
@@ -123,28 +115,17 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
         name="role"
         render={({ field }) => (
         <FormItem>
-            <FormLabel>Rol de Aprobación</FormLabel>
+            <FormLabel>Nivel de Acceso Futuro</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                     <SelectTrigger>
-                        <SelectValue placeholder="Selecciona un rol" />
+                        <SelectValue placeholder="Selecciona un nivel de acceso" />
                     </SelectTrigger>
                 </FormControl>
-                <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
-                    {userRoleDefinitions.map(category => (
-                    <SelectItem 
-                        key={category.name} 
-                        value={category.name}
-                        onPointerEnter={() => setHoveredCategory(category.name)}
-                    >
-                        <div>{category.name}</div>
-                        {hoveredCategory === category.name && (
-                        <div className="whitespace-normal text-base font-normal text-foreground/80 mt-1">
-                            {category.description}
-                        </div>
-                        )}
-                    </SelectItem>
-                    ))}
+                <SelectContent>
+                    <SelectItem value="Administrador">Administrador (Acceso Total)</SelectItem>
+                    <SelectItem value="Miembro del Equipo">Miembro del Equipo (Acceso Estándar)</SelectItem>
+                    <SelectItem value="Solo Lectura">Solo Lectura (Acceso de Consulta)</SelectItem>
                 </SelectContent>
             </Select>
             <FormMessage />
@@ -157,7 +138,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit">Guardar</Button>
+          <Button type="submit">Guardar Usuario</Button>
         </div>
       </form>
     </Form>

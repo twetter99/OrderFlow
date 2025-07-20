@@ -85,11 +85,13 @@ export type Client = {
 };
 
 export type UserRole = 
+  | 'Administrador'
+  | 'Miembro del Equipo'
+  | 'Solo Lectura'
   | 'Solicitante'
   | 'Supervisor'
   | 'Validador'
-  | 'Almacén'
-  | 'Administrador';
+  | 'Almacén';
 
 export type User = {
   id: string;

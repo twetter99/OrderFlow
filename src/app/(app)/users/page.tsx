@@ -13,6 +13,9 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
@@ -159,7 +162,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Usuarios y Permisos</h1>
           <p className="text-muted-foreground">
-            Gestiona los roles de aprobación y las cuentas de acceso al sistema.
+            Gestiona las cuentas de acceso al sistema para una futura implementación de login.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -175,6 +178,12 @@ export default function UsersPage() {
         )}
       </div>
       <Card>
+        <CardHeader>
+          <CardTitle>Listado de Usuarios del Sistema</CardTitle>
+          <CardDescription>
+            Aquí se definirán los usuarios que podrán iniciar sesión y sus niveles de acceso a los módulos de la aplicación.
+          </CardDescription>
+        </CardHeader>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
@@ -189,7 +198,7 @@ export default function UsersPage() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Rol</TableHead>
+                <TableHead>Nivel de Acceso</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -212,10 +221,8 @@ export default function UsersPage() {
                       className={cn(
                         "capitalize",
                         user.role === "Administrador" && "bg-primary/10 text-primary border-primary/20",
-                        user.role === "Almacén" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-                        user.role === 'Solicitante' && "bg-blue-100 text-blue-800 border-blue-200",
-                        user.role === 'Supervisor' && "bg-orange-100 text-orange-800 border-orange-200",
-                        user.role === 'Validador' && "bg-purple-100 text-purple-800 border-purple-200",
+                        user.role === "Miembro del Equipo" && "bg-blue-100 text-blue-800 border-blue-200",
+                        user.role === "Solo Lectura" && "bg-gray-100 text-gray-800 border-gray-200",
                       )}
                     >
                       {user.role}
@@ -259,8 +266,8 @@ export default function UsersPage() {
             </DialogTitle>
             <DialogDescription>
               {selectedUser
-                ? "Edita la información y el rol del usuario."
-                : "Rellena los detalles para crear un nuevo usuario y asignarle un rol."}
+                ? "Edita la información y el nivel de acceso del usuario."
+                : "Rellena los detalles para crear un nuevo usuario y asignarle un nivel de acceso."}
             </DialogDescription>
           </DialogHeader>
           <UserForm

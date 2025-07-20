@@ -22,7 +22,6 @@ import {
     FileText, 
     ChevronDown,
     Package,
-    UserCog,
     HardHat,
     Network,
     ShieldCheck,
@@ -101,7 +100,7 @@ const navGroups = [
         subItems: [
           { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
           { href: "/clients", label: "Clientes", icon: Building2 },
-          { href: "/operadores", label: "Operadores", icon: UserCog },
+          { href: "/operadores", label: "Operadores", icon: Truck },
           { href: "/technicians", label: "Técnicos", icon: HardHat },
           { href: "/supervisores", label: "Supervisores", icon: ShieldCheck },
           { href: "/users", label: "Usuarios y Permisos", icon: Users },
