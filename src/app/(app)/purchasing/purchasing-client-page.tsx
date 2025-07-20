@@ -67,8 +67,9 @@ const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
 
 const convertTimestamps = (order: any): PurchaseOrder => {
+    const data = order.id ? order : { id: order.id, ...order };
     return {
-      ...order,
+      ...data,
       id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
@@ -463,7 +464,7 @@ export function PurchasingClientPage() {
                                     <DropdownMenuItem 
                                         key={status} 
                                         onClick={() => handleStatusChange(order.id, order.status, status)}
-                                        disabled={order.status === status || status === 'Almacenada'}
+                                        disabled={order.status === status}
                                     >
                                         {status}
                                     </DropdownMenuItem>
