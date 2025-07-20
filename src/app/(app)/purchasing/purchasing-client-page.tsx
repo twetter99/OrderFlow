@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -60,7 +60,8 @@ import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
 import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus } from "./actions";
+import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "./actions";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
@@ -68,6 +69,7 @@ const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
+      id: order.id, // Ensure Firestore doc ID is preserved
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
     };
@@ -78,11 +80,11 @@ const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Ap
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
     'Pendiente de Aprobación': ['Aprobada', 'Rechazado'],
-    'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Puede volver a pendiente?
+    'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'],
     'Enviada al Proveedor': ['Recibida'],
     'Recibida': ['Almacenada'],
     'Almacenada': [],
-    'Rechazado': ['Pendiente de Aprobación'], // Puede volver a pendiente si se corrige
+    'Rechazado': ['Pendiente de Aprobación'],
 };
 
 
@@ -100,6 +102,7 @@ export function PurchasingClientPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Partial<PurchaseOrder> | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -162,6 +165,11 @@ export function PurchasingClientPage() {
 
   const handleDeleteTrigger = (order: PurchaseOrder) => {
     setOrderToDelete(order);
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const handleBulkDeleteClick = () => {
+    setOrderToDelete(null);
     setIsDeleteDialogOpen(true);
   };
 
@@ -242,16 +250,40 @@ export function PurchasingClientPage() {
   };
 
   const confirmDelete = async () => {
+    let result;
     if (orderToDelete) {
-      const result = await deletePurchaseOrder(orderToDelete.id);
-      if (result.success) {
-          toast({ variant: "destructive", title: "Pedido eliminado", description: result.message });
-      } else {
-          toast({ variant: "destructive", title: "Error", description: result.message });
-      }
+        result = await deletePurchaseOrder(orderToDelete.id);
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultiplePurchaseOrders(selectedRowIds);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
     setOrderToDelete(null);
+    setSelectedRowIds([]);
+  };
+
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(purchaseOrders.map(p => p.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
@@ -310,20 +342,36 @@ export function PurchasingClientPage() {
       
       <Card>
         <CardHeader>
-          <CardTitle>Órdenes de Compra</CardTitle>
-          <CardDescription>Visualiza y gestiona todas tus solicitudes de compra.</CardDescription>
-          <div className="pt-4">
-             <Button onClick={() => handleAddClick()}>
-              <PlusCircle className="mr-2 h-4 w-4" />
-              Crear Pedido Manualmente
-            </Button>
-          </div>
+            <div className="flex items-center justify-between">
+                <div>
+                    <CardTitle>Órdenes de Compra</CardTitle>
+                    <CardDescription>Visualiza y gestiona todas tus solicitudes de compra.</CardDescription>
+                </div>
+                {selectedRowIds.length > 0 ? (
+                    <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar ({selectedRowIds.length})
+                    </Button>
+                ) : (
+                    <Button onClick={() => handleAddClick()}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Crear Pedido Manualmente
+                    </Button>
+                )}
+            </div>
         </CardHeader>
         <CardContent>
         <TooltipProvider>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead padding="checkbox" className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === purchaseOrders.length && purchaseOrders.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>ID de Orden</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Estado</TableHead>
@@ -336,7 +384,14 @@ export function PurchasingClientPage() {
               {purchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
                 return (
-                <TableRow key={order.id} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
+                <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      checked={selectedRowIds.includes(order.id)}
+                      onCheckedChange={() => handleRowSelect(order.id)}
+                      aria-label={`Seleccionar orden ${order.orderNumber}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>
@@ -478,7 +533,7 @@ export function PurchasingClientPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              el pedido de compra.
+               {orderToDelete ? ` el pedido "${orderToDelete.orderNumber}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} pedidos seleccionados.` : " el pedido seleccionado.")}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -492,7 +547,3 @@ export function PurchasingClientPage() {
     </div>
   )
 }
-
-    
-
-    

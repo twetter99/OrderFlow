@@ -33,11 +33,11 @@ export async function updatePurchaseOrder(id: string, data: any) {
         const poRef = doc(db, 'purchaseOrders', id);
         const dataToUpdate: any = { ...data };
 
-        if (data.date) {
-            dataToUpdate.date = data.date instanceof Date ? Timestamp.fromDate(data.date) : Timestamp.fromDate(new Date(data.date));
+        if (data.date && !(data.date instanceof Timestamp)) {
+            dataToUpdate.date = Timestamp.fromDate(new Date(data.date));
         }
-        if (data.estimatedDeliveryDate) {
-            dataToUpdate.estimatedDeliveryDate = data.estimatedDeliveryDate instanceof Date ? Timestamp.fromDate(data.estimatedDeliveryDate) : Timestamp.fromDate(new Date(data.estimatedDeliveryDate));
+        if (data.estimatedDeliveryDate && !(data.estimatedDeliveryDate instanceof Timestamp)) {
+            dataToUpdate.estimatedDeliveryDate = Timestamp.fromDate(new Date(data.estimatedDeliveryDate));
         }
 
         await updateDoc(poRef, dataToUpdate);
@@ -59,6 +59,19 @@ export async function deletePurchaseOrder(id: string) {
         return { success: false, message: 'No se pudo eliminar el pedido de compra.' };
     }
 }
+
+export async function deleteMultiplePurchaseOrders(ids: string[]) {
+    try {
+        const deletePromises = ids.map(id => deleteDoc(doc(db, 'purchaseOrders', id)));
+        await Promise.all(deletePromises);
+        revalidatePath('/purchasing');
+        return { success: true, message: 'Pedidos de compra eliminados correctamente.' };
+    } catch (error) {
+        console.error("Error deleting multiple purchase orders from Firestore:", error);
+        return { success: false, message: 'No se pudieron eliminar los pedidos.' };
+    }
+}
+
 
 export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status']) {
     try {
