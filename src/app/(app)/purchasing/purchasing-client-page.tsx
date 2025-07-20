@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, FilterX } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +70,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
@@ -78,7 +79,6 @@ const APPROVAL_PIN = '0707';
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
-      id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
       statusHistory: order.statusHistory?.map((h: any) => ({
@@ -89,7 +89,7 @@ const convertTimestamps = (order: any): PurchaseOrder => {
 };
 
 
-const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Rechazado", "Enviada al Proveedor", "Recibida", "Almacenada"];
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
@@ -126,10 +126,17 @@ export function PurchasingClientPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
+  // Estados para los filtros
+  const [idFilter, setIdFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
-            return convertTimestamps({ id: doc.id, ...doc.data() });
+            const data = doc.data();
+            // Aseguramos que el ID del documento de Firestore sobreescriba cualquier otro campo 'id'.
+            return convertTimestamps({ ...data, id: doc.id, orderNumber: data.orderNumber || doc.id });
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -149,8 +156,15 @@ export function PurchasingClientPage() {
   }, []);
   
   const activePurchaseOrders = useMemo(() => {
-    return purchaseOrders.filter(order => order.status !== 'Almacenada');
-  }, [purchaseOrders]);
+    return purchaseOrders
+        .filter(order => order.status !== 'Almacenada')
+        .filter(order => {
+            const idMatch = idFilter ? (order.orderNumber || '').toLowerCase().includes(idFilter.toLowerCase()) : true;
+            const supplierMatch = supplierFilter ? order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()) : true;
+            const statusMatch = statusFilter !== 'all' ? order.status === statusFilter : true;
+            return idMatch && supplierMatch && statusMatch;
+        });
+  }, [purchaseOrders, idFilter, supplierFilter, statusFilter]);
 
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
@@ -354,6 +368,12 @@ const handlePinSubmit = async () => {
     }
   };
 
+  const clearFilters = () => {
+    setIdFilter('');
+    setSupplierFilter('');
+    setStatusFilter('all');
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -414,6 +434,35 @@ const handlePinSubmit = async () => {
             </div>
         </CardHeader>
         <CardContent>
+        <div className="flex items-center gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+            <Input 
+                placeholder="Filtrar por ID..."
+                value={idFilter}
+                onChange={(e) => setIdFilter(e.target.value)}
+                className="max-w-sm"
+            />
+            <Input 
+                placeholder="Filtrar por proveedor..."
+                value={supplierFilter}
+                onChange={(e) => setSupplierFilter(e.target.value)}
+                className="max-w-sm"
+            />
+             <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                    <SelectValue placeholder="Filtrar por estado..." />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="all">Todos los Estados</SelectItem>
+                    {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
+                        <SelectItem key={status} value={status}>{status}</SelectItem>
+                    ))}
+                </SelectContent>
+            </Select>
+            <Button variant="ghost" onClick={clearFilters}>
+                <FilterX className="mr-2 h-4 w-4" />
+                Limpiar
+            </Button>
+        </div>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -544,6 +593,13 @@ const handlePinSubmit = async () => {
                     </TableCell>
                 </TableRow>
               )})}
+              {activePurchaseOrders.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                        No se encontraron órdenes de compra con los filtros aplicados.
+                    </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
           </TooltipProvider>
