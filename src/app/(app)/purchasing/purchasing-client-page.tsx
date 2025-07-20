@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -22,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, FilterX } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUpDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,8 +70,6 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -104,6 +101,10 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
     'Almacenada': [],
 };
 
+type SortDescriptor = {
+    column: keyof PurchaseOrder;
+    direction: 'ascending' | 'descending';
+};
 
 export function PurchasingClientPage() {
   const { toast } = useToast();
@@ -129,15 +130,16 @@ export function PurchasingClientPage() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
 
-  // Estados para los filtros
-  const [idFilter, setIdFilter] = useState('');
-  const [supplierFilter, setSupplierFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+      column: 'estimatedDeliveryDate',
+      direction: 'ascending',
+  });
+  
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
+            // Asegurarnos que el ID de firestore sobreescribe cualquier otro
             return convertTimestamps({ ...data, id: doc.id });
         });
         setPurchaseOrders(ordersData);
@@ -160,13 +162,26 @@ export function PurchasingClientPage() {
   const activePurchaseOrders = useMemo(() => {
     return purchaseOrders
         .filter(order => order.status !== 'Almacenada')
-        .filter(order => {
-            const idMatch = idFilter ? (order.orderNumber || '').toLowerCase().includes(idFilter.toLowerCase()) : true;
-            const supplierMatch = supplierFilter ? order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()) : true;
-            const statusMatch = statusFilter !== 'all' ? order.status === statusFilter : true;
-            return idMatch && supplierMatch && statusMatch;
+        .sort((a, b) => {
+            const first = a[sortDescriptor.column];
+            const second = b[sortDescriptor.column];
+            let cmp = 0;
+
+            if (first === undefined || first === null) cmp = -1;
+            else if (second === undefined || second === null) cmp = 1;
+            else if (typeof first === 'string' && typeof second === 'string') {
+                if (sortDescriptor.column === 'estimatedDeliveryDate' || sortDescriptor.column === 'date') {
+                    cmp = new Date(first).getTime() - new Date(second).getTime();
+                } else {
+                    cmp = first.localeCompare(second);
+                }
+            } else if (typeof first === 'number' && typeof second === 'number') {
+                cmp = first - second;
+            }
+
+            return sortDescriptor.direction === 'descending' ? -cmp : cmp;
         });
-  }, [purchaseOrders, idFilter, supplierFilter, statusFilter]);
+  }, [purchaseOrders, sortDescriptor]);
 
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
@@ -350,31 +365,41 @@ export function PurchasingClientPage() {
         return { text: `Vence en ${daysUntilDelivery + 1} días`, color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
     }
     return { text: 'En Plazo', color: 'bg-green-100 text-green-800 border-green-200' };
-};
+  };
 
-const handlePinSubmit = async () => {
-    if (pinValue === APPROVAL_PIN && orderToProcess) {
-      const { id, status } = orderToProcess;
-      const result = await updatePurchaseOrderStatus(id, status);
-      if (result.success) {
-        toast({ title: 'Pedido Aprobado', description: result.message });
+  const handlePinSubmit = async () => {
+      if (pinValue === APPROVAL_PIN && orderToProcess) {
+        const { id, status } = orderToProcess;
+        const result = await updatePurchaseOrderStatus(id, status);
+        if (result.success) {
+          toast({ title: 'Pedido Aprobado', description: result.message });
+        } else {
+          toast({ variant: 'destructive', title: 'Error', description: result.message });
+        }
+        setIsPinModalOpen(false);
+        setPinValue('');
+        setOrderToProcess(null);
       } else {
-        toast({ variant: 'destructive', title: 'Error', description: result.message });
+        toast({ variant: 'destructive', title: 'PIN Incorrecto', description: 'El PIN introducido no es válido.' });
+        setPinValue('');
       }
-      setIsPinModalOpen(false);
-      setPinValue('');
-      setOrderToProcess(null);
+  };
+
+  const onSortChange = (column: keyof PurchaseOrder) => {
+    if (sortDescriptor.column === column) {
+        setSortDescriptor({
+            ...sortDescriptor,
+            direction: sortDescriptor.direction === 'ascending' ? 'descending' : 'ascending',
+        });
     } else {
-      toast({ variant: 'destructive', title: 'PIN Incorrecto', description: 'El PIN introducido no es válido.' });
-      setPinValue('');
+        setSortDescriptor({ column, direction: 'ascending' });
     }
   };
 
-  const clearFilters = () => {
-    setIdFilter('');
-    setSupplierFilter('');
-    setStatusFilter('all');
-  }
+  const getSortIcon = (column: keyof PurchaseOrder) => {
+    if (sortDescriptor.column !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
+    return sortDescriptor.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -447,51 +472,32 @@ const handlePinSubmit = async () => {
                     aria-label="Seleccionar todo"
                   />
                 </TableHead>
-                <TableHead>ID de Orden</TableHead>
-                <TableHead>Proveedor</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Entrega Estimada</TableHead>
-                <TableHead>Total</TableHead>
-                <TableHead className="text-right">
-                    <Button variant="ghost" size="sm" onClick={clearFilters}>
-                        <FilterX className="h-4 w-4" />
+                <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('orderNumber')}>
+                        ID de Orden {getSortIcon('orderNumber')}
                     </Button>
                 </TableHead>
-              </TableRow>
-              <TableRow className="bg-muted/50 hover:bg-muted/50">
-                  <TableHead></TableHead>
-                  <TableHead>
-                      <Input 
-                          placeholder="Filtrar por ID..."
-                          value={idFilter}
-                          onChange={(e) => setIdFilter(e.target.value)}
-                          className="h-8"
-                      />
-                  </TableHead>
-                  <TableHead>
-                      <Input 
-                          placeholder="Filtrar por proveedor..."
-                          value={supplierFilter}
-                          onChange={(e) => setSupplierFilter(e.target.value)}
-                          className="h-8"
-                      />
-                  </TableHead>
-                  <TableHead>
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="h-8">
-                              <SelectValue placeholder="Estado..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                              <SelectItem value="all">Todos</SelectItem>
-                              {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
-                                  <SelectItem key={status} value={status}>{status}</SelectItem>
-                              ))}
-                          </SelectContent>
-                      </Select>
-                  </TableHead>
-                  <TableHead></TableHead>
-                  <TableHead></TableHead>
-                  <TableHead></TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('supplier')}>
+                        Proveedor {getSortIcon('supplier')}
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('status')}>
+                        Estado {getSortIcon('status')}
+                    </Button>
+                </TableHead>
+                <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('estimatedDeliveryDate')}>
+                        Entrega Estimada {getSortIcon('estimatedDeliveryDate')}
+                    </Button>
+                </TableHead>
+                <TableHead className="text-right">
+                    <Button variant="ghost" onClick={() => onSortChange('total')}>
+                        Total {getSortIcon('total')}
+                    </Button>
+                </TableHead>
+                <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -544,7 +550,7 @@ const handlePinSubmit = async () => {
                         </Badge>
                     </div>
                   </TableCell>
-                  <TableCell>
+                  <TableCell className="text-right">
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
                   </TableCell>
                   <TableCell className="text-right">
@@ -608,7 +614,7 @@ const handlePinSubmit = async () => {
               {activePurchaseOrders.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No se encontraron órdenes de compra con los filtros aplicados.
+                        No se encontraron órdenes de compra activas.
                     </TableCell>
                 </TableRow>
               )}
@@ -707,4 +713,3 @@ const handlePinSubmit = async () => {
     </div>
   )
 }
-
