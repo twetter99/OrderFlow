@@ -123,7 +123,7 @@ export type Technician = {
     id: string;
     name: string;
     email: string;
-    phone?: string;
+    phone: string;
     specialty: string;
     category: TechnicianCategory;
     notes?: string;
@@ -225,8 +225,7 @@ export type Replanteo = {
   imagenes: ReplanteoImagen[];
 };
 
-// Tipo para Operadores (Técnicos) con sus tarifas
-
+// Tipo para Operadores (dueños de flotas)
 export type Operador = {
   id: string;
   name: string;
@@ -235,5 +234,4 @@ export type Operador = {
   email?: string;
   address?: string;
   notes?: string;
-  rates?: OperadorRates;
 };

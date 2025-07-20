@@ -13,6 +13,9 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, PlusCircle, Trash2 } from "lucide-react";
@@ -151,9 +154,9 @@ export default function OperadoresPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Operadores (Técnicos)</h1>
+          <h1 className="text-3xl font-bold font-headline">Operadores (Flotas)</h1>
           <p className="text-muted-foreground">
-            Gestiona el personal técnico, sus datos y sus tarifas por hora.
+            Gestiona los operadores de flotas de vehículos.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -169,6 +172,10 @@ export default function OperadoresPage() {
         )}
       </div>
       <Card>
+        <CardHeader>
+            <CardTitle>Listado de Operadores</CardTitle>
+            <CardDescription>Entidades propietarias de las flotas de vehículos.</CardDescription>
+        </CardHeader>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
@@ -232,15 +239,15 @@ export default function OperadoresPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-xl">
           <DialogHeader>
             <DialogTitle>
               {selectedOperador ? "Editar Operador" : "Añadir Nuevo Operador"}
             </DialogTitle>
             <DialogDescription>
               {selectedOperador
-                ? "Edita la información y tarifas del operador."
-                : "Rellena los detalles para crear un nuevo operador/técnico."}
+                ? "Edita la información del operador."
+                : "Rellena los detalles para crear un nuevo operador."}
             </DialogDescription>
           </DialogHeader>
           <OperadorForm
