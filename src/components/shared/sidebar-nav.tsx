@@ -25,6 +25,7 @@ import {
     HardHat,
     Network,
     ShieldCheck,
+    Archive,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -71,6 +72,7 @@ const navGroups = [
         icon: ShoppingCart,
         subItems: [
           { href: "/purchasing", label: "Compras", icon: ShoppingCart },
+          { href: "/completed-orders", label: "Órdenes Completadas", icon: Archive },
           { href: "/suppliers", label: "Proveedores", icon: Truck },
         ]
       }

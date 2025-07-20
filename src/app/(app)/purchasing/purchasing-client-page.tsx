@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { useSearchParams } from 'next/navigation';
 import {
   Table,
@@ -69,7 +69,7 @@ const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
-      id: order.id, // Ensure Firestore doc ID is preserved
+      id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
     };
@@ -128,6 +128,11 @@ export function PurchasingClientPage() {
         unsubUsers();
     };
   }, []);
+  
+  const activePurchaseOrders = useMemo(() => {
+    return purchaseOrders.filter(order => order.status !== 'Almacenada');
+  }, [purchaseOrders]);
+
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
   const canApprove = currentUser?.role === 'Administrador';
@@ -272,7 +277,7 @@ export function PurchasingClientPage() {
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      setSelectedRowIds(purchaseOrders.map(p => p.id));
+      setSelectedRowIds(activePurchaseOrders.map(p => p.id));
     } else {
       setSelectedRowIds([]);
     }
@@ -287,8 +292,8 @@ export function PurchasingClientPage() {
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
-    if (order.status === 'Almacenada') {
-        return { text: 'Entregado y Almacenado', color: 'bg-primary/10 text-primary border-primary/20' };
+    if (order.status === 'Almacenada' || order.status === 'Recibida') {
+        return { text: 'Entregado', color: 'bg-primary/10 text-primary border-primary/20' };
     }
     const deliveryDate = new Date(order.estimatedDeliveryDate);
     if (isPast(deliveryDate) && !isToday(deliveryDate)) {
@@ -307,7 +312,7 @@ export function PurchasingClientPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Compras</h1>
           <p className="text-muted-foreground">
-            Crea y rastrea todas tus órdenes de compra.
+            Crea y rastrea todas tus órdenes de compra activas. Las órdenes completadas se archivan.
           </p>
         </div>
       </div>
@@ -344,8 +349,8 @@ export function PurchasingClientPage() {
         <CardHeader>
             <div className="flex items-center justify-between">
                 <div>
-                    <CardTitle>Órdenes de Compra</CardTitle>
-                    <CardDescription>Visualiza y gestiona todas tus solicitudes de compra.</CardDescription>
+                    <CardTitle>Órdenes de Compra Activas</CardTitle>
+                    <CardDescription>Visualiza y gestiona todas tus solicitudes de compra en curso.</CardDescription>
                 </div>
                 {selectedRowIds.length > 0 ? (
                     <Button variant="destructive" onClick={handleBulkDeleteClick}>
@@ -367,7 +372,7 @@ export function PurchasingClientPage() {
               <TableRow>
                 <TableHead padding="checkbox" className="w-[50px]">
                   <Checkbox
-                    checked={selectedRowIds.length === purchaseOrders.length && purchaseOrders.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    checked={selectedRowIds.length === activePurchaseOrders.length && activePurchaseOrders.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
                     onCheckedChange={(checked) => handleSelectAll(checked)}
                     aria-label="Seleccionar todo"
                   />
@@ -381,7 +386,7 @@ export function PurchasingClientPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {purchaseOrders.map((order) => {
+              {activePurchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
                 return (
                 <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
@@ -458,7 +463,7 @@ export function PurchasingClientPage() {
                                     <DropdownMenuItem 
                                         key={status} 
                                         onClick={() => handleStatusChange(order.id, order.status, status)}
-                                        disabled={order.status === status}
+                                        disabled={order.status === status || status === 'Almacenada'}
                                     >
                                         {status}
                                     </DropdownMenuItem>

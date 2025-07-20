@@ -91,6 +91,7 @@ export type User = {
   email: string;
   phone: string;
   permissions: string[]; // List of module IDs the user has access to
+  role?: 'Administrador' | 'Empleado' | 'Almacén'; // Legacy, can be removed later
 };
 
 export type OperadorDepot = {
