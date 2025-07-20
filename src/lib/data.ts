@@ -160,13 +160,13 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', role: 'Administrador' },
-  { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', role: 'Almacén' },
-  { id: 'WF-USER-003', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', role: 'Solicitante' },
+  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users'] },
+  { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
+  { id: 'WF-USER-003', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
 ];
 const mockTechnicians: Technician[] = [
-    { id: 'WF-TECH-001', name: 'Mario García', email: 'm.garcia@tecnicos.com', phone: '655-444-333', specialty: 'Electrónica' },
-    { id: 'WF-TECH-002', name: 'Laura Jimenez', email: 'l.jimenez@tecnicos.com', phone: '655-111-222', specialty: 'GPS y Comunicaciones' },
+    { id: 'WF-TECH-001', name: 'Mario García', email: 'm.garcia@tecnicos.com', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados' },
+    { id: 'WF-TECH-002', name: 'Laura Jimenez', email: 'l.jimenez@tecnicos.com', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)' },
 ];
 const mockOperadores: Operador[] = [
     {
@@ -177,10 +177,10 @@ const mockOperadores: Operador[] = [
       email: 'facturacion@iea-sl.com',
       address: 'Calle de la Innovación, 1, 28010 Madrid',
       notes: 'Operador principal para proyectos en la comunidad de Madrid.',
-      rates: {
-          rateWorkHour: 55, rateTravelHour: 25, rateOvertimeWeekdayDay: 70, rateOvertimeWeekdayNight: 80, rateOvertimeWeekendDay: 90, rateOvertimeWeekendNight: 100,
-          rateNotes: "Tarifas actualizadas a 1 de Enero de 2024."
-      }
+      depots: [
+          { id: 'DEPOT-01', name: 'Cochera Central', address: 'Calle de la Logística, 42, Getafe' },
+          { id: 'DEPOT-02', name: 'Base Norte', address: 'Avenida de la Industria, 1, Alcobendas' }
+      ]
     },
 ];
 const mockLocations: Location[] = [

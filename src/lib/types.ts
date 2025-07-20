@@ -86,19 +86,16 @@ export type Client = {
 
 export type UserRole = 
   | 'Administrador'
-  | 'Miembro del Equipo'
-  | 'Solo Lectura'
   | 'Solicitante'
   | 'Supervisor'
-  | 'Validador'
-  | 'Almacén';
+  | 'Validador';
 
 export type User = {
   id: string;
   name: string;
   email: string;
   phone: string;
-  role: UserRole;
+  permissions: string[]; // List of module IDs the user has access to
 };
 
 export type OperadorRates = {

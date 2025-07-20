@@ -43,12 +43,13 @@ export default function SupervisorsPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const supervisorRoles: UserRole[] = ['Supervisor', 'Validador'];
-    const q = query(collection(db, "users"), where("role", "in", supervisorRoles));
+    // Esto es un ejemplo. Cuando los permisos estén implementados, se filtrará por `permissions.includes('purchasing')` o similar.
+    // Por ahora, asumimos que todos los usuarios pueden ser supervisores para la demo.
+    const q = query(collection(db, "users"));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
         const usersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
-        setSupervisors(usersData);
+        setSupervisors(usersData); // Temporalmente, mostramos todos los usuarios.
         setLoading(false);
     }, (error) => {
         console.error("Error fetching supervisors: ", error);
@@ -109,7 +110,7 @@ export default function SupervisorsPage() {
         <CardHeader>
             <CardTitle>Roles de Aprobación</CardTitle>
             <CardDescription>
-                Estos roles son cruciales para el flujo de compras.
+                Estos roles son conceptuales y se asignan otorgando permisos en el módulo de Usuarios.
             </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -133,7 +134,7 @@ export default function SupervisorsPage() {
 
       <Card>
         <CardHeader>
-            <CardTitle>Listado de Personal de Aprobación</CardTitle>
+            <CardTitle>Listado de Personal con Permisos de Aprobación</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -141,7 +142,7 @@ export default function SupervisorsPage() {
               <TableRow>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
-                <TableHead>Rol Asignado</TableHead>
+                <TableHead>Permisos</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -151,16 +152,12 @@ export default function SupervisorsPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                    <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "capitalize",
-                        user.role === 'Supervisor' && "bg-orange-100 text-orange-800 border-orange-200",
-                        user.role === 'Validador' && "bg-purple-100 text-purple-800 border-purple-200",
-                      )}
-                    >
-                      {user.role}
-                    </Badge>
+                    {user.permissions?.includes('purchasing') ? 
+                        <Badge variant="outline" className="bg-orange-100 text-orange-800 border-orange-200">
+                            Permisos de Compras
+                        </Badge>
+                        : "N/A"
+                    }
                   </TableCell>
                   <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => handleEditClick(user)}>
@@ -172,7 +169,7 @@ export default function SupervisorsPage() {
                {supervisors.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
-                        No hay usuarios con el rol de Supervisor o Validador.
+                        No hay usuarios con permisos para supervisar o validar.
                     </TableCell>
                 </TableRow>
                )}
@@ -182,7 +179,7 @@ export default function SupervisorsPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
               {selectedUser ? "Editar Usuario" : "Añadir Nuevo Supervisor/Validador"}

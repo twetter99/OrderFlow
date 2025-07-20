@@ -47,8 +47,6 @@ import {
 import { UserForm } from "@/components/users/user-form";
 import type { User } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -162,7 +160,7 @@ export default function UsersPage() {
         <div>
           <h1 className="text-3xl font-bold font-headline">Usuarios y Permisos</h1>
           <p className="text-muted-foreground">
-            Gestiona las cuentas de acceso al sistema para una futura implementación de login.
+            Gestiona las cuentas de acceso al sistema y sus permisos por módulo.
           </p>
         </div>
         {selectedRowIds.length > 0 ? (
@@ -181,7 +179,7 @@ export default function UsersPage() {
         <CardHeader>
           <CardTitle>Listado de Usuarios del Sistema</CardTitle>
           <CardDescription>
-            Aquí se definirán los usuarios que podrán iniciar sesión y sus niveles de acceso a los módulos de la aplicación.
+            Usuarios que podrán iniciar sesión y sus niveles de acceso a los módulos de la aplicación.
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
@@ -198,7 +196,7 @@ export default function UsersPage() {
                 <TableHead>Nombre</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
-                <TableHead>Nivel de Acceso</TableHead>
+                <TableHead>Permisos</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
@@ -215,18 +213,8 @@ export default function UsersPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>{user.phone}</TableCell>
-                   <TableCell>
-                    <Badge
-                      variant="outline"
-                      className={cn(
-                        "capitalize",
-                        user.role === "Administrador" && "bg-primary/10 text-primary border-primary/20",
-                        user.role === "Miembro del Equipo" && "bg-blue-100 text-blue-800 border-blue-200",
-                        user.role === "Solo Lectura" && "bg-gray-100 text-gray-800 border-gray-200",
-                      )}
-                    >
-                      {user.role}
-                    </Badge>
+                  <TableCell>
+                    {user.permissions?.length ?? 0} Módulos
                   </TableCell>
                   <TableCell className="text-right">
                       <DropdownMenu>
@@ -259,15 +247,15 @@ export default function UsersPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-3xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedUser ? "Editar Usuario" : "Añadir Nuevo Usuario"}
+              {selectedUser ? "Editar Usuario y Permisos" : "Añadir Nuevo Usuario"}
             </DialogTitle>
             <DialogDescription>
               {selectedUser
-                ? "Edita la información y el nivel de acceso del usuario."
-                : "Rellena los detalles para crear un nuevo usuario y asignarle un nivel de acceso."}
+                ? "Edita la información y los permisos de acceso del usuario."
+                : "Rellena los detalles y asigna los permisos para crear un nuevo usuario."}
             </DialogDescription>
           </DialogHeader>
           <UserForm
