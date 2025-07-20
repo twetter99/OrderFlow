@@ -121,7 +121,7 @@ export function PurchasingClientPage() {
           project,
           supplier,
           items,
-          status: 'Pendiente',
+          status: 'Pendiente de Aprobación',
         };
         handleAddClick(newOrder);
       } catch (error) {
@@ -174,7 +174,7 @@ export function PurchasingClientPage() {
         const newOrder: Partial<PurchaseOrder> = {
           supplier: result.supplier,
           items: result.items,
-          status: 'Pendiente',
+          status: 'Pendiente de Aprobación',
         };
         handleAddClick(newOrder);
       } else {
@@ -219,8 +219,8 @@ export function PurchasingClientPage() {
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
-    if (order.status === 'Recibido') {
-        return { text: 'Entregado', color: 'bg-primary/10 text-primary border-primary/20' };
+    if (order.status === 'Almacenada') {
+        return { text: 'Entregado y Almacenado', color: 'bg-primary/10 text-primary border-primary/20' };
     }
     const deliveryDate = new Date(order.estimatedDeliveryDate);
     if (isPast(deliveryDate) && !isToday(deliveryDate)) {
@@ -300,7 +300,7 @@ export function PurchasingClientPage() {
               {purchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
                 return (
-                <TableRow key={order.id} className={cn(order.status === "Pendiente" && "bg-yellow-50 dark:bg-yellow-900/20")}>
+                <TableRow key={order.id} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
                   <TableCell className="font-medium">{order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>
@@ -309,14 +309,15 @@ export function PurchasingClientPage() {
                         variant="outline"
                         className={cn(
                           "capitalize",
-                          order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
-                          order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
-                          order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
-                          order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
+                          order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
+                          order.status === "Pendiente de Aprobación" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
+                          order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
+                          order.status === "Recibida" && "bg-orange-100 text-orange-800 border-orange-200",
+                          order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
                           order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
                         )}
                       >
-                        {order.status === 'Pendiente' ? 'Pendiente Aprobación' : order.status}
+                        {order.status}
                       </Badge>
                       {order.status === 'Rechazado' && order.rejectionReason && (
                         <Tooltip>

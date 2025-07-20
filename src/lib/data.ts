@@ -134,13 +134,13 @@ const mockInventory: InventoryItem[] = [
   },
 ];
 const mockPurchaseOrders: PurchaseOrder[] = [
-  { id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibido', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }).toISOString() },
-  { id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviado', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }).toISOString() },
-  { id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }).toISOString() },
+  { id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Almacenada', date: '2024-07-10', total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }).toISOString() },
+  { id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: '2024-07-12', total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }).toISOString() },
+  { id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: '2024-07-15', total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }).toISOString() },
   { id: 'WF-PO-2024-004', project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: '2024-07-18', total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }).toISOString() },
-  { id: 'WF-PO-2024-005', project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobado', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }).toISOString() },
-  { id: 'WF-PO-2024-006', project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Aprobado', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }).toISOString() }, // Retrasado
-  { id: 'WF-PO-2024-007', project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobado', date: '2024-07-22', total: 875, items: [
+  { id: 'WF-PO-2024-005', project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobada', date: '2024-07-20', total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }).toISOString() },
+  { id: 'WF-PO-2024-006', project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Recibida', date: '2024-07-21', total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }).toISOString() }, // Retrasado
+  { id: 'WF-PO-2024-007', project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobada', date: '2024-07-22', total: 875, items: [
     { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, unit: 'viaje', type: 'Servicio' },
     { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, unit: 'noche', type: 'Servicio' },
     { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, unit: 'ud', type: 'Servicio' },
@@ -160,7 +160,7 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users'] },
+  { id: 'WF-USER-001', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores'] },
   { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
   { id: 'WF-USER-003', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
 ];
@@ -324,7 +324,7 @@ export const getNotifications = (): Notification[] => {
     const notifications: Notification[] = [];
 
     // Notificaciones de aprobación de PO
-    const pendingPOs = purchaseOrders.filter(po => po.status === 'Pendiente');
+    const pendingPOs = purchaseOrders.filter(po => po.status === 'Pendiente de Aprobación');
     pendingPOs.forEach(po => {
         notifications.push({
             id: `notif-po-${po.id}`,

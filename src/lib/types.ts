@@ -58,7 +58,7 @@ export type PurchaseOrder = {
   id: string;
   project: string;
   supplier: string;
-  status: 'Pendiente' | 'Aprobado' | 'Enviado' | 'Recibido' | 'Rechazado';
+  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Almacenada' | 'Rechazado';
   date: string | Timestamp;
   estimatedDeliveryDate: string | Timestamp;
   total: number;
@@ -84,18 +84,30 @@ export type Client = {
   phone: string;
 };
 
-export type UserRole = 
-  | 'Administrador'
-  | 'Solicitante'
-  | 'Supervisor'
-  | 'Validador';
-
 export type User = {
   id: string;
   name: string;
   email: string;
   phone: string;
   permissions: string[]; // List of module IDs the user has access to
+};
+
+export type OperadorDepot = {
+  id?: string;
+  name: string;
+  address: string;
+};
+
+// Tipo para Operadores (dueños de flotas)
+export type Operador = {
+  id: string;
+  name: string;
+  cif?: string;
+  phone?: string;
+  email?: string;
+  address?: string; // Dirección fiscal
+  notes?: string;
+  depots?: OperadorDepot[]; // Cocheras / Bases operativas
 };
 
 export type OperadorRates = {
@@ -222,22 +234,4 @@ export type Replanteo = {
   estado: 'Pendiente' | 'En Proceso' | 'Completado';
   materiales: ReplanteoMaterial[];
   imagenes: ReplanteoImagen[];
-};
-
-export type OperadorDepot = {
-  id?: string;
-  name: string;
-  address: string;
-};
-
-// Tipo para Operadores (dueños de flotas)
-export type Operador = {
-  id: string;
-  name: string;
-  cif?: string;
-  phone?: string;
-  email?: string;
-  address?: string; // Dirección fiscal
-  notes?: string;
-  depots?: OperadorDepot[]; // Cocheras / Bases operativas
 };

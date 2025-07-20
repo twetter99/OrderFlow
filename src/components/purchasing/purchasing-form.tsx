@@ -41,7 +41,7 @@ const formSchema = z.object({
   project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
-  status: z.enum(["Pendiente", "Aprobado", "Enviado", "Recibido", "Rechazado"]),
+  status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"]),
   rejectionReason: z.string().optional(),
   items: z.array(z.object({
     itemId: z.string().optional(), // Puede ser opcional si el nombre es la clave
@@ -74,7 +74,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         project: order.project || "",
         supplier: order.supplier || "",
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
-        status: order.status || "Pendiente",
+        status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
         items: order.items || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
         total: order.total || 0,
@@ -83,7 +83,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         project: "",
         supplier: "",
         estimatedDeliveryDate: new Date(),
-        status: "Pendiente" as const,
+        status: "Pendiente de Aprobación" as const,
         rejectionReason: "",
         items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
         total: 0,
@@ -360,10 +360,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                             </SelectTrigger>
                         </FormControl>
                         <SelectContent>
-                            <SelectItem value="Pendiente">Pendiente</SelectItem>
-                            <SelectItem value="Aprobado">Aprobado</SelectItem>
-                            <SelectItem value="Enviado">Enviado</SelectItem>
-                            <SelectItem value="Recibido">Recibido</SelectItem>
+                            <SelectItem value="Pendiente de Aprobación">Pendiente de Aprobación</SelectItem>
+                            <SelectItem value="Aprobada">Aprobada</SelectItem>
+                            <SelectItem value="Enviada al Proveedor">Enviada al Proveedor</SelectItem>
+                            <SelectItem value="Recibida">Recibida</SelectItem>
+                            <SelectItem value="Almacenada">Almacenada</SelectItem>
                             <SelectItem value="Rechazado">Rechazado</SelectItem>
                         </SelectContent>
                         </Select>
