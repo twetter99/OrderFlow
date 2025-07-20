@@ -94,7 +94,11 @@ export function PurchasingClientPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        setPurchaseOrders(snapshot.docs.map(doc => convertTimestamps({ id: doc.id, ...doc.data() })));
+        // La corrección clave está aquí: { ...doc.data(), id: doc.id }
+        // Esto asegura que el ID del documento de Firestore siempre sobrescriba
+        // cualquier campo "id" que pueda existir en los datos.
+        const ordersData = snapshot.docs.map(doc => convertTimestamps({ ...doc.data(), id: doc.id }));
+        setPurchaseOrders(ordersData);
         setLoading(false);
     });
     const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier))));
@@ -471,3 +475,5 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+    
