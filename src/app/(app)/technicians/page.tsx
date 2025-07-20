@@ -45,6 +45,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { addTechnician, updateTechnician, deleteTechnician, deleteMultipleTechnicians } from "./actions";
+import { Badge } from "@/components/ui/badge";
 
 export default function TechniciansPage() {
   const { toast } = useToast();
@@ -178,6 +179,7 @@ export default function TechniciansPage() {
                   />
                 </TableHead>
                 <TableHead>Nombre</TableHead>
+                <TableHead>Categoría</TableHead>
                 <TableHead>Especialidad</TableHead>
                 <TableHead>Correo Electrónico</TableHead>
                 <TableHead>Teléfono</TableHead>
@@ -195,6 +197,7 @@ export default function TechniciansPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{technician.name}</TableCell>
+                  <TableCell><Badge variant="outline">{technician.category}</Badge></TableCell>
                   <TableCell>{technician.specialty}</TableCell>
                   <TableCell>{technician.email}</TableCell>
                   <TableCell>{technician.phone}</TableCell>

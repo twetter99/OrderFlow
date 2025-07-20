@@ -16,9 +16,18 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Technician } from "@/lib/types";
+import type { Technician, TechnicianCategory } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+
+const technicianCategoryDefinitions = [
+    { name: 'Oficial de Primera', description: 'Técnico experto, capaz de liderar instalaciones complejas y solucionar problemas.' },
+    { name: 'Oficial de Segunda', description: 'Técnico con experiencia, realiza instalaciones estándar de forma autónoma.' },
+    { name: 'Ayudante', description: 'Técnico en formación, asiste a los oficiales y realiza tareas supervisadas.' },
+] as const;
+
+const technicianCategories = technicianCategoryDefinitions.map(c => c.name) as [TechnicianCategory, ...TechnicianCategory[]];
 
 const rateSchema = z.object({
   rateWorkHour: z.coerce.number().min(0, "La tarifa debe ser positiva").optional(),
@@ -33,6 +42,7 @@ const rateSchema = z.object({
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   specialty: z.string().min(1, "La especialidad es obligatoria."),
+  category: z.enum(technicianCategories, { required_error: "La categoría es obligatoria."}),
   phone: z.string().optional(),
   email: z.string().email("Debe ser un correo electrónico válido.").optional().or(z.literal('')),
   notes: z.string().optional(),
@@ -141,6 +151,8 @@ function CurrencyInput({
 
 
 export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormProps) {
+  const [hoveredCategory, setHoveredCategory] = React.useState<string | null>(null);
+
   const defaultValues: Partial<Technician> = technician
     ? { 
         ...technician, 
@@ -158,6 +170,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
     : {
         name: "",
         specialty: "General",
+        category: 'Ayudante',
         phone: "",
         email: "",
         notes: "",
@@ -201,19 +214,54 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                         </FormItem>
                     )}
                     />
-                    <FormField
-                    control={form.control}
-                    name="specialty"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Especialidad</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Ej: Electrónica, GPS..." {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <FormField
+                            control={form.control}
+                            name="category"
+                            render={({ field }) => (
+                                <FormItem>
+                                    <FormLabel>Categoría</FormLabel>
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                        <FormControl>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Selecciona una categoría"/>
+                                            </SelectTrigger>
+                                        </FormControl>
+                                        <SelectContent onPointerLeave={() => setHoveredCategory(null)}>
+                                            {technicianCategoryDefinitions.map(category => (
+                                                <SelectItem 
+                                                    key={category.name} 
+                                                    value={category.name}
+                                                    onPointerEnter={() => setHoveredCategory(category.name)}
+                                                >
+                                                    <div>{category.name}</div>
+                                                    {hoveredCategory === category.name && (
+                                                    <div className="whitespace-normal text-xs text-muted-foreground mt-1">
+                                                        {category.description}
+                                                    </div>
+                                                    )}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                        <FormField
+                            control={form.control}
+                            name="specialty"
+                            render={({ field }) => (
+                                <FormItem>
+                                <FormLabel>Especialidad</FormLabel>
+                                <FormControl>
+                                    <Input placeholder="Ej: Electrónica, GPS..." {...field} />
+                                </FormControl>
+                                <FormMessage />
+                                </FormItem>
+                            )}
+                        />
+                    </div>
                     <FormField
                     control={form.control}
                     name="phone"

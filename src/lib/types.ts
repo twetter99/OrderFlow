@@ -109,12 +109,15 @@ export type OperadorRates = {
     rateNotes?: string;
 }
 
+export type TechnicianCategory = 'Oficial de Primera' | 'Oficial de Segunda' | 'Ayudante';
+
 export type Technician = {
     id: string;
     name: string;
     email: string;
     phone?: string;
     specialty: string;
+    category: TechnicianCategory;
     notes?: string;
     rates?: OperadorRates;
 }
