@@ -38,6 +38,7 @@ import { ItemCombobox } from "./item-combobox";
 import React from "react";
 
 const formSchema = z.object({
+  orderNumber: z.string().optional(),
   project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
@@ -73,6 +74,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     ? { 
         project: order.project || "",
         supplier: order.supplier || "",
+        orderNumber: order.orderNumber || "",
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
@@ -82,6 +84,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     : {
         project: "",
         supplier: "",
+        orderNumber: "",
         estimatedDeliveryDate: new Date(),
         status: "Pendiente de Aprobación" as const,
         rejectionReason: "",

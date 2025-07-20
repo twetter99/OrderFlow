@@ -2,19 +2,24 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
 
 export async function addPurchaseOrder(data: any) {
   try {
-    // Ensure date objects are correctly handled by Firestore
+    const poCollection = collection(db, 'purchaseOrders');
+    const poSnapshot = await getDocs(poCollection);
+    const orderCount = poSnapshot.size;
+    const newOrderNumber = `WF-PO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
+
     const dataToSave = {
         ...data,
+        orderNumber: newOrderNumber,
         date: new Date(data.date),
         estimatedDeliveryDate: new Date(data.estimatedDeliveryDate),
     };
-    await addDoc(collection(db, 'purchaseOrders'), dataToSave);
+    await addDoc(poCollection, dataToSave);
     revalidatePath('/purchasing');
     return { success: true, message: 'Pedido de compra añadido correctamente.' };
   } catch (error) {
@@ -28,7 +33,6 @@ export async function updatePurchaseOrder(id: string, data: any) {
         const poRef = doc(db, 'purchaseOrders', id);
         const dataToUpdate: any = { ...data };
 
-        // Convert date strings or Date objects back to Firestore Timestamps
         if (data.date) {
             dataToUpdate.date = data.date instanceof Date ? Timestamp.fromDate(data.date) : Timestamp.fromDate(new Date(data.date));
         }

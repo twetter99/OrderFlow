@@ -56,6 +56,7 @@ export type PurchaseOrderItem = {
 
 export type PurchaseOrder = {
   id: string;
+  orderNumber?: string;
   project: string;
   supplier: string;
   status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Almacenada' | 'Rechazado';

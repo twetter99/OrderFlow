@@ -66,7 +66,7 @@ export default function PurchaseOrderPrintPage() {
         </div>
         <div className="text-right">
           <h2 className="text-2xl font-bold uppercase">Orden de Compra</h2>
-          <p className="text-lg font-mono">{order.id}</p>
+          <p className="text-lg font-mono">{order.orderNumber || order.id}</p>
           <p className="text-sm">Fecha: {new Date(order.date).toLocaleDateString('es-ES')}</p>
         </div>
       </header>

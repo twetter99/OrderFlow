@@ -105,7 +105,10 @@ export function PurchasingClientPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => convertTimestamps({ ...doc.data(), id: doc.id }));
+        const ordersData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return convertTimestamps({ ...data, id: doc.id });
+        });
         setPurchaseOrders(ordersData);
         setLoading(false);
     });
@@ -173,8 +176,8 @@ export function PurchasingClientPage() {
       return;
     }
 
-    const subject = `Orden de Compra #${order.id} de WINFIN`;
-    const body = `Hola ${supplierInfo.contactPerson},\n\nAdjuntamos la orden de compra #${order.id}.\n\nPor favor, confirma la recepción y la fecha de entrega estimada.\n\nGracias,\nEl equipo de WINFIN`;
+    const subject = `Orden de Compra ${order.orderNumber} de WINFIN`;
+    const body = `Hola ${supplierInfo.contactPerson},\n\nAdjuntamos la orden de compra ${order.orderNumber}.\n\nPor favor, confirma la recepción y la fecha de entrega estimada.\n\nGracias,\nEl equipo de WINFIN`;
     
     window.location.href = `mailto:${supplierInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
@@ -224,10 +227,7 @@ export function PurchasingClientPage() {
   };
 
   const handleSave = async (values: any) => {
-    const newId = `WF-PO-2024-${String(purchaseOrders.length + 1).padStart(3, '0')}`;
-    const dataToSave = selectedOrder && 'id' in selectedOrder 
-      ? values 
-      : { ...values, id: newId, date: new Date().toISOString() };
+    const dataToSave = { ...values, date: new Date().toISOString() };
 
     const result = selectedOrder && 'id' in selectedOrder
       ? await updatePurchaseOrder(selectedOrder.id as string, dataToSave)
@@ -337,7 +337,7 @@ export function PurchasingClientPage() {
                 const deliveryStatus = getDeliveryStatus(order);
                 return (
                 <TableRow key={order.id} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -446,7 +446,7 @@ export function PurchasingClientPage() {
         <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder && ('id' in selectedOrder || 'items' in selectedOrder) ? (canApprove ? "Revisar Pedido de Compra" : "Detalles del Pedido") : "Crear Nuevo Pedido de Compra"}
+              {selectedOrder && ('id' in selectedOrder || 'items' in selectedOrder) ? (canApprove ? `Revisar Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}` : `Detalles del Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}`) : "Crear Nuevo Pedido de Compra"}
             </DialogTitle>
             <DialogDescription>
               {selectedOrder
