@@ -4,6 +4,7 @@
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
+import type { PurchaseOrder } from '@/lib/types';
 
 export async function addPurchaseOrder(data: any) {
   try {
@@ -52,5 +53,17 @@ export async function deletePurchaseOrder(id: string) {
     } catch (error) {
         console.error("Error deleting purchase order from Firestore:", error);
         return { success: false, message: 'No se pudo eliminar el pedido de compra.' };
+    }
+}
+
+export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status']) {
+    try {
+        const poRef = doc(db, 'purchaseOrders', id);
+        await updateDoc(poRef, { status });
+        revalidatePath('/purchasing');
+        return { success: true, message: `El estado del pedido se ha actualizado a "${status}".` };
+    } catch (error) {
+        console.error("Error updating purchase order status:", error);
+        return { success: false, message: 'No se pudo actualizar el estado del pedido.' };
     }
 }

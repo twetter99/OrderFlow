@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -29,6 +29,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
   Dialog,
@@ -57,7 +60,7 @@ import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
 import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder } from "./actions";
+import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus } from "./actions";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
@@ -69,6 +72,8 @@ const convertTimestamps = (order: any): PurchaseOrder => {
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
     };
 };
+
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Rechazado", "Enviada al Proveedor", "Recibida", "Almacenada"];
 
 export function PurchasingClientPage() {
   const { toast } = useToast();
@@ -161,6 +166,16 @@ export function PurchasingClientPage() {
     
     window.location.href = `mailto:${supplierInfo.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
   };
+  
+  const handleStatusChange = async (id: string, status: PurchaseOrder['status']) => {
+    const result = await updatePurchaseOrderStatus(id, status);
+    if (result.success) {
+      toast({ title: 'Estado Actualizado', description: result.message });
+    } else {
+      toast({ variant: 'destructive', title: 'Error', description: result.message });
+    }
+  };
+
 
   const handleGenerateWithAI = async () => {
     if (!aiPrompt) {
@@ -357,6 +372,24 @@ export function PurchasingClientPage() {
                             <Eye className="mr-2 h-4 w-4"/>
                             {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
                           </DropdownMenuItem>
+                          <DropdownMenuSub>
+                            <DropdownMenuSubTrigger>
+                              <ChevronRight className="mr-2 h-4 w-4" />
+                              <span>Cambiar Estado</span>
+                            </DropdownMenuSubTrigger>
+                            <DropdownMenuSubContent>
+                                {ALL_STATUSES.map(status => (
+                                    <DropdownMenuItem 
+                                        key={status} 
+                                        onClick={() => handleStatusChange(order.id, status)}
+                                        disabled={order.status === status}
+                                    >
+                                        {status}
+                                    </DropdownMenuItem>
+                                ))}
+                            </DropdownMenuSubContent>
+                          </DropdownMenuSub>
+                          <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handlePrintClick(order.id)}>
                             <Printer className="mr-2 h-4 w-4"/>
                             Imprimir Orden
