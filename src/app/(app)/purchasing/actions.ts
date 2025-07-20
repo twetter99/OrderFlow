@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
 
@@ -28,12 +28,12 @@ export async function updatePurchaseOrder(id: string, data: any) {
         const poRef = doc(db, 'purchaseOrders', id);
         const dataToUpdate: any = { ...data };
 
-        // Convert date strings back to Date objects if they exist
-        if (data.date && typeof data.date === 'string') {
-            dataToUpdate.date = new Date(data.date);
+        // Convert date strings or Date objects back to Firestore Timestamps
+        if (data.date) {
+            dataToUpdate.date = data.date instanceof Date ? Timestamp.fromDate(data.date) : Timestamp.fromDate(new Date(data.date));
         }
-        if (data.estimatedDeliveryDate && typeof data.estimatedDeliveryDate === 'string') {
-            dataToUpdate.estimatedDeliveryDate = new Date(data.estimatedDeliveryDate);
+        if (data.estimatedDeliveryDate) {
+            dataToUpdate.estimatedDeliveryDate = data.estimatedDeliveryDate instanceof Date ? Timestamp.fromDate(data.estimatedDeliveryDate) : Timestamp.fromDate(new Date(data.estimatedDeliveryDate));
         }
 
         await updateDoc(poRef, dataToUpdate);
