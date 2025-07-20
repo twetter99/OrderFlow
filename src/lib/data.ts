@@ -8,7 +8,7 @@ import { add, sub } from 'date-fns';
 const today = new Date();
 
 // Helper to convert date objects to ISO strings for mock data
-const convertMockDates = (order: Omit<PurchaseOrder, 'date' | 'estimatedDeliveryDate'> & { date: Date, estimatedDeliveryDate: Date }): PurchaseOrder => {
+const convertMockDates = (order: Omit<PurchaseOrder, 'date' | 'estimatedDeliveryDate' | 'id'> & { date: Date, estimatedDeliveryDate: Date }): Omit<PurchaseOrder, 'id'> => {
   return {
     ...order,
     date: order.date.toISOString(),
@@ -143,17 +143,17 @@ const mockInventory: InventoryItem[] = [
   },
 ];
 const mockPurchaseOrders: PurchaseOrder[] = [
-    convertMockDates({ id: 'WF-PO-2024-001', project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Almacenada', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) }),
-    convertMockDates({ id: 'WF-PO-2024-002', project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: new Date('2024-07-12'), total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }) }),
-    convertMockDates({ id: 'WF-PO-2024-003', project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: new Date('2024-07-15'), total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }) }),
-    convertMockDates({ id: 'WF-PO-2024-004', project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: new Date('2024-07-18'), total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }) }),
-    convertMockDates({ id: 'WF-PO-2024-005', project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobada', date: new Date('2024-07-20'), total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }) }),
-    convertMockDates({ id: 'WF-PO-2024-006', project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Recibida', date: new Date('2024-07-21'), total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }) }),
-    convertMockDates({ id: 'WF-PO-2024-007', project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobada', date: new Date('2024-07-22'), total: 875, items: [
+    { id: 'WF-PO-2024-001', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Almacenada', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) })},
+    { id: 'WF-PO-2024-002', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: new Date('2024-07-12'), total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }) })},
+    { id: 'WF-PO-2024-003', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: new Date('2024-07-15'), total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }) })},
+    { id: 'WF-PO-2024-004', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: new Date('2024-07-18'), total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }) })},
+    { id: 'WF-PO-2024-005', ...convertMockDates({ project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobada', date: new Date('2024-07-20'), total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }) })},
+    { id: 'WF-PO-2024-006', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Recibida', date: new Date('2024-07-21'), total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }) })},
+    { id: 'WF-PO-2024-007', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobada', date: new Date('2024-07-22'), total: 875, items: [
       { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, unit: 'viaje', type: 'Servicio' },
       { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, unit: 'noche', type: 'Servicio' },
       { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, unit: 'ud', type: 'Servicio' },
-    ], estimatedDeliveryDate: new Date() }),
+    ], estimatedDeliveryDate: new Date() })},
 ];
 const mockSuppliers: Supplier[] = [
   { id: 'WF-SUP-001', name: 'TechParts Inc.', contactPerson: 'Jane Doe', email: 'sales@techparts.com', phone: '123-456-7890', deliveryRating: 4.5, qualityRating: 4.8 },
