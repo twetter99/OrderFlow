@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -70,6 +70,7 @@ import {
   InputOTPSlot,
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -102,7 +103,7 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
 };
 
 type SortDescriptor = {
-    column: keyof PurchaseOrder;
+    column: keyof PurchaseOrder | 'projectName';
     direction: 'ascending' | 'descending';
 };
 
@@ -115,6 +116,13 @@ export function PurchasingClientPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Estados para filtros
+  const [idFilter, setIdFilter] = useState('');
+  const [supplierFilter, setSupplierFilter] = useState('');
+  const [projectFilter, setProjectFilter] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
@@ -139,7 +147,6 @@ export function PurchasingClientPage() {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
-            // Asegurarnos que el ID de firestore sobreescribe cualquier otro
             return convertTimestamps({ ...data, id: doc.id });
         });
         setPurchaseOrders(ordersData);
@@ -160,17 +167,39 @@ export function PurchasingClientPage() {
   }, []);
   
   const activePurchaseOrders = useMemo(() => {
-    return purchaseOrders
-        .filter(order => order.status !== 'Almacenada')
-        .sort((a, b) => {
-            const first = a[sortDescriptor.column];
-            const second = b[sortDescriptor.column];
+    
+    const projectMap = new Map(projects.map(p => [p.id, p.name]));
+    
+    let filteredOrders = purchaseOrders.filter(order => order.status !== 'Almacenada');
+
+    if (idFilter) {
+        filteredOrders = filteredOrders.filter(order => order.orderNumber?.toLowerCase().includes(idFilter.toLowerCase()));
+    }
+    if (supplierFilter) {
+        filteredOrders = filteredOrders.filter(order => order.supplier.toLowerCase().includes(supplierFilter.toLowerCase()));
+    }
+    if (projectFilter) {
+        filteredOrders = filteredOrders.filter(order => projectMap.get(order.project)?.toLowerCase().includes(projectFilter.toLowerCase()));
+    }
+    if (statusFilter) {
+        filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+    }
+    
+    const ordersWithProjectName = filteredOrders.map(order => ({
+        ...order,
+        projectName: projectMap.get(order.project) || order.project,
+    }));
+
+
+    return ordersWithProjectName.sort((a, b) => {
+            const first = a[sortDescriptor.column as keyof typeof a];
+            const second = b[sortDescriptor.column as keyof typeof b];
             let cmp = 0;
 
             if (first === undefined || first === null) cmp = -1;
             else if (second === undefined || second === null) cmp = 1;
             else if (typeof first === 'string' && typeof second === 'string') {
-                if (sortDescriptor.column === 'estimatedDeliveryDate' || sortDescriptor.column === 'date') {
+                 if (sortDescriptor.column === 'estimatedDeliveryDate' || sortDescriptor.column === 'date') {
                     cmp = new Date(first).getTime() - new Date(second).getTime();
                 } else {
                     cmp = first.localeCompare(second);
@@ -181,7 +210,7 @@ export function PurchasingClientPage() {
 
             return sortDescriptor.direction === 'descending' ? -cmp : cmp;
         });
-  }, [purchaseOrders, sortDescriptor]);
+  }, [purchaseOrders, projects, idFilter, supplierFilter, projectFilter, statusFilter, sortDescriptor]);
 
 
   const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
@@ -301,7 +330,14 @@ export function PurchasingClientPage() {
   };
 
   const handleSave = async (values: any) => {
-    const dataToSave = { ...values, date: new Date().toISOString() };
+    const dataToSave = { ...values };
+     if (dataToSave.date && !(dataToSave.date instanceof Timestamp)) {
+        dataToSave.date = new Date(dataToSave.date);
+    }
+    if (dataToSave.estimatedDeliveryDate && !(dataToSave.estimatedDeliveryDate instanceof Timestamp)) {
+        dataToSave.estimatedDeliveryDate = new Date(dataToSave.estimatedDeliveryDate);
+    }
+
 
     const result = selectedOrder && 'id' in selectedOrder
       ? await updatePurchaseOrder(selectedOrder.id as string, dataToSave)
@@ -385,7 +421,7 @@ export function PurchasingClientPage() {
       }
   };
 
-  const onSortChange = (column: keyof PurchaseOrder) => {
+  const onSortChange = (column: SortDescriptor['column']) => {
     if (sortDescriptor.column === column) {
         setSortDescriptor({
             ...sortDescriptor,
@@ -396,9 +432,9 @@ export function PurchasingClientPage() {
     }
   };
 
-  const getSortIcon = (column: keyof PurchaseOrder) => {
-    if (sortDescriptor.column !== column) return <ArrowUpDown className="ml-2 h-4 w-4" />;
-    return sortDescriptor.direction === 'ascending' ? <ArrowUpDown className="ml-2 h-4 w-4" /> : <ArrowUpDown className="ml-2 h-4 w-4" />;
+  const getSortIcon = (column: SortDescriptor['column']) => {
+    if (sortDescriptor.column !== column) return null;
+    return sortDescriptor.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
   };
 
   return (
@@ -461,6 +497,34 @@ export function PurchasingClientPage() {
             </div>
         </CardHeader>
         <CardContent>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 border rounded-lg bg-muted/50">
+            <div className="space-y-2">
+                <Label htmlFor="filter-id">ID de Orden</Label>
+                <Input id="filter-id" placeholder="Filtrar por ID..." value={idFilter} onChange={(e) => setIdFilter(e.target.value)} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="filter-supplier">Proveedor</Label>
+                <Input id="filter-supplier" placeholder="Filtrar por proveedor..." value={supplierFilter} onChange={(e) => setSupplierFilter(e.target.value)} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="filter-project">Proyecto</Label>
+                <Input id="filter-project" placeholder="Filtrar por proyecto..." value={projectFilter} onChange={(e) => setProjectFilter(e.target.value)} />
+            </div>
+             <div className="space-y-2">
+                <Label htmlFor="filter-status">Estado</Label>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger id="filter-status">
+                        <SelectValue placeholder="Todos los estados" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="">Todos los estados</SelectItem>
+                        {ALL_STATUSES.filter(s => s !== 'Almacenada').map(status => (
+                            <SelectItem key={status} value={status}>{status}</SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+        </div>
         <TooltipProvider>
           <Table>
             <TableHeader>
@@ -480,6 +544,11 @@ export function PurchasingClientPage() {
                 <TableHead>
                     <Button variant="ghost" onClick={() => onSortChange('supplier')}>
                         Proveedor {getSortIcon('supplier')}
+                    </Button>
+                </TableHead>
+                 <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('projectName')}>
+                        Proyecto {getSortIcon('projectName')}
                     </Button>
                 </TableHead>
                 <TableHead>
@@ -514,6 +583,7 @@ export function PurchasingClientPage() {
                   </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
+                  <TableCell>{(order as any).projectName}</TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Badge
@@ -613,8 +683,8 @@ export function PurchasingClientPage() {
               )})}
               {activePurchaseOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
-                        No se encontraron órdenes de compra activas.
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                        No se encontraron órdenes de compra que coincidan con los filtros.
                     </TableCell>
                 </TableRow>
               )}
