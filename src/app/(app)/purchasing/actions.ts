@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase';
-import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs, getDoc, arrayUnion } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
 
@@ -12,12 +12,16 @@ export async function addPurchaseOrder(data: any) {
     const poSnapshot = await getDocs(poCollection);
     const orderCount = poSnapshot.size;
     const newOrderNumber = `WF-PO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
+    
+    const initialStatus = 'Pendiente de Aprobación';
 
     const dataToSave = {
         ...data,
         orderNumber: newOrderNumber,
         date: new Date(data.date),
         estimatedDeliveryDate: new Date(data.estimatedDeliveryDate),
+        status: initialStatus,
+        statusHistory: [{ status: initialStatus, date: new Date() }],
     };
     await addDoc(poCollection, dataToSave);
     revalidatePath('/purchasing');
@@ -76,8 +80,15 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
 export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status']) {
     try {
         const poRef = doc(db, 'purchaseOrders', id);
-        await updateDoc(poRef, { status });
+        const newHistoryEntry = { status, date: new Date() };
+        
+        await updateDoc(poRef, { 
+            status: status,
+            statusHistory: arrayUnion(newHistoryEntry) 
+        });
+        
         revalidatePath('/purchasing');
+        revalidatePath('/completed-orders');
         return { success: true, message: `El estado del pedido se ha actualizado a "${status}".` };
     } catch (error) {
         console.error("Error updating purchase order status:", error);

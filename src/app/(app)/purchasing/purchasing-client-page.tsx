@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -62,30 +62,34 @@ import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "./actions";
 import { Checkbox } from "@/components/ui/checkbox";
+import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 // Para probar como otro rol, cambia a 'WF-USER-002' (Almacén) o 'WF-USER-003' (Empleado)
 
 const convertTimestamps = (order: any): PurchaseOrder => {
-    const data = order.id ? order : { id: order.id, ...order };
     return {
-      ...data,
-      id: order.id,
+      ...order,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
+      statusHistory: order.statusHistory?.map((h: any) => ({
+        ...h,
+        date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
+      })) || []
     };
 };
+
 
 const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Rechazado", "Enviada al Proveedor", "Recibida", "Almacenada"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
     'Pendiente de Aprobación': ['Aprobada', 'Rechazado'],
-    'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'],
+    'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Permitir revertir a pendiente
+    'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
     'Enviada al Proveedor': ['Recibida'],
     'Recibida': ['Almacenada'],
     'Almacenada': [],
-    'Rechazado': ['Pendiente de Aprobación'],
 };
 
 
@@ -100,6 +104,7 @@ export function PurchasingClientPage() {
   const [loading, setLoading] = useState(true);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Partial<PurchaseOrder> | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
@@ -167,6 +172,11 @@ export function PurchasingClientPage() {
   const handleEditClick = (order: PurchaseOrder) => {
     setSelectedOrder(order);
     setIsModalOpen(true);
+  };
+  
+  const handleHistoryClick = (order: PurchaseOrder) => {
+    setSelectedOrder(order);
+    setIsHistoryModalOpen(true);
   };
 
   const handleDeleteTrigger = (order: PurchaseOrder) => {
@@ -454,6 +464,10 @@ export function PurchasingClientPage() {
                             <Eye className="mr-2 h-4 w-4"/>
                             {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
                           </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
+                            <History className="mr-2 h-4 w-4"/>
+                            Trazabilidad
+                          </DropdownMenuItem>
                           <DropdownMenuSub>
                             <DropdownMenuSubTrigger>
                               <ChevronRight className="mr-2 h-4 w-4" />
@@ -485,6 +499,7 @@ export function PurchasingClientPage() {
                             className="text-red-600"
                             onClick={() => handleDeleteTrigger(order)}
                           >
+                             <Trash2 className="mr-2 h-4 w-4" />
                             Eliminar
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -527,6 +542,18 @@ export function PurchasingClientPage() {
             inventoryItems={inventory}
             projects={projects}
           />
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Trazabilidad del Pedido {selectedOrder?.orderNumber}</DialogTitle>
+                <DialogDescription>
+                    Historial de todos los cambios de estado para este pedido.
+                </DialogDescription>
+            </DialogHeader>
+            {selectedOrder && <OrderStatusHistory history={selectedOrder.statusHistory || []} />}
         </DialogContent>
       </Dialog>
       

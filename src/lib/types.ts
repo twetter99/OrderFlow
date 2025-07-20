@@ -54,6 +54,11 @@ export type PurchaseOrderItem = {
   type: 'Material' | 'Servicio';
 };
 
+export type StatusHistoryEntry = {
+  status: PurchaseOrder['status'];
+  date: string | Timestamp;
+};
+
 export type PurchaseOrder = {
   id: string;
   orderNumber?: string;
@@ -65,6 +70,7 @@ export type PurchaseOrder = {
   total: number;
   items: PurchaseOrderItem[];
   rejectionReason?: string;
+  statusHistory?: StatusHistoryEntry[];
 };
 
 export type Supplier = {
