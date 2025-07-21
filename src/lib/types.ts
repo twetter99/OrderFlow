@@ -243,3 +243,42 @@ export type Replanteo = {
   materiales: ReplanteoMaterial[];
   imagenes: ReplanteoImagen[];
 };
+
+// --- Tipos para los nuevos módulos ---
+
+export type SupplierInvoice = {
+  id: string;
+  purchaseOrderId?: string;
+  deliveryNoteId?: string;
+  invoiceNumber: string;
+  supplierName: string;
+  emissionDate: string;
+  receptionDate: string;
+  baseAmount: number;
+  vatAmount: number;
+  totalAmount: number;
+  status: 'Pendiente de validar' | 'Validada' | 'Pendiente de pago' | 'Pagada';
+  attachmentUrl?: string;
+  validationHistory?: {
+    userId: string;
+    userName: string;
+    date: string;
+    comment: string;
+  }[];
+};
+
+export type Payment = {
+  id: string;
+  invoiceId: string;
+  invoiceNumber: string;
+  supplierName: string;
+  dueDate: string;
+  amountDue: number;
+  paymentMethod: 'Transferencia' | 'Confirming' | 'Otro';
+  status: 'Pendiente' | 'Pagado parcialmente' | 'Pagado total';
+  paymentHistory?: {
+    date: string;
+    amount: number;
+    reference: string;
+  }[];
+};

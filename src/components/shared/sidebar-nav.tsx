@@ -26,6 +26,8 @@ import {
     Network,
     ShieldCheck,
     Archive,
+    FileDigit,
+    Banknote,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -74,6 +76,8 @@ const navGroups = [
           { href: "/purchasing", label: "Compras", icon: ShoppingCart },
           { href: "/completed-orders", label: "Órdenes Completadas", icon: Archive },
           { href: "/suppliers", label: "Proveedores", icon: Truck },
+          { href: "/supplier-invoices", label: "Facturas Proveedor", icon: FileDigit },
+          { href: "/payments", label: "Vencimientos y Pagos", icon: Banknote },
         ]
       }
     ]

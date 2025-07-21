@@ -2,7 +2,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador, SupplierInvoice, Payment } from './types';
 import { add, sub } from 'date-fns';
 
 const today = new Date();
@@ -291,6 +291,19 @@ const mockReplanteos: Replanteo[] = [
     imagenes: []
   }
 ];
+const mockSupplierInvoices: SupplierInvoice[] = [
+  { id: 'INV-001', purchaseOrderId: 'WF-PO-2024-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', emissionDate: '2024-07-11', receptionDate: '2024-07-12', baseAmount: 3500, vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
+  { id: 'INV-002', purchaseOrderId: 'WF-PO-2024-002', invoiceNumber: 'MW-INV-982', supplierName: 'MetalWorks Ltd.', emissionDate: '2024-07-15', receptionDate: '2024-07-16', baseAmount: 775, vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
+  { id: 'INV-003', purchaseOrderId: 'WF-PO-2024-005', invoiceNumber: 'FACT-TECH-508', supplierName: 'TechParts Inc.', emissionDate: '2024-07-22', receptionDate: '2024-07-23', baseAmount: 2550, vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
+  { id: 'INV-004', purchaseOrderId: 'WF-PO-2024-006', invoiceNumber: 'MW-INV-991', supplierName: 'MetalWorks Ltd.', emissionDate: '2024-07-22', receptionDate: '2024-07-23', baseAmount: 900, vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
+];
+const mockPayments: Payment[] = [
+    { id: 'PAY-001', invoiceId: 'INV-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', dueDate: sub(today, {days: 15}).toISOString(), amountDue: 4235, paymentMethod: 'Transferencia', status: 'Pagado total', paymentHistory: [{ date: sub(today, {days: 15}).toISOString(), amount: 4235, reference: 'TR-2024-5821' }] },
+    { id: 'PAY-002', invoiceId: 'INV-002', invoiceNumber: 'MW-INV-982', supplierName: 'MetalWorks Ltd.', dueDate: add(today, {days: 12}).toISOString(), amountDue: 937.75, paymentMethod: 'Transferencia', status: 'Pendiente' },
+    { id: 'PAY-003', invoiceId: 'INV-003', invoiceNumber: 'FACT-TECH-508', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 35}).toISOString(), amountDue: 3085.50, paymentMethod: 'Confirming', status: 'Pendiente' },
+    { id: 'PAY-004', invoiceId: 'INV-004', invoiceNumber: 'MW-INV-991', supplierName: 'MetalWorks Ltd.', dueDate: sub(today, {days: 2}).toISOString(), amountDue: 1089, paymentMethod: 'Transferencia', status: 'Pendiente' },
+    { id: 'PAY-005', invoiceId: 'INV-005', invoiceNumber: 'FACT-TECH-512', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 5}).toISOString(), amountDue: 5000, paymentMethod: 'Transferencia', status: 'Pagado parcialmente', paymentHistory: [{ date: sub(today, {days: 1}).toISOString(), amount: 2500, reference: 'TR-2024-5911' }] },
+];
 
 // --- Firestore Data Fetching Logic ---
 
@@ -326,6 +339,8 @@ export const inventoryLocations: InventoryLocation[] = mockInventoryLocations;
 export const deliveryNotes: DeliveryNote[] = mockDeliveryNotes;
 export const installationTemplates: PlantillaInstalacion[] = mockInstallationTemplates;
 export const replanteos: Replanteo[] = mockReplanteos;
+export const supplierInvoices: SupplierInvoice[] = mockSupplierInvoices;
+export const payments: Payment[] = mockPayments;
 
 
 // Generador de notificaciones dinámicas
