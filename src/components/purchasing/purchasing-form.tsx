@@ -49,7 +49,7 @@ const formSchema = z.object({
     itemId: z.string().optional(), // Puede ser opcional si el nombre es la clave
     itemName: z.string().min(1, "El nombre es obligatorio."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
-    price: z.coerce.number().min(0.01, "El precio es obligatorio."),
+    price: z.coerce.number().min(0, "El precio es obligatorio."),
     unit: z.string().min(1, "La unidad es obligatoria."),
     type: z.enum(['Material', 'Servicio']),
   })).min(1, "Debes añadir al menos un artículo."),
@@ -70,6 +70,7 @@ interface PurchasingFormProps {
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
   const isReadOnly = order && 'id' in order && !canApprove;
+  const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
   
   const defaultValues = order
     ? { 
@@ -198,7 +199,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Fecha Entrega Estimada</FormLabel>
-                  <Popover>
+                  <Popover open={isDeliveryDatePickerOpen} onOpenChange={setIsDeliveryDatePickerOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -222,7 +223,12 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                           if (date) {
+                             field.onChange(date);
+                             setIsDeliveryDatePickerOpen(false);
+                           }
+                        }}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         initialFocus
                       />
