@@ -22,7 +22,7 @@ import { cn } from "@/lib/utils"
 
 export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: PurchaseOrder[] }) {
   // Sort by date descending to get the most recent orders
-  const recentOrders = [...purchaseOrders].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  const recentOrders = [...purchaseOrders].sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
 
   return (
     <Card>
@@ -45,17 +45,18 @@ export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: Purchase
           <TableBody>
             {recentOrders.slice(0, 5).map((order) => (
               <TableRow key={order.id}>
-                <TableCell className="font-medium">{order.id}</TableCell>
+                <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                 <TableCell>{order.supplier}</TableCell>
                 <TableCell>
                   <Badge
                     variant="outline"
                     className={cn(
                       "capitalize",
-                      order.status === "Aprobado" && "bg-green-100 text-green-800 border-green-200",
-                      order.status === "Pendiente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
-                      order.status === "Enviado" && "bg-blue-100 text-blue-800 border-blue-200",
-                      order.status === "Recibido" && "bg-primary/10 text-primary border-primary/20",
+                      order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
+                      order.status === "Pendiente de Aprobación" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                      order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
+                      order.status === "Recibida" && "bg-orange-100 text-orange-800 border-orange-200",
+                      order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
                       order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
                     )}
                   >
@@ -67,6 +68,13 @@ export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: Purchase
                 </TableCell>
               </TableRow>
             ))}
+             {recentOrders.length === 0 && (
+                <TableRow>
+                    <TableCell colSpan={4} className="text-center text-muted-foreground py-8">
+                        No hay órdenes de compra recientes.
+                    </TableCell>
+                </TableRow>
+             )}
           </TableBody>
         </Table>
       </CardContent>
