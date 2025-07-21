@@ -18,8 +18,8 @@ export async function addPurchaseOrder(data: any) {
     const dataToSave = {
         ...data,
         orderNumber: newOrderNumber,
-        date: new Date(data.date),
-        estimatedDeliveryDate: new Date(data.estimatedDeliveryDate),
+        date: data.date, // Firestore handles Date objects correctly
+        estimatedDeliveryDate: data.estimatedDeliveryDate, // Firestore handles Date objects correctly
         status: initialStatus,
         statusHistory: [{ status: initialStatus, date: new Date() }],
     };
