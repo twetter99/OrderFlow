@@ -62,6 +62,8 @@ export async function deletePurchaseOrder(id: string) {
         revalidatePath('/purchasing');
         revalidatePath('/completed-orders');
         revalidatePath('/dashboard');
+        revalidatePath('/');
+        revalidatePath('/', 'layout');
         return { success: true, message: 'Pedido de compra eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting purchase order from Firestore:", error);
@@ -76,6 +78,8 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
         revalidatePath('/purchasing');
         revalidatePath('/completed-orders');
         revalidatePath('/dashboard');
+        revalidatePath('/');
+        revalidatePath('/', 'layout');
         return { success: true, message: 'Pedidos de compra eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple purchase orders from Firestore:", error);
