@@ -540,6 +540,11 @@ export function PurchasingClientPage() {
                         ID de Orden {getSortIcon('orderNumber')}
                     </Button>
                 </TableHead>
+                 <TableHead>
+                    <Button variant="ghost" onClick={() => onSortChange('date')}>
+                        F. Creación {getSortIcon('date')}
+                    </Button>
+                </TableHead>
                 <TableHead>
                     <Button variant="ghost" onClick={() => onSortChange('supplier')}>
                         Proveedor {getSortIcon('supplier')}
@@ -581,6 +586,7 @@ export function PurchasingClientPage() {
                     />
                   </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
+                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.projectName}</TableCell>
                   <TableCell>
@@ -682,7 +688,7 @@ export function PurchasingClientPage() {
               )})}
               {activePurchaseOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra que coincidan con los filtros.
                     </TableCell>
                 </TableRow>
