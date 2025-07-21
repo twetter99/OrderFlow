@@ -26,6 +26,7 @@ export async function addPurchaseOrder(data: any) {
     };
     await addDoc(poCollection, dataToSave);
     revalidatePath('/purchasing');
+    revalidatePath('/dashboard');
     return { success: true, message: 'Pedido de compra añadido correctamente.' };
   } catch (error) {
     console.error("Error adding purchase order to Firestore:", error);
@@ -47,6 +48,7 @@ export async function updatePurchaseOrder(id: string, data: any) {
 
         await updateDoc(poRef, dataToUpdate);
         revalidatePath('/purchasing');
+        revalidatePath('/dashboard');
         return { success: true, message: 'Pedido de compra actualizado correctamente.' };
     } catch (error) {
         console.error("Error updating purchase order in Firestore:", error);
@@ -59,6 +61,7 @@ export async function deletePurchaseOrder(id: string) {
         await deleteDoc(doc(db, 'purchaseOrders', id));
         revalidatePath('/purchasing');
         revalidatePath('/completed-orders');
+        revalidatePath('/dashboard');
         return { success: true, message: 'Pedido de compra eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting purchase order from Firestore:", error);
@@ -72,6 +75,7 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
         await Promise.all(deletePromises);
         revalidatePath('/purchasing');
         revalidatePath('/completed-orders');
+        revalidatePath('/dashboard');
         return { success: true, message: 'Pedidos de compra eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple purchase orders from Firestore:", error);
@@ -92,6 +96,7 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
         
         revalidatePath('/purchasing');
         revalidatePath('/completed-orders');
+        revalidatePath('/dashboard');
         return { success: true, message: `El estado del pedido se ha actualizado a "${status}".` };
     } catch (error) {
         console.error("Error updating purchase order status:", error);
