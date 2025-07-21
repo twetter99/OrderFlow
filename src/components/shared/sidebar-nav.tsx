@@ -28,6 +28,7 @@ import {
     FileDigit,
     Banknote,
     QrCode,
+    ShieldCheck,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
