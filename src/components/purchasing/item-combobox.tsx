@@ -38,20 +38,35 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
   };
   
   const handleCreateNew = (inputValue: string) => {
-     if (inputValue.trim()) {
-        onChange({ name: inputValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+     const trimmedValue = inputValue.trim();
+     if (trimmedValue) {
+        onChange({ name: trimmedValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
      }
      setSearchValue(""); // Reset search value
      setOpen(false);
   }
 
+  React.useEffect(() => {
+    if (!open) {
+      setSearchValue("");
+    } else {
+      // Pre-fill search with current value if it exists, allowing for editing
+      setSearchValue(value || "");
+    }
+  }, [open, value]);
+  
+  const filteredItems = React.useMemo(() => {
+    if (!searchValue) return inventoryItems;
+    return inventoryItems.filter(item => 
+      item.name.toLowerCase().includes(searchValue.toLowerCase()) ||
+      item.sku.toLowerCase().includes(searchValue.toLowerCase())
+    );
+  }, [searchValue, inventoryItems]);
+  
+  const showCreateNew = searchValue.trim() && !filteredItems.some(item => item.name.toLowerCase() === searchValue.toLowerCase());
+
   return (
-    <Popover open={open} onOpenChange={(isOpen) => {
-        setOpen(isOpen);
-        if (!isOpen) {
-            setSearchValue(""); // Reset search on close
-        }
-    }}>
+    <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -67,24 +82,25 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>
-        <Command>
+        <Command shouldFilter={false}>
           <CommandInput 
             placeholder="Buscar o crear artículo..."
             value={searchValue}
             onValueChange={setSearchValue}
           />
           <CommandList>
-            {searchValue.trim() && (
-                <CommandEmpty>
-                    <CommandItem
+            <CommandEmpty>
+                {searchValue.trim() ? (
+                     <CommandItem
                         onSelect={() => handleCreateNew(searchValue)}
+                        className="cursor-pointer"
                     >
                         Crear nuevo artículo: "{searchValue}"
                     </CommandItem>
-                </CommandEmpty>
-            )}
+                ) : "No se encontraron artículos."}
+            </CommandEmpty>
             <CommandGroup>
-              {inventoryItems.map((item) => (
+              {filteredItems.map((item) => (
                 <CommandItem
                   key={item.id}
                   value={item.name}
@@ -107,6 +123,14 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
                     </div>
                 </CommandItem>
               ))}
+              {showCreateNew && (
+                  <CommandItem
+                      onSelect={() => handleCreateNew(searchValue)}
+                      className="cursor-pointer"
+                  >
+                     Crear nuevo artículo: "{searchValue.trim()}"
+                  </CommandItem>
+              )}
             </CommandGroup>
           </CommandList>
         </Command>
