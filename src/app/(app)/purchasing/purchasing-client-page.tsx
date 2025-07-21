@@ -140,8 +140,8 @@ export function PurchasingClientPage() {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
-      column: 'estimatedDeliveryDate',
-      direction: 'ascending',
+      column: 'date',
+      direction: 'descending',
   });
   
   useEffect(() => {
@@ -327,18 +327,9 @@ export function PurchasingClientPage() {
   };
 
   const handleSave = async (values: any) => {
-    const dataToSave = { ...values };
-     if (dataToSave.date && !(dataToSave.date instanceof Timestamp)) {
-        dataToSave.date = new Date(dataToSave.date);
-    }
-    if (dataToSave.estimatedDeliveryDate && !(dataToSave.estimatedDeliveryDate instanceof Timestamp)) {
-        dataToSave.estimatedDeliveryDate = new Date(dataToSave.estimatedDeliveryDate);
-    }
-
-
     const result = selectedOrder && 'id' in selectedOrder
-      ? await updatePurchaseOrder(selectedOrder.id as string, dataToSave)
-      : await addPurchaseOrder(dataToSave);
+      ? await updatePurchaseOrder(selectedOrder.id as string, values)
+      : await addPurchaseOrder(values);
       
     if (result.success) {
       toast({ title: selectedOrder && 'id' in selectedOrder ? "Pedido actualizado" : "Pedido creado", description: result.message });
@@ -433,7 +424,7 @@ export function PurchasingClientPage() {
     if (sortDescriptor.column === column) {
       return sortDescriptor.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
     }
-    return <ArrowUpDown className="ml-2 h-4 w-4 opacity-50" />;
+    return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
   };
 
   return (
@@ -536,37 +527,37 @@ export function PurchasingClientPage() {
                   />
                 </TableHead>
                 <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('orderNumber')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('orderNumber')}>
                         ID de Orden {getSortIcon('orderNumber')}
                     </Button>
                 </TableHead>
                  <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('date')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('date')}>
                         F. Creación {getSortIcon('date')}
                     </Button>
                 </TableHead>
                 <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('supplier')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('supplier')}>
                         Proveedor {getSortIcon('supplier')}
                     </Button>
                 </TableHead>
                  <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('projectName')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('projectName')}>
                         Proyecto {getSortIcon('projectName')}
                     </Button>
                 </TableHead>
                 <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('status')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('status')}>
                         Estado {getSortIcon('status')}
                     </Button>
                 </TableHead>
                 <TableHead>
-                    <Button variant="ghost" onClick={() => onSortChange('estimatedDeliveryDate')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('estimatedDeliveryDate')}>
                         Entrega Estimada {getSortIcon('estimatedDeliveryDate')}
                     </Button>
                 </TableHead>
                 <TableHead className="text-right">
-                    <Button variant="ghost" onClick={() => onSortChange('total')}>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('total')}>
                         Total {getSortIcon('total')}
                     </Button>
                 </TableHead>
@@ -793,3 +784,4 @@ export function PurchasingClientPage() {
     
 
     
+

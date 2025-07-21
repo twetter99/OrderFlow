@@ -39,6 +39,7 @@ import React from "react";
 
 const formSchema = z.object({
   orderNumber: z.string().optional(),
+  date: z.date({ required_error: "La fecha de creación es obligatoria." }),
   project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
@@ -69,13 +70,13 @@ interface PurchasingFormProps {
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
   const isReadOnly = order && 'id' in order && !canApprove;
-  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   
   const defaultValues = order
     ? { 
         project: order.project || "",
         supplier: order.supplier || "",
         orderNumber: order.orderNumber || "",
+        date: order.date ? new Date(order.date) : new Date(),
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
@@ -86,6 +87,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         project: "",
         supplier: "",
         orderNumber: "",
+        date: new Date(),
         estimatedDeliveryDate: new Date(),
         status: "Pendiente de Aprobación" as const,
         rejectionReason: "",
@@ -118,7 +120,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <FormField
             control={form.control}
             name="supplier"
@@ -158,13 +160,45 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 </FormItem>
             )}
            />
+           <FormField
+              control={form.control}
+              name="date"
+              render={({ field }) => (
+                <FormItem className="flex flex-col">
+                  <FormLabel>Fecha de Creación</FormLabel>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <FormControl>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full pl-3 text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                           disabled
+                        >
+                          {field.value ? (
+                            format(field.value, "PPP", { locale: es })
+                          ) : (
+                            <span>Elige una fecha</span>
+                          )}
+                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                        </Button>
+                      </FormControl>
+                    </PopoverTrigger>
+                    {/* No PopoverContent as it's disabled */}
+                  </Popover>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="estimatedDeliveryDate"
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Fecha Entrega Estimada</FormLabel>
-                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
+                  <Popover>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -188,10 +222,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={(date) => {
-                          field.onChange(date);
-                          setIsCalendarOpen(false);
-                        }}
+                        onSelect={field.onChange}
                         disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         initialFocus
                       />
