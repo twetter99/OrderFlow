@@ -6,7 +6,7 @@ import { StatsCard } from "@/components/dashboard/stats-card";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { DollarSign, Package, FolderKanban, AlertTriangle } from "lucide-react";
-import { collection, query, where, onSnapshot } from "firebase/firestore";
+import { collection, query, where, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from '@/lib/firebase';
 import type { PurchaseOrder, InventoryItem, Project, InventoryLocation } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -32,6 +32,15 @@ function DashboardSkeleton() {
   );
 }
 
+const convertPurchaseOrderTimestamps = (order: any): PurchaseOrder => {
+    return {
+      ...order,
+      id: order.id,
+      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
+      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
+    };
+};
+
 export default function DashboardPage() {
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
     const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -41,7 +50,8 @@ export default function DashboardPage() {
 
     useEffect(() => {
         const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-            setPurchaseOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder)));
+            const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
+            setPurchaseOrders(ordersData);
         });
 
         const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
@@ -71,7 +81,7 @@ export default function DashboardPage() {
         };
     }, []);
 
-    const pendingApprovals = purchaseOrders.filter(po => po.status === 'Pendiente').length;
+    const pendingApprovals = purchaseOrders.filter(po => po.status === 'Pendiente de Aprobación').length;
 
     const lowStockItems = inventory.filter(item => {
         const totalQuantity = inventoryLocations
