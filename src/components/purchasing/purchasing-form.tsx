@@ -69,6 +69,7 @@ interface PurchasingFormProps {
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
   const isReadOnly = order && 'id' in order && !canApprove;
+  const [isCalendarOpen, setIsCalendarOpen] = React.useState(false);
   
   const defaultValues = order
     ? { 
@@ -163,7 +164,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
               render={({ field }) => (
                 <FormItem className="flex flex-col">
                   <FormLabel>Fecha Entrega Estimada</FormLabel>
-                  <Popover>
+                  <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                     <PopoverTrigger asChild>
                       <FormControl>
                         <Button
@@ -187,7 +188,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                       <Calendar
                         mode="single"
                         selected={field.value}
-                        onSelect={field.onChange}
+                        onSelect={(date) => {
+                          field.onChange(date);
+                          setIsCalendarOpen(false);
+                        }}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                         initialFocus
                       />
                     </PopoverContent>
