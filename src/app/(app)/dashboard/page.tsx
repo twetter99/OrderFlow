@@ -11,9 +11,6 @@ import { db } from '@/lib/firebase';
 import type { PurchaseOrder, InventoryItem, Project, InventoryLocation } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
 
-export const dynamic = 'force-dynamic';
-export const revalidate = 0;
-
 function DashboardSkeleton() {
   return (
     <div className="flex flex-col gap-8">
