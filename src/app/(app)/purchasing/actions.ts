@@ -18,10 +18,10 @@ export async function addPurchaseOrder(data: any) {
     const dataToSave = {
         ...data,
         orderNumber: newOrderNumber,
-        date: data.date, // Firestore handles Date objects correctly
-        estimatedDeliveryDate: data.estimatedDeliveryDate, // Firestore handles Date objects correctly
+        date: Timestamp.fromDate(new Date(data.date)),
+        estimatedDeliveryDate: Timestamp.fromDate(new Date(data.estimatedDeliveryDate)),
         status: initialStatus,
-        statusHistory: [{ status: initialStatus, date: new Date() }],
+        statusHistory: [{ status: initialStatus, date: Timestamp.now() }],
     };
     await addDoc(poCollection, dataToSave);
     revalidatePath('/purchasing');
@@ -57,6 +57,7 @@ export async function deletePurchaseOrder(id: string) {
     try {
         await deleteDoc(doc(db, 'purchaseOrders', id));
         revalidatePath('/purchasing');
+        revalidatePath('/completed-orders');
         return { success: true, message: 'Pedido de compra eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting purchase order from Firestore:", error);
@@ -69,6 +70,7 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
         const deletePromises = ids.map(id => deleteDoc(doc(db, 'purchaseOrders', id)));
         await Promise.all(deletePromises);
         revalidatePath('/purchasing');
+        revalidatePath('/completed-orders');
         return { success: true, message: 'Pedidos de compra eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple purchase orders from Firestore:", error);
@@ -80,7 +82,7 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
 export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status']) {
     try {
         const poRef = doc(db, 'purchaseOrders', id);
-        const newHistoryEntry = { status, date: new Date() };
+        const newHistoryEntry = { status, date: Timestamp.now() };
         
         await updateDoc(poRef, { 
             status: status,
