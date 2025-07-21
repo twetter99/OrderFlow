@@ -24,10 +24,10 @@ import {
     Package,
     HardHat,
     Network,
-    ShieldCheck,
     Archive,
     FileDigit,
     Banknote,
+    QrCode,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -67,6 +67,7 @@ const navGroups = [
         subItems: [
           { href: "/inventory", label: "Inventario", icon: Warehouse },
           { href: "/locations", label: "Almacenes", icon: Building2 },
+          { href: "/receptions", label: "Recepciones", icon: QrCode },
         ]
       },
       {

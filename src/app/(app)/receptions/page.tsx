@@ -13,6 +13,9 @@ import {
 import {
   Card,
   CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,7 +44,7 @@ export default function ReceptionsPage() {
 
   const ordersToReceive = useMemo(() => {
     return purchaseOrders.filter(o => 
-      o.status === 'Enviado' && o.items.some(item => item.type === 'Material')
+      o.status === 'Enviada al Proveedor' && o.items.some(item => item.type === 'Material')
     );
   }, [purchaseOrders]);
 
@@ -56,7 +59,7 @@ export default function ReceptionsPage() {
     
     // Update Inventory
     let updatedInventoryLocations = [...inventoryLocations];
-    if (status === 'Recibido' && receivingLocationId && receivedItems) {
+    if (status === 'Recibida' && receivingLocationId && receivedItems) {
       
       receivedItems.forEach(itemToReceive => {
           const locationIndex = updatedInventoryLocations.findIndex(
@@ -82,7 +85,7 @@ export default function ReceptionsPage() {
     
     toast({
         title: "Orden Actualizada",
-        description: `La orden ${orderId} ha sido marcada como ${status}. El inventario en la ubicación seleccionada ha sido actualizado.`
+        description: `La orden ${orderToUpdate.orderNumber} ha sido marcada como ${status}. El inventario en la ubicación seleccionada ha sido actualizado.`
     });
     setIsChecklistOpen(false);
   }
@@ -98,13 +101,19 @@ export default function ReceptionsPage() {
         </div>
       </div>
       <Card>
+         <CardHeader>
+            <CardTitle>Pedidos Pendientes de Recepción</CardTitle>
+            <CardDescription>
+                Lista de órdenes de compra que han sido enviadas por el proveedor y están listas para ser verificadas y almacenadas.
+            </CardDescription>
+        </CardHeader>
         <CardContent className="pt-6">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>ID de Orden</TableHead>
                 <TableHead>Proveedor</TableHead>
-                <TableHead>Fecha de Envío</TableHead>
+                <TableHead>Fecha de Entrega Estimada</TableHead>
                 <TableHead>Estado</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -112,9 +121,9 @@ export default function ReceptionsPage() {
             <TableBody>
               {ordersToReceive.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.id}</TableCell>
+                  <TableCell className="font-medium">{order.orderNumber}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -147,7 +156,7 @@ export default function ReceptionsPage() {
         <DialogContent className="sm:max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-                Verificar Recepción: {selectedOrder?.id}
+                Verificar Recepción: {selectedOrder?.orderNumber}
             </DialogTitle>
             <DialogDescription>
                 Selecciona un almacén y verifica la mercancía recibida contra la orden de compra.

@@ -87,7 +87,7 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
             .filter(item => item.scanned > 0)
             .map(item => ({ itemId: item.id, quantity: item.scanned }));
 
-        onUpdateStatus(order.id, 'Recibido', receivingLocationId, receivedItems);
+        onUpdateStatus(order.id, 'Recibida', receivingLocationId, receivedItems);
     }
     
     const canConfirm = !!receivingLocationId && items.length > 0;
@@ -181,7 +181,7 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar Recepción con Incidencia</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Se registrará una incidencia y se recibirá la cantidad escaneada. El inventario se actualizará y la orden se marcará como "Recibido". ¿Deseas continuar?
+                                    Se registrará una incidencia y se recibirá la cantidad escaneada. El inventario se actualizará y la orden se marcará como "Recibida". ¿Deseas continuar?
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
@@ -204,7 +204,7 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                                 <AlertDialogHeader>
                                 <AlertDialogTitle>Confirmar Recepción Completa</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Todos los artículos coinciden. El inventario en {locations.find(l => l.id === receivingLocationId)?.name || 'el almacén seleccionado'} se actualizará y la orden se marcará como "Recibido". ¿Estás seguro?
+                                    Todos los artículos coinciden. El inventario en {locations.find(l => l.id === receivingLocationId)?.name || 'el almacén seleccionado'} se actualizará y la orden se marcará como "Recibida". ¿Estás seguro?
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
