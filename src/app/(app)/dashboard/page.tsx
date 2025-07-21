@@ -64,14 +64,9 @@ export default function DashboardPage() {
 
         const unsubInvLocations = onSnapshot(collection(db, "inventoryLocations"), (snapshot) => {
             setInventoryLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
+            // Set loading to false after the last listener is attached and has likely fired once
+            setLoading(false);
         });
-
-        const allLoaded = Promise.all([
-          new Promise(res => onSnapshot(collection(db, "purchaseOrders"), () => res(true))),
-          new Promise(res => onSnapshot(collection(db, "inventory"), () => res(true))),
-          new Promise(res => onSnapshot(collection(db, "projects"), () => res(true))),
-          new Promise(res => onSnapshot(collection(db, "inventoryLocations"), () => res(true))),
-        ]).then(() => setLoading(false));
 
         return () => {
             unsubPO();
