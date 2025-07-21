@@ -274,7 +274,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" {...field} disabled={isReadOnly}/>
+                                                    <Input type="number" {...field} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -302,7 +302,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" step="0.01" {...field} disabled={isReadOnly}/>
+                                                    <Input type="number" step="0.01" {...field} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                                 {!isReadOnly && watchedItems[index]?.type === 'Material' && (
