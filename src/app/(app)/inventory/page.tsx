@@ -253,6 +253,10 @@ export default function InventoryPage() {
                 const isPhysical = item.type === 'simple' || item.type === 'composite';
                 // @ts-ignore
                 const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
+                const supplierNames = (item.suppliers || [])
+                    .map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
+                    .filter(Boolean)
+                    .join(', ');
                 
                 return (
                   <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""}>
@@ -280,7 +284,7 @@ export default function InventoryPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>{isPhysical ? (item.suppliers || []).join(', ') : 'N/A'}</TableCell>
+                    <TableCell>{isPhysical ? (supplierNames || 'N/A') : 'N/A'}</TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
                     </TableCell>
