@@ -265,7 +265,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                         <FormLabel>Proveedores</FormLabel>
                         <TooltipProvider>
                           <Tooltip>
-                            <TooltipTrigger className="w-full">
+                            <TooltipTrigger asChild>
                               <FormControl>
                                   <MultiSelect
                                       options={suppliers.map(s => ({ value: s.id, label: s.name }))}
