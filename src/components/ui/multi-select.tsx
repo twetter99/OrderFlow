@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { Check, X, ChevronsUpDown } from "lucide-react";
+import { Check, X, ChevronsUpDown, LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -33,6 +33,7 @@ interface MultiSelectProps {
   className?: string;
   placeholder?: string;
   closeOnSelect?: boolean;
+  triggerIcon?: LucideIcon;
 }
 
 function MultiSelect({
@@ -42,6 +43,7 @@ function MultiSelect({
   className,
   placeholder = "Selecciona opciones...",
   closeOnSelect = false,
+  triggerIcon: TriggerIcon = ChevronsUpDown,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -82,7 +84,7 @@ function MultiSelect({
               <span className="text-muted-foreground">{placeholder}</span>
             )}
           </div>
-          <ChevronsUpDown className="h-4 w-4 shrink-0 opacity-50" />
+          <TriggerIcon className="h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-full p-0" style={{width: 'var(--radix-popover-trigger-width)'}}>

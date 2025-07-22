@@ -24,6 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { useMemo, useEffect } from "react";
 import { Textarea } from "../ui/textarea";
 import { MultiSelect } from "../ui/multi-select";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 const formSchema = z.object({
   type: z.enum(['simple', 'composite', 'service']),
@@ -133,12 +134,10 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         finalValues.unit = 'ud';
     }
 
-    if (values.type === 'simple' && finalValues.suppliers && finalValues.suppliers.length > 0) {
-        // This is handled by the multi-select component now, supplier field is deprecated
-    } else if (values.type === 'simple') {
-        finalValues.supplier = 'Sin Asignar';
+    if (values.type === 'simple' && !finalValues.suppliers) {
+      finalValues.suppliers = [];
     }
-
+    
     // El campo quantity se gestiona por ubicación, no en el item maestro.
     delete finalValues.quantity;
 
@@ -264,15 +263,25 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     render={({ field }) => (
                         <FormItem>
                         <FormLabel>Proveedores</FormLabel>
-                        <FormControl>
-                            <MultiSelect
-                                options={suppliers.map(s => ({ value: s.id, label: s.name }))}
-                                selected={field.value || []}
-                                onChange={field.onChange}
-                                placeholder="Selecciona proveedores..."
-                                closeOnSelect={true}
-                            />
-                        </FormControl>
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger className="w-full">
+                              <FormControl>
+                                  <MultiSelect
+                                      options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                                      selected={field.value || []}
+                                      onChange={field.onChange}
+                                      placeholder="Selecciona proveedores..."
+                                      closeOnSelect={true}
+                                      triggerIcon={PlusCircle}
+                                  />
+                              </FormControl>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p>Haz clic para seleccionar uno o varios proveedores</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
                         <FormMessage />
                         </FormItem>
                     )}
