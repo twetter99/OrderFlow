@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Table,
@@ -20,7 +19,7 @@ import {
   CardDescription
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { inventory as initialInventory, locations as initialLocations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
+import { inventory as initialInventory, inventoryLocations as initialInventoryLocations } from "@/lib/data";
 import { ArrowLeft, PlusCircle, ArrowRightLeft } from "lucide-react";
 import {
   Dialog,
@@ -35,6 +34,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TransferForm } from "@/components/inventory-locations/transfer-form";
+import { db } from "@/lib/firebase";
+import { doc, onSnapshot } from "firebase/firestore";
 
 function AddStockForm({
     location,
@@ -100,11 +101,36 @@ export default function LocationDetailsPage() {
   const { toast } = useToast();
   
   const id = params.id as string;
-  const location = initialLocations.find(l => l.id === id);
+  const [location, setLocation] = useState<Location | null>(null);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>(initialInventoryLocations);
   const [isAddStockModalOpen, setIsAddStockModalOpen] = useState(false);
   const [isTransferModalOpen, setIsTransferModalOpen] = useState(false);
+  
+  useEffect(() => {
+    if (!id) return;
+    const unsub = onSnapshot(doc(db, "locations", id), (doc) => {
+      if (doc.exists()) {
+        setLocation({ id: doc.id, ...doc.data() } as Location);
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: 'Almacén no encontrado.' });
+        setLocation(null);
+      }
+      setLoading(false);
+    });
+
+    const unsubAll = onSnapshot(collection(db, "locations"), (snapshot) => {
+        setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location)));
+    });
+
+    return () => {
+        unsub();
+        unsubAll();
+    }
+  }, [id, toast]);
+
 
   const stockInLocation = useMemo(() => {
     return inventoryLocations
@@ -116,7 +142,7 @@ export default function LocationDetailsPage() {
           ...itemDetails,
         };
       })
-      .filter(item => item.name); // Filtra por si no se encuentra el detalle del item
+      .filter(item => item.name);
   }, [id, inventoryLocations]);
 
   const handleSaveStock = (values: { itemId: string; quantity: number }) => {
@@ -170,6 +196,10 @@ export default function LocationDetailsPage() {
     toast({ title: "Transferencia Exitosa", description: `Se movieron ${values.quantity} unidades del artículo seleccionado.` });
     setIsTransferModalOpen(false);
   };
+
+  if (loading) {
+      return <div>Cargando almacén...</div>;
+  }
 
   if (!location) {
     return (
@@ -266,7 +296,7 @@ export default function LocationDetailsPage() {
             </DialogHeader>
             <TransferForm
                 inventoryItems={initialInventory.filter(i => i.type === 'simple')}
-                locations={initialLocations}
+                locations={locations}
                 inventoryLocations={inventoryLocations}
                 onSave={handleSaveTransfer}
                 onCancel={() => setIsTransferModalOpen(false)}

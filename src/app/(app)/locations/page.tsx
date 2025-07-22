@@ -1,8 +1,7 @@
 
-
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import {
   Table,
@@ -17,7 +16,7 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { locations as initialLocations, inventoryLocations as initialInventoryLocations, inventory } from "@/lib/data";
+import { inventoryLocations as initialInventoryLocations, inventory } from "@/lib/data";
 import { MoreHorizontal, PlusCircle, Trash2, View } from "lucide-react";
 import {
   DropdownMenu,
@@ -48,15 +47,33 @@ import { LocationForm } from "@/components/locations/location-form";
 import type { Location } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { addLocation, updateLocation, deleteLocation, deleteMultipleLocations } from "./actions";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function LocationsPage() {
   const { toast } = useToast();
   const router = useRouter();
-  const [locations, setLocations] = useState<Location[]>(initialLocations);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  
+  useEffect(() => {
+    const unsubscribe = onSnapshot(collection(db, "locations"), (snapshot) => {
+      const locationsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
+      setLocations(locationsData);
+      setLoading(false);
+    }, (error) => {
+        console.error("Error fetching locations: ", error);
+        toast({ variant: "destructive", title: "Error", description: "No se pudieron cargar los almacenes." });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [toast]);
   
   const locationStats = useMemo(() => {
     return locations.map(location => {
@@ -97,36 +114,38 @@ export default function LocationsPage() {
     router.push(`/locations/${locationId}`);
   };
 
-  const handleSave = (values: Partial<Location>) => {
-    if (selectedLocation) {
-      setLocations(
-        locations.map((c) =>
-          c.id === selectedLocation.id ? { ...c, ...values, id: c.id } as Location : c
-        )
-      );
-      toast({ title: "Almacén actualizado", description: "El almacén se ha actualizado correctamente." });
+  const handleSave = async (values: any) => {
+    const result = selectedLocation
+      ? await updateLocation(selectedLocation.id, values)
+      : await addLocation(values);
+
+    if (result.success) {
+      toast({ title: selectedLocation ? "Almacén actualizado" : "Almacén creado", description: result.message });
+      setIsModalOpen(false);
     } else {
-      setLocations([
-        ...locations,
-        { ...values, id: `LOC-${String(locations.length + 1).padStart(3, '0')}` } as Location,
-      ]);
-      toast({ title: "Almacén creado", description: "El nuevo almacén se ha creado correctamente." });
+      toast({ variant: "destructive", title: "Error", description: result.message });
     }
-    setIsModalOpen(false);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
+    let result;
     if (selectedRowIds.length > 0) {
-        setLocations(locations.filter((loc) => !selectedRowIds.includes(loc.id)));
-        // En una app real, también se debería manejar el stock de los almacenes eliminados
-        toast({ variant: "destructive", title: "Almacenes eliminados", description: `${selectedRowIds.length} almacenes han sido eliminados.` });
-        setSelectedRowIds([]);
+        result = await deleteMultipleLocations(selectedRowIds);
     } else if (selectedLocation) {
-      setLocations(locations.filter((c) => c.id !== selectedLocation.id));
-      toast({ variant: "destructive", title: "Almacén eliminado", description: "El almacén se ha eliminado correctamente." });
+        result = await deleteLocation(selectedLocation.id);
+    } else {
+        return;
     }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
     setIsDeleteDialogOpen(false);
     setSelectedLocation(null);
+    setSelectedRowIds([]);
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -145,6 +164,10 @@ export default function LocationsPage() {
     );
   };
   
+  if (loading) {
+    return <div>Cargando almacenes...</div>
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -226,6 +249,13 @@ export default function LocationsPage() {
                     </TableCell>
                 </TableRow>
               ))}
+              {locations.length === 0 && !loading && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    No hay almacenes creados. ¡Añade el primero!
+                  </TableCell>
+                </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
@@ -260,7 +290,7 @@ export default function LocationsPage() {
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
               Esta acción no se puede deshacer. Esto eliminará permanentemente
-              {selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} almacenes seleccionados.` : " el almacén."}
+              {selectedLocation ? ` el almacén "${selectedLocation.name}".` : (selectedRowIds.length > 1 ? ` los ${selectedRowIds.length} almacenes seleccionados.` : " el almacén.")}
               Eliminar un almacén no elimina los artículos, pero su stock asignado quedará huérfano.
             </AlertDialogDescription>
           </AlertDialogHeader>
