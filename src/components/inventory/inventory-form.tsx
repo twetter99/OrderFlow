@@ -123,14 +123,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     
     if (values.type === 'composite') {
         finalValues.unitCost = kitCost; // Ensure calculated cost is saved
-        finalValues.supplier = 'Ensamblado Interno';
         delete finalValues.suppliers; // Kits don't have external suppliers
         finalValues.unit = 'ud';
     }
     
     if (values.type === 'service') {
         finalValues.minThreshold = 0;
-        finalValues.supplier = 'N/A';
         delete finalValues.suppliers;
         finalValues.unit = 'ud';
     }
@@ -194,7 +192,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
           )}
         />
 
-        <div className="grid grid-cols-1 gap-4">
+        <div className="space-y-4">
           <FormField
             control={form.control}
             name="name"
@@ -235,31 +233,32 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 </FormItem>
                 )}
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="family"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Familia</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                            <SelectTrigger>
-                                <SelectValue placeholder="Selecciona una familia"/>
-                            </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                            {productFamilies.map(family => (
-                                <SelectItem key={family} value={family}>{family}</SelectItem>
-                            ))}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            {itemType === 'simple' && (
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                    control={form.control}
+                    name="family"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Familia</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Selecciona una familia"/>
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                {productFamilies.map(family => (
+                                    <SelectItem key={family} value={family}>{family}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            </div>
+             {itemType === 'simple' && (
                <FormField
                     control={form.control}
                     name="suppliers"
@@ -272,7 +271,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."
-                                closeOnSelect={true}
                             />
                         </FormControl>
                         <FormMessage />
@@ -280,7 +278,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     )}
                 />
             )}
-          </div>
         </div>
         
         {itemType === 'simple' && (
