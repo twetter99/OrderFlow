@@ -378,15 +378,15 @@ export function PurchasingClientPage() {
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
     if (order.status === 'Almacenada' || order.status === 'Recibida') {
-        return { text: 'Entregado', color: 'bg-primary/10 text-primary border-primary/20' };
+        return { text: 'Entregado', color: 'bg-green-100 text-green-800 border-green-200' };
     }
     const deliveryDate = new Date(order.estimatedDeliveryDate);
     if (isPast(deliveryDate) && !isToday(deliveryDate)) {
-        return { text: 'Retrasado', color: 'bg-red-100 text-red-800 border-red-200' };
+        return { text: 'Retrasado', color: 'bg-destructive/20 text-destructive border-destructive/20' };
     }
     const daysUntilDelivery = differenceInDays(deliveryDate, new Date());
     if (daysUntilDelivery <= 5) {
-        return { text: `Vence en ${daysUntilDelivery + 1} días`, color: 'bg-yellow-100 text-yellow-800 border-yellow-200' };
+        return { text: `Vence en ${daysUntilDelivery + 1} días`, color: 'bg-orange-100 text-orange-800 border-orange-200' };
     }
     return { text: 'En Plazo', color: 'bg-green-100 text-green-800 border-green-200' };
   };
@@ -431,7 +431,7 @@ export function PurchasingClientPage() {
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline">Compras</h1>
+          <h1 className="text-3xl font-bold font-headline uppercase">Compras</h1>
           <p className="text-muted-foreground">
             Crea y rastrea todas tus órdenes de compra activas. Las órdenes completadas se archivan.
           </p>
@@ -568,7 +568,7 @@ export function PurchasingClientPage() {
               {activePurchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
                 return (
-                <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-yellow-50 dark:bg-yellow-900/20")}>
+                <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-orange-50 dark:bg-orange-900/20")}>
                   <TableCell padding="checkbox">
                     <Checkbox
                       checked={selectedRowIds.includes(order.id)}
@@ -587,11 +587,11 @@ export function PurchasingClientPage() {
                         className={cn(
                           "capitalize",
                           order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
-                          order.status === "Pendiente de Aprobación" && "bg-yellow-100 text-yellow-800 border-yellow-200 animate-pulse",
+                          order.status === "Pendiente de Aprobación" && "bg-orange-100 text-orange-800 border-orange-200 animate-pulse",
                           order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
-                          order.status === "Recibida" && "bg-orange-100 text-orange-800 border-orange-200",
+                          order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
                           order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
-                          order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
+                          order.status === "Rechazado" && "bg-destructive/20 text-destructive border-destructive/20"
                         )}
                       >
                         {order.status}
@@ -785,3 +785,7 @@ export function PurchasingClientPage() {
 
     
 
+
+
+
+    
