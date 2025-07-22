@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import type { InventoryItem, Supplier } from "@/lib/types";
-import { SupplierCombobox } from "./supplier-combobox";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { PlusCircle, Trash2 } from "lucide-react";
@@ -24,17 +23,21 @@ import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from ".
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useMemo, useEffect } from "react";
 import { Textarea } from "../ui/textarea";
+import { MultiSelect } from "../ui/multi-select";
 
 const formSchema = z.object({
   type: z.enum(['simple', 'composite', 'service']),
   sku: z.string().min(1, "El SKU es obligatorio."),
   name: z.string().min(1, "El nombre es obligatorio."),
+  supplierProductCode: z.string().optional(),
+  family: z.string().optional(),
   unit: z.string().min(1, "La unidad es obligatoria."),
   observations: z.string().optional(),
   // Campos opcionales según el tipo
   minThreshold: z.coerce.number().optional(),
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
   supplier: z.string().optional(),
+  suppliers: z.array(z.string()).optional(),
   components: z.array(z.object({
     itemId: z.string().min(1, "Selecciona un componente."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
@@ -61,19 +64,24 @@ interface InventoryFormProps {
   onAddNewSupplier: () => void;
 }
 
+const productFamilies = ["Electrónica", "Cableado", "Soportes", "Tornillería", "Sensores", "Servicios"];
+
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
   const defaultValues = item
-    ? { ...item, minThreshold: item.minThreshold || 0, unitCost: item.unitCost || 0 }
+    ? { ...item, minThreshold: item.minThreshold || 0, unitCost: item.unitCost || 0, suppliers: item.suppliers || [] }
     : {
         type: 'simple' as const,
         sku: "",
         name: "",
+        supplierProductCode: "",
+        family: "",
         observations: "",
         minThreshold: 10,
         unitCost: 0,
         unit: 'ud',
         supplier: "",
+        suppliers: [],
         components: [],
       };
 
@@ -118,12 +126,14 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     if (values.type === 'composite') {
         finalValues.unitCost = kitCost; // Ensure calculated cost is saved
         finalValues.supplier = 'Ensamblado Interno';
+        finalValues.suppliers = [];
         finalValues.unit = 'ud';
     }
     
     if (values.type === 'service') {
         finalValues.minThreshold = 0;
         finalValues.supplier = 'N/A';
+        finalValues.suppliers = [];
         finalValues.unit = 'ud';
     }
 
@@ -179,7 +189,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
           )}
         />
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4">
           <FormField
             control={form.control}
             name="name"
@@ -193,30 +203,89 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
               </FormItem>
             )}
           />
-          <FormField
-            control={form.control}
-            name="sku"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>SKU</FormLabel>
-                <FormControl>
-                  <Input placeholder="p. ej., CPU-45" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="sku"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>SKU (Código Interno)</FormLabel>
+                    <FormControl>
+                    <Input placeholder="p. ej., CPU-45" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="supplierProductCode"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Código Producto Proveedor</FormLabel>
+                    <FormControl>
+                    <Input placeholder="p. ej., TP-INC-8472B" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="family"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Familia</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Selecciona una familia"/>
+                            </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {productFamilies.map(family => (
+                                <SelectItem key={family} value={family}>{family}</SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+            {itemType === 'simple' && (
+               <FormField
+                    control={form.control}
+                    name="suppliers"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Proveedores</FormLabel>
+                        <FormControl>
+                            <MultiSelect
+                                options={suppliers.map(s => ({ value: s.name, label: s.name }))}
+                                selected={field.value || []}
+                                onChange={field.onChange}
+                                placeholder="Selecciona proveedores..."
+                            />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
             )}
-          />
+          </div>
         </div>
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
              <FormField
                 control={form.control}
                 name="minThreshold"
                 render={({ field }) => (
                 <FormItem>
-                    <FormLabel>Umbral Mínimo de Stock Total</FormLabel>
+                    <FormLabel>Umbral Mínimo de Stock</FormLabel>
                     <FormControl>
                     <Input type="number" placeholder="10" {...field} />
                     </FormControl>
@@ -245,39 +314,19 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     </FormItem>
                 )}
             />
-            </div>
-             <div className="grid grid-cols-2 gap-4">
-                <FormField
-                    control={form.control}
-                    name="unitCost"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Costo Unitario (€)</FormLabel>
-                        <FormControl>
-                            <Input type="number" step="0.01" placeholder="350,00" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="supplier"
-                    render={({ field }) => (
-                        <FormItem className="flex flex-col pt-2">
-                        <FormLabel>Proveedor</FormLabel>
-                        <FormControl>
-                            <SupplierCombobox
-                            suppliers={suppliers}
-                            value={field.value || ''}
-                            onChange={field.onChange}
-                            onAddNew={onAddNewSupplier}
-                            />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+            <FormField
+                control={form.control}
+                name="unitCost"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Costo Unitario (€)</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="0.01" placeholder="350,00" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             </div>
             </>
         )}

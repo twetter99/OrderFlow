@@ -1,5 +1,4 @@
 
-
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -32,10 +31,13 @@ export type InventoryItem = {
   id: string;
   sku: string;
   name: string;
+  supplierProductCode?: string; // Código del producto según el proveedor
+  family?: string; // Familia o categoría del producto
   minThreshold: number;
   unitCost: number;
   unit: 'ud' | 'ml';
-  supplier: string;
+  supplier?: string; // Proveedor principal o preferente
+  suppliers?: string[]; // Lista de proveedores asociados
   type: 'simple' | 'composite' | 'service';
   observations?: string;
   components?: {
