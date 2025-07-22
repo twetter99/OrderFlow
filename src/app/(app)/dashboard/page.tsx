@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect } from 'react';
@@ -78,26 +79,6 @@ export default function DashboardPage() {
 
     const pendingApprovals = purchaseOrders.filter(po => po.status === 'Pendiente de Aprobación').length;
 
-    const lowStockItems = inventory.filter(item => {
-        const totalQuantity = inventoryLocations
-          .filter(loc => loc.itemId === item.id)
-          .reduce((sum, loc) => sum + loc.quantity, 0);
-
-        if (item.type === 'composite') {
-            const buildableQuantity = Math.min(
-                ...(item.components?.map(c => {
-                    const componentItem = inventory.find(i => i.id === c.itemId);
-                    const componentTotalQuantity = inventoryLocations
-                        .filter(loc => loc.itemId === c.itemId)
-                        .reduce((sum, loc) => sum + loc.quantity, 0);
-                    return componentItem ? Math.floor(componentTotalQuantity / c.quantity) : 0;
-                }) || [0])
-            );
-            return buildableQuantity < item.minThreshold;
-        }
-        return totalQuantity < item.minThreshold;
-    }).length;
-
     const totalInventoryValue = inventory.reduce((acc, item) => {
         if (item.type === 'simple') {
             const totalQuantity = inventoryLocations
@@ -117,12 +98,12 @@ export default function DashboardPage() {
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-3xl font-bold font-headline">Panel de Control</h1>
+        <h1 className="text-3xl font-bold font-headline uppercase">Panel de Control</h1>
         <p className="text-muted-foreground">
           ¡Bienvenido de nuevo! Aquí tienes un resumen de tus operaciones.
         </p>
       </div>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <StatsCard 
           title="Valor de Inventario"
           value={new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(totalInventoryValue)}
@@ -141,13 +122,6 @@ export default function DashboardPage() {
           icon={Package}
           description="Necesitan tu revisión"
           isAlert={pendingApprovals > 0}
-        />
-        <StatsCard 
-          title="Artículos con Stock Bajo"
-          value={lowStockItems.toString()}
-          icon={AlertTriangle}
-          description="Acción requerida"
-          isAlert={lowStockItems > 0}
         />
       </div>
       <div className="grid gap-6 md:grid-cols-2">

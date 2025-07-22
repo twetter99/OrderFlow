@@ -35,7 +35,6 @@ const formSchema = z.object({
   unit: z.string().min(1, "La unidad es obligatoria."),
   observations: z.string().optional(),
   // Campos opcionales según el tipo
-  minThreshold: z.coerce.number().optional(),
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
   suppliers: z.array(z.string()).optional(),
   components: z.array(z.object({
@@ -84,7 +83,7 @@ const productFamilies = [
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
   const defaultValues = item
-    ? { ...item, minThreshold: item.minThreshold || 0, unitCost: item.unitCost || 0, suppliers: item.suppliers || [] }
+    ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [] }
     : {
         type: 'simple' as const,
         sku: "",
@@ -92,7 +91,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         supplierProductCode: "",
         family: "",
         observations: "",
-        minThreshold: 10,
         unitCost: 0,
         unit: 'ud',
         suppliers: [],
@@ -144,7 +142,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     }
     
     if (values.type === 'service') {
-        finalValues.minThreshold = 0;
         delete finalValues.suppliers;
         finalValues.unit = 'ud';
     }
@@ -247,8 +244,8 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 )}
             />
             </div>
-             <div className="grid grid-cols-1">
-                <FormField
+            <div className="grid grid-cols-1">
+                 <FormField
                     control={form.control}
                     name="family"
                     render={({ field }) => (
@@ -277,54 +274,43 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 />
             </div>
              {itemType === 'simple' && (
-               <FormField
-                    control={form.control}
-                    name="suppliers"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Proveedores</FormLabel>
-                        <TooltipProvider>
-                          <Tooltip>
-                            <TooltipTrigger asChild>
-                              <FormControl>
-                                  <MultiSelect
-                                      options={suppliers.map(s => ({ value: s.id, label: s.name }))}
-                                      selected={field.value || []}
-                                      onChange={field.onChange}
-                                      placeholder="Selecciona proveedores..."
-                                      closeOnSelect={true}
-                                      triggerIcon={PlusCircle}
-                                  />
-                              </FormControl>
-                            </TooltipTrigger>
-                            <TooltipContent>
-                              <p>Haz clic para seleccionar uno o varios proveedores</p>
-                            </TooltipContent>
-                          </Tooltip>
-                        </TooltipProvider>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
+                <div className="grid grid-cols-1">
+                    <FormField
+                        control={form.control}
+                        name="suppliers"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Proveedores</FormLabel>
+                             <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <FormControl>
+                                            <MultiSelect
+                                                options={suppliers.map(s => ({ value: s.id, label: s.name }))}
+                                                selected={field.value || []}
+                                                onChange={field.onChange}
+                                                placeholder="Selecciona proveedores..."
+                                                closeOnSelect={true}
+                                                triggerIcon={PlusCircle}
+                                            />
+                                        </FormControl>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                    <p>Haz clic para seleccionar uno o varios proveedores</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             )}
         </div>
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-3 gap-4">
-             <FormField
-                control={form.control}
-                name="minThreshold"
-                render={({ field }) => (
-                <FormItem>
-                    <FormLabel>Umbral Mínimo de Stock</FormLabel>
-                    <FormControl>
-                    <Input type="number" placeholder="10" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                </FormItem>
-                )}
-            />
+            <div className="grid grid-cols-2 gap-4">
              <FormField
                 control={form.control}
                 name="unit"

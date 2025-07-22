@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -241,7 +242,6 @@ export default function InventoryPage() {
                 </TableHead>
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
-                <TableHead>Estado</TableHead>
                 <TableHead>Cantidad Total</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Costo Unitario</TableHead>
@@ -253,7 +253,6 @@ export default function InventoryPage() {
                 const isPhysical = item.type === 'simple' || item.type === 'composite';
                 // @ts-ignore
                 const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
-                const isLowStock = isPhysical && quantityToShow < item.minThreshold;
                 
                 return (
                   <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""}>
@@ -274,30 +273,14 @@ export default function InventoryPage() {
                     </TableCell>
                     <TableCell>
                       {isPhysical && (
-                        <Badge
-                          variant="outline"
-                          className={cn(
-                            isLowStock 
-                              ? "bg-destructive/10 text-destructive border-destructive/20" 
-                              : "bg-green-100 text-green-800 border-green-200"
-                          )}
-                        >
-                          {isLowStock ? "Stock Bajo" : "En Stock"}
-                        </Badge>
-                      )}
-                      {item.type === 'service' && <Badge variant="secondary">Servicio</Badge>}
-                    </TableCell>
-                    <TableCell>
-                      {isPhysical && (
                         <div className="flex items-baseline gap-1">
                           <span className="font-bold">{quantityToShow}</span>
                           <span className="text-xs text-muted-foreground">{item.unit}</span>
-                          {item.type === 'simple' && <span className="text-xs text-muted-foreground">/ {item.minThreshold}</span>}
                           {item.type === 'composite' && <span className="text-xs text-muted-foreground"> (Construible)</span>}
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>{isPhysical ? item.supplier : 'N/A'}</TableCell>
+                    <TableCell>{isPhysical ? (item.suppliers || []).join(', ') : 'N/A'}</TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
                     </TableCell>
