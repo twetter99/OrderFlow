@@ -5,7 +5,7 @@ import { Toaster } from '@/components/ui/toaster';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex min-h-screen w-full bg-background font-sans">
+    <div className="flex min-h-screen w-full font-sans bg-background">
       <SidebarNav />
       <div className="flex flex-col flex-1 bg-muted/30">
         <Header />
