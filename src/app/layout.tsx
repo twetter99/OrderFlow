@@ -7,7 +7,8 @@ import { Toaster } from "@/components/ui/toaster";
 const exo2 = Exo_2({
   subsets: ['latin'],
   variable: '--font-exo2',
-})
+  weight: ['400', '600'],
+});
 
 export const metadata: Metadata = {
   title: 'OrderFlow',
