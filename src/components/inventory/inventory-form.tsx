@@ -263,7 +263,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                         <FormLabel>Proveedores</FormLabel>
                         <FormControl>
                             <MultiSelect
-                                options={suppliers.map(s => ({ value: s.name, label: s.name }))}
+                                options={suppliers.map(s => ({ value: s.id, label: s.name }))}
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."

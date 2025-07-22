@@ -42,8 +42,8 @@ function MultiSelect({
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
-  const handleUnselect = (item: string) => {
-    onChange(selected.filter((s) => s !== item));
+  const handleUnselect = (value: string) => {
+    onChange(selected.filter((s) => s !== value));
   };
 
   return (
@@ -58,17 +58,17 @@ function MultiSelect({
         >
           <div className="flex gap-1 flex-wrap">
             {selected.length > 0 ? (
-              selected.map((item) => (
+              selected.map((value) => (
                 <Badge
                   variant="secondary"
-                  key={item}
+                  key={value}
                   className="mr-1"
                   onClick={(e) => {
                     e.stopPropagation(); // Prevent opening popover
-                    handleUnselect(item);
+                    handleUnselect(value);
                   }}
                 >
-                  {options.find(o => o.value === item)?.label || item}
+                  {options.find(o => o.value === value)?.label || value}
                   <X className="h-3 w-3 ml-1" />
                 </Badge>
               ))
