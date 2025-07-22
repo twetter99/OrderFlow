@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -55,25 +56,28 @@ function MultiSelect({
           variant="outline"
           role="combobox"
           aria-expanded={open}
-          className={cn("w-full justify-between h-auto", className)}
+          className={cn("w-full justify-between h-auto min-h-10", className)}
           onClick={() => setOpen(!open)}
         >
           <div className="flex gap-1 flex-wrap">
             {selected.length > 0 ? (
-              selected.map((value) => (
-                <Badge
-                  variant="secondary"
-                  key={value}
-                  className="mr-1"
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent opening popover
-                    handleUnselect(value);
-                  }}
-                >
-                  {options.find(o => o.value === value)?.label || value}
-                  <X className="h-3 w-3 ml-1" />
-                </Badge>
-              ))
+              selected.map((value) => {
+                const option = options.find(o => o.value === value);
+                return (
+                    <Badge
+                        variant="secondary"
+                        key={value}
+                        className="mr-1"
+                        onClick={(e) => {
+                            e.stopPropagation(); // Prevent opening popover
+                            handleUnselect(value);
+                        }}
+                        >
+                        {option?.label || value}
+                        <X className="h-3 w-3 ml-1" />
+                    </Badge>
+                )
+              })
             ) : (
               <span className="text-muted-foreground">{placeholder}</span>
             )}
@@ -98,8 +102,6 @@ function MultiSelect({
                     );
                     if (closeOnSelect) {
                         setOpen(false);
-                    } else {
-                        setOpen(true);
                     }
                   }}
                 >

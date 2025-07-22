@@ -137,6 +137,14 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         finalValues.unit = 'ud';
     }
 
+    if (values.type === 'simple' && finalValues.suppliers && finalValues.suppliers.length > 0) {
+        const primarySupplierId = finalValues.suppliers[0];
+        finalValues.supplier = suppliers.find(s => s.id === primarySupplierId)?.name || 'Varios';
+    } else if (values.type === 'simple') {
+        finalValues.supplier = 'Sin Asignar';
+    }
+
+
     // El campo quantity se gestiona por ubicación, no en el item maestro.
     delete finalValues.quantity;
 
@@ -267,7 +275,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."
-                                closeOnSelect={true}
                             />
                         </FormControl>
                         <FormMessage />
