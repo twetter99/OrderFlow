@@ -124,32 +124,26 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     if (values.type === 'composite') {
         finalValues.unitCost = kitCost; // Ensure calculated cost is saved
         finalValues.supplier = 'Ensamblado Interno';
-        finalValues.suppliers = [];
+        delete finalValues.suppliers; // Kits don't have external suppliers
         finalValues.unit = 'ud';
     }
     
     if (values.type === 'service') {
         finalValues.minThreshold = 0;
         finalValues.supplier = 'N/A';
-        finalValues.suppliers = [];
+        delete finalValues.suppliers;
         finalValues.unit = 'ud';
     }
 
     if (values.type === 'simple' && finalValues.suppliers && finalValues.suppliers.length > 0) {
-        const primarySupplierId = finalValues.suppliers[0];
-        finalValues.supplier = suppliers.find(s => s.id === primarySupplierId)?.name || 'Varios';
+        // Set a primary supplier for display purposes if needed, or handle it differently.
+        finalValues.supplier = suppliers.find(s => s.id === finalValues.suppliers[0])?.name || 'Varios';
     } else if (values.type === 'simple') {
         finalValues.supplier = 'Sin Asignar';
     }
 
     // El campo quantity se gestiona por ubicación, no en el item maestro.
     delete finalValues.quantity;
-    
-    // Remove the single 'supplier' field if multiple suppliers are chosen, to avoid confusion.
-    if (finalValues.suppliers && finalValues.suppliers.length > 1) {
-        delete finalValues.supplier;
-    }
-
 
     onSave(finalValues);
   }
