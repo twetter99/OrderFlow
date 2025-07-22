@@ -72,6 +72,7 @@ const productFamilies = [
     { name: 'Harting', description: 'Conectores industriales y accesorios de la marca Harting.' },
     { name: 'Herrajes', description: 'Soportes, escuadras, anclajes, perfiles y elementos de fijación metálica.' },
     { name: 'Tornillería', description: 'Tornillos, tuercas, arandelas y sistemas de fijación.' },
+    { name: 'Borneros Wago', description: 'Bornas, puentes y tapas para placa de conexiones.' },
     { name: 'Equipos', description: 'Dispositivos electrónicos y eléctricos: routers, switches, cámaras, pantallas, fuentes de alimentación, etc.' },
     { name: 'Herramientas', description: 'Herramientas manuales y eléctricas necesarias para la instalación y el mantenimiento: destornilladores, taladros, pelacables, etc.' },
     { name: 'Papercast', description: 'Pantallas y componentes específicos de la marca Papercast.' },
@@ -244,7 +245,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 )}
             />
             </div>
-            <div className="grid grid-cols-1">
+             <div className="grid grid-cols-1">
                  <FormField
                     control={form.control}
                     name="family"
