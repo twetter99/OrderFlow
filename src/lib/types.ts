@@ -44,7 +44,6 @@ export type InventoryItem = {
     quantity: number;
   }[];
   quantity?: number; // Should be calculated, not stored
-  minThreshold?: number;
 };
 
 export type PurchaseOrderItem = {
@@ -154,7 +153,14 @@ export type Technician = {
 export type Location = {
   id: string;
   name: string;
-  description: string;
+  description?: string;
+  type: 'physical' | 'mobile';
+  street?: string;
+  number?: string;
+  postalCode?: string;
+  city?: string;
+  province?: string;
+  technicianId?: string; // Optional: associated technician for mobile warehouses
 };
 
 export type DeliveryNote = {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo } from "react";
@@ -96,18 +97,18 @@ export default function LocationsPage() {
     router.push(`/locations/${locationId}`);
   };
 
-  const handleSave = (values: any) => {
+  const handleSave = (values: Partial<Location>) => {
     if (selectedLocation) {
       setLocations(
         locations.map((c) =>
-          c.id === selectedLocation.id ? { ...c, ...values, id: c.id } : c
+          c.id === selectedLocation.id ? { ...c, ...values, id: c.id } as Location : c
         )
       );
       toast({ title: "Almacén actualizado", description: "El almacén se ha actualizado correctamente." });
     } else {
       setLocations([
         ...locations,
-        { ...values, id: `LOC-${String(locations.length + 1).padStart(3, '0')}` },
+        { ...values, id: `LOC-${String(locations.length + 1).padStart(3, '0')}` } as Location,
       ]);
       toast({ title: "Almacén creado", description: "El nuevo almacén se ha creado correctamente." });
     }
@@ -231,7 +232,7 @@ export default function LocationsPage() {
       </Card>
       
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-xl">
+        <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>
               {selectedLocation ? "Editar Almacén" : "Añadir Nuevo Almacén"}
