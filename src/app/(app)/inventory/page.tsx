@@ -256,7 +256,7 @@ export default function InventoryPage() {
                 const isLowStock = isPhysical && quantityToShow < item.minThreshold;
                 
                 return (
-                  <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""} className={cn(isLowStock && !selectedRowIds.includes(item.id) && "bg-red-50 dark:bg-red-900/20")}>
+                  <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""}>
                     <TableCell padding="checkbox">
                       <Checkbox
                         checked={selectedRowIds.includes(item.id)}
