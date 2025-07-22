@@ -259,8 +259,29 @@ export function PurchasingClientPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handlePrintClick = (orderId: string) => {
-    window.open(`/purchasing/${orderId}/print`, '_blank');
+  const handlePrintClick = (order: PurchaseOrder) => {
+    const projectDetails = projects.find(p => p.id === order.project);
+    const supplierDetails = suppliers.find(s => s.name === order.supplier);
+    const clientDetails = projectDetails ? users.find(u => u.id === projectDetails.clientId) : undefined;
+    
+    const enrichedOrder = {
+        ...order,
+        projectDetails,
+        supplierDetails,
+        clientDetails,
+    };
+
+    try {
+        localStorage.setItem(`print_order_${order.id}`, JSON.stringify(enrichedOrder));
+        window.open(`/purchasing/${order.id}/print`, '_blank');
+    } catch (e) {
+        console.error("Could not save to localStorage", e);
+        toast({
+            variant: "destructive",
+            title: "Error de Impresión",
+            description: "No se pudo preparar la orden para imprimir. Inténtalo de nuevo."
+        })
+    }
   };
 
   const handleEmailClick = (order: PurchaseOrder) => {
@@ -656,7 +677,7 @@ export function PurchasingClientPage() {
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handlePrintClick(order.id)}>
+                          <DropdownMenuItem onClick={() => handlePrintClick(order)}>
                             <Printer className="mr-2 h-4 w-4"/>
                             Imprimir Orden
                           </DropdownMenuItem>
@@ -787,5 +808,7 @@ export function PurchasingClientPage() {
 
 
 
+
+    
 
     

@@ -4,9 +4,8 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { purchaseOrders, suppliers, projects, clients } from '@/lib/data';
 import type { PurchaseOrder, Supplier, Project, Client } from '@/lib/types';
-import { Bot, Printer } from 'lucide-react';
+import { Bot, Loader2, Printer, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface EnrichedPurchaseOrder extends PurchaseOrder {
@@ -19,29 +18,55 @@ export default function PurchaseOrderPrintPage() {
   const params = useParams();
   const id = params.id as string;
   const [order, setOrder] = useState<EnrichedPurchaseOrder | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const foundOrder = purchaseOrders.find((o) => o.id === id);
-    if (foundOrder) {
-      const supplierDetails = suppliers.find((s) => s.name === foundOrder.supplier);
-      const projectDetails = projects.find((p) => p.id === foundOrder.project);
-      const clientDetails = projectDetails ? clients.find(c => c.id === projectDetails.clientId) : undefined;
-      setOrder({ ...foundOrder, supplierDetails, projectDetails, clientDetails });
+    try {
+        const item = localStorage.getItem(`print_order_${id}`);
+        if (item) {
+            setOrder(JSON.parse(item));
+            localStorage.removeItem(`print_order_${id}`); // Clean up after reading
+        } else {
+            setError('No se pudo encontrar la información de la orden. Por favor, cierra esta pestaña y vuelve a intentarlo desde el listado.');
+        }
+    } catch (e) {
+        console.error("Error reading from localStorage:", e);
+        setError('Ocurrió un error al cargar los datos de la orden.');
+    } finally {
+        setLoading(false);
     }
   }, [id]);
 
   useEffect(() => {
     if (order) {
-        setTimeout(() => window.print(), 500);
+        // Delay print slightly to ensure all content is rendered
+        const timer = setTimeout(() => window.print(), 500);
+        return () => clearTimeout(timer);
     }
-  }, [order])
-
-  if (!order) {
-    return <div className="p-10 text-center">Cargando orden de compra...</div>;
-  }
+  }, [order]);
   
   const handlePrint = () => {
     window.print();
+  }
+
+  if (loading) {
+    return (
+        <div className="p-10 text-center flex flex-col items-center justify-center min-h-screen">
+            <Loader2 className="h-8 w-8 animate-spin mb-4" />
+            <p>Cargando orden de compra...</p>
+        </div>
+    );
+  }
+
+  if (error || !order) {
+    return (
+         <div className="p-10 text-center flex flex-col items-center justify-center min-h-screen bg-red-50 text-red-800">
+            <AlertTriangle className="h-10 w-10 mb-4" />
+            <h1 className="text-xl font-bold mb-2">Error al Cargar la Orden</h1>
+            <p>{error || 'No se encontró la orden de compra.'}</p>
+        </div>
+    );
   }
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
@@ -139,5 +164,7 @@ export default function PurchaseOrderPrintPage() {
     </div>
   );
 }
+
+    
 
     
