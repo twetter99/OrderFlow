@@ -36,7 +36,6 @@ const formSchema = z.object({
   // Campos opcionales según el tipo
   minThreshold: z.coerce.number().optional(),
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
-  supplier: z.string().optional(),
   suppliers: z.array(z.string()).optional(),
   components: z.array(z.object({
     itemId: z.string().min(1, "Selecciona un componente."),
@@ -80,7 +79,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         minThreshold: 10,
         unitCost: 0,
         unit: 'ud',
-        supplier: "",
         suppliers: [],
         components: [],
       };
@@ -144,9 +142,14 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         finalValues.supplier = 'Sin Asignar';
     }
 
-
     // El campo quantity se gestiona por ubicación, no en el item maestro.
     delete finalValues.quantity;
+    
+    // Remove the single 'supplier' field if multiple suppliers are chosen, to avoid confusion.
+    if (finalValues.suppliers && finalValues.suppliers.length > 1) {
+        delete finalValues.supplier;
+    }
+
 
     onSave(finalValues);
   }
@@ -275,6 +278,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."
+                                closeOnSelect={true}
                             />
                         </FormControl>
                         <FormMessage />
