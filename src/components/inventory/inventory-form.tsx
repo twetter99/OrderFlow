@@ -64,7 +64,22 @@ interface InventoryFormProps {
   onAddNewSupplier: () => void;
 }
 
-const productFamilies = ["Electrónica", "Cableado", "Soportes", "Tornillería", "Sensores", "Servicios"];
+const productFamilies = [
+    { name: 'Cableado', description: 'Todo tipo de cables eléctricos, datos UTP, coaxiales, etc.' },
+    { name: 'Conectores', description: 'Conectores para cables, terminales tipo faston, fichas de empalme, RJ45, etc.' },
+    { name: 'Terminales', description: 'Terminales, pines y otros terminales para conexión de cables.' },
+    { name: 'Tubos', description: 'Tubo corrugado, abierto, canaletas y otros sistemas de canalización.' },
+    { name: 'Bridas', description: 'Bridas y bases de nylon y accesorios de sujeción de cables.' },
+    { name: 'Harting', description: 'Conectores industriales y accesorios de la marca Harting.' },
+    { name: 'Herrajes', description: 'Soportes, escuadras, anclajes, perfiles y elementos de fijación metálica.' },
+    { name: 'Tornillería', description: 'Tornillos, tuercas, arandelas y sistemas de fijación.' },
+    { name: 'Equipos', description: 'Dispositivos electrónicos y eléctricos: routers, switches, cámaras, pantallas, fuentes de alimentación, etc.' },
+    { name: 'Herramientas', description: 'Herramientas manuales y eléctricas necesarias para la instalación y el mantenimiento: destornilladores, taladros, pelacables, etc.' },
+    { name: 'Papercast', description: 'Pantallas y componentes específicos de la marca Papercast.' },
+    { name: 'Vision360', description: 'Equipos y componentes del sistema Vision360 para visión artificial y asistencia avanzada en vehículos.' },
+    { name: 'Afluencia360', description: 'Equipos y componentes del sistema Afluencia360 para análisis de afluencia y movilidad en transporte público.' },
+    { name: 'Varios', description: 'Materiales diversos y consumibles no categorizados en las familias anteriores.' },
+];
 
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
@@ -247,7 +262,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                             </FormControl>
                             <SelectContent>
                                 {productFamilies.map(family => (
-                                    <SelectItem key={family} value={family}>{family}</SelectItem>
+                                    <SelectItem key={family.name} value={family.name}>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{family.name}</span>
+                                            <span className="text-xs text-muted-foreground">{family.description}</span>
+                                        </div>
+                                    </SelectItem>
                                 ))}
                             </SelectContent>
                         </Select>
