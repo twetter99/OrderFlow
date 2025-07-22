@@ -267,6 +267,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."
+                                closeOnSelect={true}
                             />
                         </FormControl>
                         <FormMessage />

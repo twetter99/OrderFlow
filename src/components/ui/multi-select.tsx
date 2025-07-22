@@ -31,6 +31,7 @@ interface MultiSelectProps {
   onChange: (selected: string[]) => void;
   className?: string;
   placeholder?: string;
+  closeOnSelect?: boolean;
 }
 
 function MultiSelect({
@@ -39,6 +40,7 @@ function MultiSelect({
   onChange,
   className,
   placeholder = "Selecciona opciones...",
+  closeOnSelect = false,
 }: MultiSelectProps) {
   const [open, setOpen] = React.useState(false);
 
@@ -94,7 +96,11 @@ function MultiSelect({
                         ? selected.filter((item) => item !== option.value)
                         : [...selected, option.value]
                     );
-                    setOpen(true);
+                    if (closeOnSelect) {
+                        setOpen(false);
+                    } else {
+                        setOpen(true);
+                    }
                   }}
                 >
                   <Check
