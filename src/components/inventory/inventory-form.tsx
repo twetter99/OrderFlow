@@ -134,8 +134,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     }
 
     if (values.type === 'simple' && finalValues.suppliers && finalValues.suppliers.length > 0) {
-        // Set a primary supplier for display purposes if needed, or handle it differently.
-        finalValues.supplier = suppliers.find(s => s.id === finalValues.suppliers[0])?.name || 'Varios';
+        // This is handled by the multi-select component now, supplier field is deprecated
     } else if (values.type === 'simple') {
         finalValues.supplier = 'Sin Asignar';
     }
@@ -234,7 +233,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 )}
             />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+             <div className="grid grid-cols-1">
                 <FormField
                     control={form.control}
                     name="family"
@@ -271,6 +270,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 selected={field.value || []}
                                 onChange={field.onChange}
                                 placeholder="Selecciona proveedores..."
+                                closeOnSelect={true}
                             />
                         </FormControl>
                         <FormMessage />
