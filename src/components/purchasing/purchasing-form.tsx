@@ -36,6 +36,7 @@ import { es } from "date-fns/locale";
 import { Calendar } from "../ui/calendar";
 import { ItemCombobox } from "./item-combobox";
 import React from "react";
+import { productFamilies } from "@/lib/data";
 
 const formSchema = z.object({
   orderNumber: z.string().optional(),
@@ -52,6 +53,7 @@ const formSchema = z.object({
     price: z.coerce.number().min(0, "El precio es obligatorio."),
     unit: z.string().min(1, "La unidad es obligatoria."),
     type: z.enum(['Material', 'Servicio']),
+    family: z.string().optional(), // Used for filtering, not saved
   })).min(1, "Debes añadir al menos un artículo."),
   total: z.coerce.number() // Se calculará automáticamente
 });
@@ -81,7 +83,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
-        items: order.items || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
+        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || ''})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: '' }],
         total: order.total || 0,
        }
     : {
@@ -92,7 +94,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: new Date(),
         status: "Pendiente de Aprobación" as const,
         rejectionReason: "",
-        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const }],
+        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: '' }],
         total: 0,
       };
 
@@ -114,8 +116,18 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     return watchedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
   }, [watchedItems]);
 
+  const itemsBySupplier = React.useMemo(() => {
+    if (!watchedSupplier) return [];
+    const supplierDetails = suppliers.find(s => s.name === watchedSupplier);
+    if (!supplierDetails) return [];
+    return inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id));
+  }, [watchedSupplier, inventoryItems, suppliers]);
+
+
   function onSubmit(values: PurchasingFormValues) {
-    onSave({ ...values, total }); // Pass the calculated total on submit
+    // Remove temporary 'family' field before saving
+    const itemsToSave = values.items.map(({ family, ...rest }) => rest);
+    onSave({ ...values, items: itemsToSave, total }); // Pass the calculated total on submit
   }
 
   return (
@@ -250,15 +262,22 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[10%]">Tipo</TableHead>
-                            <TableHead className="w-[35%]">Descripción</TableHead>
-                            <TableHead className="w-[15%]">Cantidad</TableHead>
+                            <TableHead className="w-[20%]">Familia</TableHead>
+                            <TableHead className="w-[25%]">Descripción</TableHead>
+                            <TableHead className="w-[10%]">Cantidad</TableHead>
                             <TableHead className="w-[10%]">Unidad</TableHead>
-                            <TableHead className="w-[20%]">Precio Unitario (€)</TableHead>
+                            <TableHead className="w-[15%]">Precio Unitario (€)</TableHead>
                             {!isReadOnly && <TableHead className="w-[10%] text-right"></TableHead>}
                         </TableRow>
                     </TableHeader>
                     <TableBody>
-                        {fields.map((field, index) => (
+                        {fields.map((field, index) => {
+                            const selectedFamily = watchedItems[index]?.family;
+                            const filteredItemsForLine = itemsBySupplier.filter(item => 
+                                !selectedFamily || item.family === selectedFamily
+                            );
+                            
+                            return (
                             <TableRow key={field.id}>
                                 <TableCell>
                                     <FormField
@@ -283,6 +302,30 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                     />
                                 </TableCell>
                                 <TableCell>
+                                    <FormField
+                                        control={form.control}
+                                        name={`items.${index}.family`}
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <Select
+                                                  onValueChange={(value) => {
+                                                    field.onChange(value);
+                                                    form.setValue(`items.${index}.itemName`, ''); // Reset item name on family change
+                                                  }}
+                                                  defaultValue={field.value}
+                                                  disabled={isReadOnly || !watchedSupplier || watchedItems[index]?.type === 'Servicio'}
+                                                >
+                                                  <FormControl><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger></FormControl>
+                                                  <SelectContent>
+                                                    <SelectItem value="">Todas las familias</SelectItem>
+                                                    {productFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
+                                                  </SelectContent>
+                                                </Select>
+                                            </FormItem>
+                                        )}
+                                    />
+                                </TableCell>
+                                <TableCell>
                                      <FormField
                                         control={form.control}
                                         name={`items.${index}.itemName`}
@@ -290,7 +333,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                             <FormItem>
                                                 <FormControl>
                                                    <ItemCombobox 
-                                                        inventoryItems={inventoryItems}
+                                                        inventoryItems={filteredItemsForLine}
                                                         value={field.value}
                                                         onChange={(selectedItem) => {
                                                             form.setValue(`items.${index}.itemName`, selectedItem.name);
@@ -301,7 +344,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                             const purchaseItemType = selectedItem.type === 'service' ? 'Servicio' : 'Material';
                                                             form.setValue(`items.${index}.type`, purchaseItemType);
                                                         }}
-                                                        disabled={isReadOnly}
+                                                        disabled={isReadOnly || !watchedSupplier}
                                                    />
                                                 </FormControl>
                                                 <FormMessage />
@@ -366,7 +409,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                 </TableCell>
                                 )}
                             </TableRow>
-                        ))}
+                        )})}
                     </TableBody>
                 </Table>
                 </div>
@@ -376,7 +419,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' })}
+                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material', family: '' })}
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila
@@ -455,3 +498,4 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     </Form>
   );
 }
+

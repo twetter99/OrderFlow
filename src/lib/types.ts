@@ -44,6 +44,7 @@ export type InventoryItem = {
     quantity: number;
   }[];
   quantity?: number; // Should be calculated, not stored
+  minThreshold?: number;
 };
 
 export type PurchaseOrderItem = {

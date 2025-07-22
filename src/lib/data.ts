@@ -18,6 +18,24 @@ const convertMockDates = (order: Omit<PurchaseOrder, 'date' | 'estimatedDelivery
 
 // --- Default Mock Data (used as fallback) ---
 
+export const productFamilies = [
+    { name: 'Cableado', description: 'Todo tipo de cables eléctricos, datos UTP, coaxiales, etc.' },
+    { name: 'Conectores', description: 'Conectores para cables, terminales tipo faston, fichas de empalme, RJ45, etc.' },
+    { name: 'Terminales', description: 'Terminales, pines y otros terminales para conexión de cables.' },
+    { name: 'Tubos', description: 'Tubo corrugado, abierto, canaletas y otros sistemas de canalización.' },
+    { name: 'Bridas', description: 'Bridas y bases de nylon y accesorios de sujeción de cables.' },
+    { name: 'Harting', description: 'Conectores industriales y accesorios de la marca Harting.' },
+    { name: 'Herrajes', description: 'Soportes, escuadras, anclajes, perfiles y elementos de fijación metálica.' },
+    { name: 'Tornillería', description: 'Tornillos, tuercas, arandelas y sistemas de fijación.' },
+    { name: 'Borneros Wago', description: 'Bornas, puentes y tapas para placa de conexiones.' },
+    { name: 'Equipos', description: 'Dispositivos electrónicos y eléctricos: routers, switches, cámaras, pantallas, fuentes de alimentación, etc.' },
+    { name: 'Herramientas', description: 'Herramientas manuales y eléctricas necesarias para la instalación y el mantenimiento: destornilladores, taladros, pelacables, etc.' },
+    { name: 'Papercast', description: 'Pantallas y componentes específicos de la marca Papercast.' },
+    { name: 'Vision360', description: 'Equipos y componentes del sistema Vision360 para visión artificial y asistencia avanzada en vehículos.' },
+    { name: 'Afluencia360', description: 'Equipos y componentes del sistema Afluencia360 para análisis de afluencia y movilidad en transporte público.' },
+    { name: 'Varios', description: 'Materiales diversos y consumibles no categorizados en las familias anteriores.' },
+];
+
 const mockProjects: Project[] = [
   {
     id: 'WF-PROJ-001',
@@ -118,22 +136,20 @@ const mockProjects: Project[] = [
   },
 ];
 const mockInventory: InventoryItem[] = [
-  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', minThreshold: 10, unitCost: 350, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
-  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', minThreshold: 20, unitCost: 15.50, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', minThreshold: 30, unitCost: 45, unit: 'ud', supplier: 'MetalWorks Ltd.', type: 'simple' },
-  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', minThreshold: 50, unitCost: 8, unit: 'ud', supplier: 'Soluciones de Ferretería', type: 'simple' },
-  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', minThreshold: 15, unitCost: 120, unit: 'ud', supplier: 'Global Nav', type: 'simple' },
-  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', minThreshold: 10, unitCost: 85, unit: 'ud', supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', minThreshold: 50, unitCost: 2.5, unit: 'ml', supplier: 'TechParts Inc.', type: 'simple' },
-  { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', minThreshold: 0, unitCost: 75, unit: 'ud', supplier: 'N/A', type: 'service' },
+  { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', family: 'Equipos', unitCost: 350, unit: 'ud', suppliers: ['WF-SUP-001'], type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
+  { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', family: 'Herrajes', unitCost: 15.50, unit: 'ud', suppliers: ['WF-SUP-002'], type: 'simple' },
+  { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', family: 'Herrajes', unitCost: 45, unit: 'ud', suppliers: ['WF-SUP-002'], type: 'simple' },
+  { id: 'ITEM-004', sku: 'SCRW-M5', name: 'Paquete de Tornillos M5 (100ct)', family: 'Tornillería', unitCost: 8, unit: 'ud', suppliers: ['WF-SUP-003'], type: 'simple' },
+  { id: 'ITEM-005', sku: 'GPS-MOD-2', name: 'Módulo GPS v2', family: 'Equipos', unitCost: 120, unit: 'ud', suppliers: ['WF-SUP-004'], type: 'simple' },
+  { id: 'ITEM-006', sku: 'CAM-SEC-HD', name: 'Cámara de Seguridad HD', family: 'Equipos', unitCost: 85, unit: 'ud', suppliers: ['WF-SUP-001'], type: 'simple' },
+  { id: 'ITEM-007', sku: 'CBL-PWR-10M', name: 'Cable de Alimentación 2-hilos', family: 'Cableado', unitCost: 2.5, unit: 'ml', suppliers: ['WF-SUP-001'], type: 'simple' },
+  { id: 'ITEM-101', sku: 'SERV-INST-HR', name: 'Hora de Instalación Técnica', unitCost: 75, unit: 'ud', type: 'service' },
   {
     id: 'ITEM-100',
     sku: 'KIT-INST-BASIC',
     name: 'Kit de Instalación Básico',
-    minThreshold: 5,
     unitCost: 478, // Costo es la suma de los componentes
     unit: 'ud',
-    supplier: 'Ensamblado Interno',
     type: 'composite',
     components: [
       { itemId: 'ITEM-001', quantity: 1 }, // 1x CPU
@@ -369,7 +385,7 @@ export const getNotifications = (): Notification[] => {
           .filter(loc => loc.itemId === item.id)
           .reduce((sum, loc) => sum + loc.quantity, 0);
 
-        return totalQuantity < item.minThreshold;
+        return totalQuantity < (item.minThreshold || 0);
     });
     lowStockItems.forEach(item => {
         notifications.push({
