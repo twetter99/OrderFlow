@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -83,7 +82,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
-        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || ''})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: '' }],
+        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || ''})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: order.total || 0,
        }
     : {
@@ -94,7 +93,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: new Date(),
         status: "Pendiente de Aprobación" as const,
         rejectionReason: "",
-        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: '' }],
+        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: 0,
       };
 
@@ -120,6 +119,8 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     if (!watchedSupplier) return [];
     const supplierDetails = suppliers.find(s => s.name === watchedSupplier);
     if (!supplierDetails) return [];
+    // Firestore stores supplier IDs, so we need to filter by ID
+    const associatedSupplierIds = inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id)).map(item => item.id);
     return inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id));
   }, [watchedSupplier, inventoryItems, suppliers]);
 
@@ -274,7 +275,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                         {fields.map((field, index) => {
                             const selectedFamily = watchedItems[index]?.family;
                             const filteredItemsForLine = itemsBySupplier.filter(item => 
-                                !selectedFamily || item.family === selectedFamily
+                                !selectedFamily || selectedFamily === 'all' || item.family === selectedFamily
                             );
                             
                             return (
@@ -312,12 +313,12 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                     field.onChange(value);
                                                     form.setValue(`items.${index}.itemName`, ''); // Reset item name on family change
                                                   }}
-                                                  defaultValue={field.value}
+                                                  value={field.value}
                                                   disabled={isReadOnly || !watchedSupplier || watchedItems[index]?.type === 'Servicio'}
                                                 >
                                                   <FormControl><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger></FormControl>
                                                   <SelectContent>
-                                                    <SelectItem value="">Todas las familias</SelectItem>
+                                                    <SelectItem value="all">Todas las familias</SelectItem>
                                                     {productFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
                                                   </SelectContent>
                                                 </Select>
@@ -419,7 +420,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material', family: '' })}
+                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material', family: 'all' })}
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila
@@ -499,3 +500,4 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   );
 }
 
+    
