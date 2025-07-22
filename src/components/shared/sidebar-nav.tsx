@@ -30,7 +30,6 @@ import {
     QrCode,
     ShieldCheck,
 } from "lucide-react";
-import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import React from "react";
@@ -129,16 +128,16 @@ export function SidebarNav() {
   }
 
   return (
-    <aside className="hidden md:flex flex-col w-64 border-r bg-card">
-      <div className="flex items-center gap-2 h-16 border-b px-6">
-        <Bot className="h-6 w-6 text-primary" />
+    <aside className="hidden md:flex flex-col w-64 border-r bg-secondary text-secondary-foreground">
+      <div className="flex items-center gap-2 h-16 border-b border-white/10 px-6">
+        <Bot className="h-6 w-6" />
         <h1 className="text-lg font-bold font-headline">OrderFlow</h1>
       </div>
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navGroups.map((group, index) => (
           <div key={group.title} className="space-y-1">
             {group.title && (
-                 <h2 className="px-4 py-2 font-semibold text-primary tracking-wider uppercase">{group.title}</h2>
+                 <h2 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50">{group.title}</h2>
             )}
             {group.items.map((item) => {
               const uniqueKey = `${item.label}`;
@@ -149,8 +148,8 @@ export function SidebarNav() {
                   <CollapsibleTrigger className="w-full">
                      <div
                       className={cn(
-                        "flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary font-semibold",
-                         isActive && "bg-muted text-primary"
+                        "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
+                         isActive && "bg-white/10 text-white"
                       )}
                     >
                        <div className="flex items-center gap-3">
@@ -161,9 +160,9 @@ export function SidebarNav() {
                     </div>
                   </CollapsibleTrigger>
                   <CollapsibleContent>
-                     <div className="pl-8 pt-1 border-l border-dashed ml-5 my-1 space-y-1">
+                     <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
                       {item.subItems.map(subItem => {
-                         const isSubActive = pathname === subItem.href || (subItem.href === '/users' && ['/approval-flows'].includes(pathname));
+                         const isSubActive = pathname.startsWith(subItem.href);
                          const subUniqueKey = `${subItem.label}-${subItem.href}`;
 
                          return (
@@ -171,8 +170,8 @@ export function SidebarNav() {
                                   key={subUniqueKey}
                                   href={subItem.href}
                                   className={cn(
-                                  "flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary text-sm",
-                                  isSubActive && "text-primary bg-muted/50"
+                                  "flex items-center gap-3 rounded-md px-3 py-2 text-white/60 transition-all hover:text-white text-sm",
+                                  isSubActive && "text-white font-semibold"
                                   )}
                               >
                               <subItem.icon className="h-4 w-4" />
@@ -185,7 +184,6 @@ export function SidebarNav() {
                 </Collapsible>
               );
             })}
-             {index < navGroups.length -1 && <Separator className="my-2" />}
           </div>
         ))}
       </nav>

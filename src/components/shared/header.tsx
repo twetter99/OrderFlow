@@ -45,14 +45,14 @@ export function Header() {
             <span className="sr-only">Alternar menú de navegación</span>
           </Button>
         </SheetTrigger>
-        <SheetContent side="left" className="flex flex-col">
+        <SheetContent side="left" className="flex flex-col bg-secondary text-secondary-foreground">
           <nav className="grid gap-2 text-lg font-medium">
             <Link
               href="#"
-              className="flex items-center gap-2 text-lg font-semibold"
+              className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
               <Bot className="h-6 w-6" />
-              <span className="sr-only">OrderFlow</span>
+              <span>OrderFlow</span>
             </Link>
             <Link
               href="/dashboard"
@@ -63,7 +63,7 @@ export function Header() {
             </Link>
             <Link
               href="/purchasing"
-              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl bg-muted px-3 py-2 text-foreground hover:text-foreground"
+              className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2 text-muted-foreground hover:text-foreground"
             >
               <ShoppingCart className="h-5 w-5" />
               Pedidos
@@ -104,16 +104,7 @@ export function Header() {
       </Sheet>
 
       <div className="w-full flex-1">
-        <form>
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar productos, proyectos, pedidos..."
-              className="w-full appearance-none bg-background pl-8 shadow-none md:w-2/3 lg:w-1/3"
-            />
-          </div>
-        </form>
+        {/* Search can be added back if needed */}
       </div>
       
       <NotificationsPanel />

@@ -27,7 +27,7 @@ export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: Purchase
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="font-headline">Órdenes de Compra Recientes</CardTitle>
+        <CardTitle className="font-headline uppercase">Órdenes Recientes</CardTitle>
         <CardDescription>
           Una lista de las últimas 5 órdenes de compra.
         </CardDescription>
@@ -53,11 +53,11 @@ export function RecentOrdersTable({ purchaseOrders }: { purchaseOrders: Purchase
                     className={cn(
                       "capitalize",
                       order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
-                      order.status === "Pendiente de Aprobación" && "bg-yellow-100 text-yellow-800 border-yellow-200",
+                      order.status === "Pendiente de Aprobación" && "bg-orange-100 text-orange-800 border-orange-200",
                       order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
-                      order.status === "Recibida" && "bg-orange-100 text-orange-800 border-orange-200",
+                      order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
                       order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
-                      order.status === "Rechazado" && "bg-red-100 text-red-800 border-red-200"
+                      order.status === "Rechazado" && "bg-destructive/20 text-destructive border-destructive/20"
                     )}
                   >
                     {order.status}
