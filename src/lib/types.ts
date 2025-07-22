@@ -65,6 +65,7 @@ export type PurchaseOrder = {
   orderNumber?: string;
   project: string;
   supplier: string;
+  deliveryLocationId: string;
   status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Almacenada' | 'Rechazado';
   date: string | Timestamp;
   estimatedDeliveryDate: string | Timestamp;

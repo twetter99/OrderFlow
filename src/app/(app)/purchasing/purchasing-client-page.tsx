@@ -52,7 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
-import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User } from "@/lib/types";
+import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User, Location } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
@@ -116,6 +116,7 @@ export function PurchasingClientPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -157,6 +158,7 @@ export function PurchasingClientPage() {
     const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))));
+    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location))));
 
     return () => {
         unsubPO();
@@ -164,6 +166,7 @@ export function PurchasingClientPage() {
         unsubInventory();
         unsubProjects();
         unsubUsers();
+        unsubLocations();
     };
   }, []);
   
@@ -262,13 +265,13 @@ export function PurchasingClientPage() {
   const handlePrintClick = (order: PurchaseOrder) => {
     const projectDetails = projects.find(p => p.id === order.project);
     const supplierDetails = suppliers.find(s => s.name === order.supplier);
-    const clientDetails = projectDetails ? users.find(u => u.id === projectDetails.clientId) : undefined;
+    const deliveryLocationDetails = locations.find(l => l.id === order.deliveryLocationId);
     
     const enrichedOrder = {
         ...order,
         projectDetails,
         supplierDetails,
-        clientDetails,
+        deliveryLocationDetails,
     };
 
     try {
@@ -739,6 +742,7 @@ export function PurchasingClientPage() {
             suppliers={suppliers}
             inventoryItems={inventory}
             projects={projects}
+            locations={locations}
           />
         </DialogContent>
       </Dialog>
@@ -800,15 +804,3 @@ export function PurchasingClientPage() {
     </div>
   )
 }
-
-
-    
-
-    
-
-
-
-
-    
-
-    

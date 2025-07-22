@@ -4,14 +4,14 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import type { PurchaseOrder, Supplier, Project, Client } from '@/lib/types';
+import type { PurchaseOrder, Supplier, Project, Location } from '@/lib/types';
 import { Bot, Loader2, Printer, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface EnrichedPurchaseOrder extends PurchaseOrder {
   supplierDetails?: Supplier;
   projectDetails?: Project;
-  clientDetails?: Client;
+  deliveryLocationDetails?: Location;
 }
 
 export default function PurchaseOrderPrintPage() {
@@ -70,6 +70,7 @@ export default function PurchaseOrderPrintPage() {
   }
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
+  const deliveryLocation = order.deliveryLocationDetails;
 
   return (
     <div className="bg-white text-black p-8 font-sans">
@@ -106,9 +107,17 @@ export default function PurchaseOrderPrintPage() {
         </div>
          <div>
             <h3 className="text-sm uppercase font-bold text-gray-500 mb-2">Enviar a</h3>
-            <p className="font-semibold">WINFIN Almacén Principal</p>
-            <p>Polígono Industrial "El Futuro", Nave 7</p>
-            <p>28080 Madrid, España</p>
+            <p className="font-semibold">{deliveryLocation?.name}</p>
+            {deliveryLocation?.type === 'physical' && (
+              <>
+                <p>{deliveryLocation.street}, {deliveryLocation.number}</p>
+                <p>{deliveryLocation.postalCode}, {deliveryLocation.city}</p>
+                <p>{deliveryLocation.province}</p>
+              </>
+            )}
+             {deliveryLocation?.type === 'mobile' && (
+                <p>Almacén móvil. Contactar para coordinar entrega.</p>
+             )}
         </div>
       </section>
 
@@ -164,7 +173,3 @@ export default function PurchaseOrderPrintPage() {
     </div>
   );
 }
-
-    
-
-    

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -21,7 +22,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { PurchaseOrder, Supplier, InventoryItem, Project } from "@/lib/types";
+import type { PurchaseOrder, Supplier, InventoryItem, Project, Location } from "@/lib/types";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
@@ -42,6 +43,7 @@ const formSchema = z.object({
   date: z.date({ required_error: "La fecha de creación es obligatoria." }),
   project: z.string().min(1, "El proyecto es obligatorio."),
   supplier: z.string().min(1, "El proveedor es obligatorio."),
+  deliveryLocationId: z.string().min(1, "Debes seleccionar un almacén de entrega."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
   status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"]),
   rejectionReason: z.string().optional(),
@@ -67,9 +69,10 @@ interface PurchasingFormProps {
   suppliers: Supplier[];
   inventoryItems: InventoryItem[];
   projects: Project[];
+  locations: Location[];
 }
 
-export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects }: PurchasingFormProps) {
+export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects, locations }: PurchasingFormProps) {
   const isReadOnly = order && 'id' in order && !canApprove;
   const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
   
@@ -77,17 +80,19 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     ? { 
         project: order.project || "",
         supplier: order.supplier || "",
+        deliveryLocationId: order.deliveryLocationId || "",
         orderNumber: order.orderNumber || "",
         date: order.date ? new Date(order.date) : new Date(),
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
-        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || ''})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
+        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: order.total || 0,
        }
     : {
         project: "",
         supplier: "",
+        deliveryLocationId: "",
         orderNumber: "",
         date: new Date(),
         estimatedDeliveryDate: new Date(),
@@ -176,32 +181,20 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
            />
            <FormField
               control={form.control}
-              name="date"
+              name="deliveryLocationId"
               render={({ field }) => (
-                <FormItem className="flex flex-col">
-                  <FormLabel>Fecha de Creación</FormLabel>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <FormControl>
-                        <Button
-                          variant={"outline"}
-                          className={cn(
-                            "w-full pl-3 text-left font-normal",
-                            !field.value && "text-muted-foreground"
-                          )}
-                           disabled
-                        >
-                          {field.value ? (
-                            format(field.value, "PPP", { locale: es })
-                          ) : (
-                            <span>Elige una fecha</span>
-                          )}
-                          <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                        </Button>
-                      </FormControl>
-                    </PopoverTrigger>
-                    {/* No PopoverContent as it's disabled */}
-                  </Popover>
+                <FormItem>
+                  <FormLabel>Almacén de Entrega</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly || locations.length === 0}>
+                    <FormControl>
+                      <SelectTrigger>
+                        <SelectValue placeholder={locations.length > 0 ? "Selecciona un almacén" : "Crea un almacén primero"} />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {locations.map(loc => <SelectItem key={loc.id} value={loc.id}>{loc.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
                   <FormMessage />
                 </FormItem>
               )}
@@ -499,5 +492,3 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     </Form>
   );
 }
-
-    
