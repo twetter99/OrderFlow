@@ -9,7 +9,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <div className="flex flex-col items-center justify-center mb-8">
             <div className="mb-4">
-                <Image src="/images/logo.png" alt="OrderFlow Logo" width={180} height={180} />
+                <Image src="/images/logo.png" alt="OrderFlow Logo" width={240} height={240} />
             </div>
           <h1 className="text-3xl font-bold font-headline text-center">
             Bienvenido a OrderFlow
