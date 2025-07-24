@@ -73,7 +73,7 @@ export default function DespatchPrintPage() {
         <div className="flex items-center gap-4">
           <Image src="/images/logo.png" alt="OrderFlow Logo" width={60} height={60} />
           <div>
-            <h1 className="text-3xl font-bold">WINFIN</h1>
+            <h1 className="text-2xl font-bold">WINFIN</h1>
             <p className="text-sm">Moreras, 1, 28350 Ciempozuelos (Madrid)</p>
             <p className="text-sm">CIF: B05393632</p>
           </div>
