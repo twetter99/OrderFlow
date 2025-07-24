@@ -3,6 +3,7 @@
 "use client"
 
 import Link from "next/link"
+import Image from "next/image"
 import {
   Bell,
   Bot,
@@ -51,7 +52,7 @@ export function Header() {
               href="#"
               className="flex items-center gap-2 text-lg font-semibold mb-4"
             >
-              <Bot className="h-6 w-6" />
+              <Image src="/images/logo.png" alt="OrderFlow Logo" width={32} height={32} />
               <span>OrderFlow</span>
             </Link>
             <Link

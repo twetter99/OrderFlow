@@ -5,8 +5,9 @@ import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import type { PurchaseOrder, Supplier, Project, Location } from '@/lib/types';
-import { Bot, Loader2, Printer, AlertTriangle } from 'lucide-react';
+import { Loader2, Printer, AlertTriangle } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import Image from 'next/image';
 
 interface EnrichedPurchaseOrder extends PurchaseOrder {
   supplierDetails?: Supplier;
@@ -83,7 +84,7 @@ export default function PurchaseOrderPrintPage() {
       
       <header className="flex justify-between items-start pb-4 border-b-2 border-black">
         <div className="flex items-center gap-4">
-          <Bot className="h-12 w-12 text-blue-600" />
+          <Image src="/images/logo.png" alt="OrderFlow Logo" width={60} height={60} />
           <div>
             <h1 className="text-3xl font-bold">WINFIN</h1>
             <p className="text-sm">Moreras, 1, 28350 Ciempozuelos (Madrid)</p>

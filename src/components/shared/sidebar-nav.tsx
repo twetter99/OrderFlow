@@ -2,6 +2,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { 
     Bot, 
@@ -130,7 +131,7 @@ export function SidebarNav() {
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-secondary text-secondary-foreground">
       <div className="flex items-center gap-2 h-16 border-b border-white/10 px-6">
-        <Bot className="h-6 w-6" />
+        <Image src="/images/logo.png" alt="OrderFlow Logo" width={32} height={32} />
         <h1 className="text-lg font-bold font-headline">OrderFlow</h1>
       </div>
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
