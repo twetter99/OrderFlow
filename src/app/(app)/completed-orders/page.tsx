@@ -80,7 +80,10 @@ export default function CompletedOrdersPage() {
   }, []);
   
   const completedOrders = useMemo(() => {
-    return purchaseOrders.filter(order => order.status === 'Almacenada');
+    const finalStatuses: PurchaseOrder['status'][] = ['Recibida', 'Almacenada'];
+    return purchaseOrders
+      .filter(order => finalStatuses.includes(order.status))
+      .sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
   }, [purchaseOrders]);
 
   const handleDeleteTrigger = (order: PurchaseOrder) => {
@@ -178,7 +181,8 @@ export default function CompletedOrdersPage() {
                 <TableHead>ID de Orden</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Proyecto</TableHead>
-                <TableHead>Fecha de Almacenamiento</TableHead>
+                <TableHead>Fecha</TableHead>
+                <TableHead>Estado</TableHead>
                 <TableHead>Total</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
@@ -197,7 +201,19 @@ export default function CompletedOrdersPage() {
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                    <TableCell>{order.project}</TableCell>
-                  <TableCell>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant="outline"
+                      className={cn(
+                        "capitalize",
+                        order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
+                        order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
+                      )}
+                    >
+                      {order.status}
+                    </Badge>
+                  </TableCell>
                   <TableCell>
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
                   </TableCell>
@@ -231,7 +247,7 @@ export default function CompletedOrdersPage() {
               )})}
               {completedOrders.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                  <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                     No hay órdenes de compra completadas.
                   </TableCell>
                 </TableRow>
