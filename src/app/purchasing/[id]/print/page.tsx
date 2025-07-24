@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -134,7 +135,10 @@ export default function PurchaseOrderPrintPage() {
             <TableBody>
                 {order.items.map((item, index) => (
                     <TableRow key={index}>
-                        <TableCell className="font-medium">{item.itemName}</TableCell>
+                        <TableCell>
+                          <p className="font-medium">{item.itemName}</p>
+                          {item.itemSku && <p className="text-xs text-gray-500">SKU: {item.itemSku}</p>}
+                        </TableCell>
                         <TableCell className="text-right">{item.quantity}</TableCell>
                         <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
                         <TableCell className="text-right">{formatCurrency(item.price * item.quantity)}</TableCell>

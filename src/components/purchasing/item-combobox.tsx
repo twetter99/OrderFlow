@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -23,7 +24,7 @@ import type { InventoryItem } from "@/lib/types"
 interface ItemComboboxProps {
   inventoryItems: InventoryItem[];
   value: string;
-  onChange: (item: InventoryItem | { name: string, unitCost: number, unit: string, id: undefined, sku: undefined, type: 'Material' | 'Servicio' }) => void;
+  onChange: (item: InventoryItem | { name: string; sku: string; unitCost: number; unit: string; id: undefined; type: 'Material' | 'Servicio' }) => void;
   disabled?: boolean;
 }
 
@@ -40,7 +41,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
   const handleCreateNew = (inputValue: string) => {
      const trimmedValue = inputValue.trim();
      if (trimmedValue) {
-        onChange({ name: trimmedValue, unitCost: 0, unit: 'ud', id: undefined, sku: undefined, type: 'Material' });
+        onChange({ name: trimmedValue, sku: 'NUEVO', unitCost: 0, unit: 'ud', id: undefined, type: 'Material' });
      }
      setSearchValue(""); // Reset search value
      setOpen(false);
@@ -115,9 +116,12 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
                             )}
                         />
                         <div className="flex-grow">
-                            {item.name}
+                            <span className="font-medium">{item.name}</span>
                             <div className="text-xs text-muted-foreground">
-                                SKU: {item.sku} | Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}
+                                SKU: {item.sku}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                                Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}
                             </div>
                         </div>
                     </div>

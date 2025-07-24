@@ -49,6 +49,7 @@ const formSchema = z.object({
   rejectionReason: z.string().optional(),
   items: z.array(z.object({
     itemId: z.string().optional(), // Puede ser opcional si el nombre es la clave
+    itemSku: z.string().optional(),
     itemName: z.string().min(1, "El nombre es obligatorio."),
     quantity: z.coerce.number().min(1, "La cantidad debe ser >= 1."),
     price: z.coerce.number().min(0, "El precio es obligatorio."),
@@ -86,7 +87,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
-        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
+        items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: order.total || 0,
        }
     : {
@@ -98,7 +99,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         estimatedDeliveryDate: new Date(),
         status: "Pendiente de Aprobación" as const,
         rejectionReason: "",
-        items: [{ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
+        items: [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: 0,
       };
 
@@ -331,6 +332,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                         value={field.value}
                                                         onChange={(selectedItem) => {
                                                             form.setValue(`items.${index}.itemName`, selectedItem.name);
+                                                            form.setValue(`items.${index}.itemSku`, selectedItem.sku);
                                                             form.setValue(`items.${index}.price`, selectedItem.unitCost);
                                                             form.setValue(`items.${index}.itemId`, selectedItem.id);
                                                             form.setValue(`items.${index}.unit`, selectedItem.unit);
@@ -413,7 +415,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     variant="outline"
                     size="sm"
                     className="mt-4"
-                    onClick={() => append({ itemName: "", quantity: 1, price: 0, unit: "ud", type: 'Material', family: 'all' })}
+                    onClick={() => append({ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material', family: 'all' })}
                 >
                     <PlusCircle className="mr-2 h-4 w-4" />
                     Añadir Fila

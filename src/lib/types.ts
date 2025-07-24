@@ -48,6 +48,7 @@ export type InventoryItem = {
 
 export type PurchaseOrderItem = {
   itemId?: string;
+  itemSku?: string;
   itemName: string;
   quantity: number;
   price: number;
