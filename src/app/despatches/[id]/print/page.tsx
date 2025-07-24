@@ -73,7 +73,8 @@ export default function DespatchPrintPage() {
           <Bot className="h-12 w-12 text-blue-600" />
           <div>
             <h1 className="text-3xl font-bold">WINFIN</h1>
-            <p className="text-sm">Soluciones de Automatización y Logística</p>
+            <p className="text-sm">Moreras, 1, 28350 Ciempozuelos (Madrid)</p>
+            <p className="text-sm">CIF: B05393632</p>
           </div>
         </div>
         <div className="text-right">
