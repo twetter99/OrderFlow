@@ -83,12 +83,11 @@ export default function PurchaseOrderPrintPage() {
       `}</style>
       
       <header className="flex justify-between items-start pb-4 border-b-2 border-black">
-        <div className="flex items-center gap-4">
-          <Image src="/images/logo.png" alt="OrderFlow Logo" width={60} height={60} />
-          <div>
-            <h1 className="text-2xl font-bold">WINFIN</h1>
-            <p className="text-sm">Moreras, 1, 28350 Ciempozuelos (Madrid)</p>
-            <p className="text-sm">CIF: B05393632</p>
+        <div>
+          <Image src="/images/logo.png" alt="OrderFlow Logo" width={180} height={40} />
+          <div className="mt-2 text-sm">
+            <p>Moreras, 1, 28350 Ciempozuelos (Madrid)</p>
+            <p>CIF: B05393632</p>
           </div>
         </div>
         <div className="text-right">
