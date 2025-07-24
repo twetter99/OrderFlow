@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import Link from "next/link";
@@ -30,6 +31,7 @@ import {
     Banknote,
     QrCode,
     ShieldCheck,
+    Anchor,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -68,7 +70,8 @@ const navGroups = [
         subItems: [
           { href: "/inventory", label: "Inventario", icon: Warehouse },
           { href: "/locations", label: "Almacenes", icon: Building2 },
-          { href: "/receptions", label: "Recepciones", icon: QrCode },
+          { href: "/receptions", label: "Recepciones", icon: Anchor },
+          { href: "/despatches", label: "Despachos", icon: QrCode },
         ]
       },
       {

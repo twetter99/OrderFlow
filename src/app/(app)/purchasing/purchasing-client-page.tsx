@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -72,6 +72,7 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -109,6 +110,7 @@ type SortDescriptor = {
 };
 
 export function PurchasingClientPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -130,6 +132,7 @@ export function PurchasingClientPage() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isReceptionAlertOpen, setIsReceptionAlertOpen] = useState(false);
   const [pinValue, setPinValue] = useState('');
   
   const [orderToProcess, setOrderToProcess] = useState<{ id: string; status: PurchaseOrder['status'] } | null>(null);
@@ -301,6 +304,11 @@ export function PurchasingClientPage() {
   };
   
   const handleStatusChange = async (id: string, currentStatus: PurchaseOrder['status'], newStatus: PurchaseOrder['status']) => {
+    if (newStatus === 'Recibida') {
+        setIsReceptionAlertOpen(true);
+        return;
+    }
+
     if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(newStatus)) {
         toast({
             variant: "destructive",
@@ -781,6 +789,23 @@ export function PurchasingClientPage() {
         </DialogContent>
       </Dialog>
       
+      <AlertDialog open={isReceptionAlertOpen} onOpenChange={setIsReceptionAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><Anchor className="h-5 w-5 text-primary"/>Proceso de Recepción</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para garantizar un control de stock preciso, las recepciones de material deben realizarse desde el módulo específico de "Recepciones". ¿Deseas ir ahora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/receptions')}>
+              Ir a Recepciones
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}

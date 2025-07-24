@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import {
   Table,
   TableBody,
@@ -19,9 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { purchaseOrders as initialPurchaseOrders, inventory as initialInventory, locations, inventoryLocations as initialInventoryLocations } from "@/lib/data";
 import { cn } from "@/lib/utils";
-import { QrCode } from "lucide-react";
+import { QrCode, Anchor } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,18 +29,34 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { InventoryItem, PurchaseOrder, InventoryLocation } from "@/lib/types";
+import type { InventoryItem, PurchaseOrder, InventoryLocation, Location } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
+import { collection, onSnapshot, doc, writeBatch, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>(initialPurchaseOrders);
-  const [inventory, setInventory] = useState<InventoryItem[]>(initialInventory);
-  const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>(initialInventoryLocations);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+
+  useEffect(() => {
+    const unsubPO = onSnapshot(collection(db, 'purchaseOrders'), (snapshot) => {
+        setPurchaseOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder)));
+        setLoading(false);
+    });
+     const unsubLocations = onSnapshot(collection(db, 'locations'), (snapshot) => {
+        setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location)));
+    });
+    return () => {
+        unsubPO();
+        unsubLocations();
+    }
+  }, []);
 
   const ordersToReceive = useMemo(() => {
     return purchaseOrders.filter(o => 
@@ -53,41 +69,58 @@ export default function ReceptionsPage() {
     setIsChecklistOpen(true);
   };
   
-  const handleUpdateOrderStatus = (orderId: string, status: PurchaseOrder['status'], receivingLocationId?: string, receivedItems?: { itemId: string; quantity: number }[]) => {
-    const orderToUpdate = purchaseOrders.find(o => o.id === orderId);
-    if (!orderToUpdate) return;
-    
-    // Update Inventory
-    let updatedInventoryLocations = [...inventoryLocations];
-    if (status === 'Recibida' && receivingLocationId && receivedItems) {
-      
-      receivedItems.forEach(itemToReceive => {
-          const locationIndex = updatedInventoryLocations.findIndex(
-              loc => loc.itemId === itemToReceive.itemId && loc.locationId === receivingLocationId
-          );
-
-          if (locationIndex > -1) {
-              updatedInventoryLocations[locationIndex].quantity += itemToReceive.quantity;
-          } else {
-              updatedInventoryLocations.push({
-                  id: `INVLOC-${Date.now()}-${itemToReceive.itemId}`,
-                  itemId: itemToReceive.itemId,
-                  locationId: receivingLocationId,
-                  quantity: itemToReceive.quantity
-              });
-          }
-      });
-      
-      setInventoryLocations(updatedInventoryLocations);
+  const handleUpdateOrderStatus = async (orderId: string, status: PurchaseOrder['status'], receivingLocationId?: string, receivedItems?: { itemId: string; quantity: number }[]) => {
+    if (status !== 'Recibida' || !receivingLocationId || !receivedItems) {
+        // Handle other status updates if necessary, or just return.
+        // For now, this function is only for reception.
+        return;
     }
-    
-    setPurchaseOrders(prevOrders => prevOrders.map(o => o.id === orderId ? {...o, status: status} : o));
-    
-    toast({
-        title: "Orden Actualizada",
-        description: `La orden ${orderToUpdate.orderNumber} ha sido marcada como ${status}. El inventario en la ubicación seleccionada ha sido actualizado.`
+
+    const batch = writeBatch(db);
+
+    // 1. Update Purchase Order Status
+    const poRef = doc(db, "purchaseOrders", orderId);
+    batch.update(poRef, { status: status, statusHistory: [...(purchaseOrders.find(po => po.id === orderId)?.statusHistory || []), { status: status, date: Timestamp.now() }] });
+
+    // 2. Update Inventory in the selected location
+    const inventoryUpdates = receivedItems.map(async (itemToReceive) => {
+        const q = collection(db, "inventoryLocations");
+        const querySnapshot = await getDocs(q); // In a real app, query directly: where("itemId", "==", itemToReceive.itemId), where("locationId", "==", receivingLocationId)
+        const docToUpdate = querySnapshot.docs.find(d => d.data().itemId === itemToReceive.itemId && d.data().locationId === receivingLocationId);
+
+        if (docToUpdate) {
+            const newQuantity = docToUpdate.data().quantity + itemToReceive.quantity;
+            batch.update(docToUpdate.ref, { quantity: newQuantity });
+        } else {
+            const newDocRef = doc(collection(db, "inventoryLocations"));
+            batch.set(newDocRef, { 
+                itemId: itemToReceive.itemId,
+                locationId: receivingLocationId,
+                quantity: itemToReceive.quantity 
+            });
+        }
     });
-    setIsChecklistOpen(false);
+
+    try {
+        await Promise.all(inventoryUpdates);
+        await batch.commit();
+        toast({
+            title: "Recepción Confirmada",
+            description: `La orden ${selectedOrder?.orderNumber} ha sido marcada como "Recibida" y el stock ha sido actualizado.`
+        });
+        setIsChecklistOpen(false);
+    } catch (error) {
+        console.error("Error receiving order: ", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo procesar la recepción."
+        })
+    }
+  }
+
+  if (loading) {
+    return <div>Cargando recepciones...</div>
   }
 
   return (
@@ -123,7 +156,7 @@ export default function ReceptionsPage() {
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.orderNumber}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toLocaleDateString() : new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -134,7 +167,7 @@ export default function ReceptionsPage() {
                   </TableCell>
                   <TableCell className="text-right">
                       <Button variant="outline" size="sm" onClick={() => handleVerifyClick(order)}>
-                        <QrCode className="mr-2 h-4 w-4" />
+                        <Anchor className="mr-2 h-4 w-4" />
                         Verificar Recepción
                       </Button>
                     </TableCell>
