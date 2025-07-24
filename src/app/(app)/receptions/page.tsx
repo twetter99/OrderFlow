@@ -32,7 +32,7 @@ import {
 import type { InventoryItem, PurchaseOrder, InventoryLocation, Location } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
-import { collection, onSnapshot, doc, writeBatch, Timestamp } from "firebase/firestore";
+import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
 export default function ReceptionsPage() {
