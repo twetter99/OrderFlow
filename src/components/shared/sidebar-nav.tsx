@@ -130,9 +130,14 @@ export function SidebarNav() {
 
   return (
     <aside className="hidden md:flex flex-col w-64 border-r bg-secondary text-secondary-foreground">
-      <div className="flex items-center gap-2 h-16 border-b border-white/10 px-6">
-        <Image src="/images/logo.png" alt="OrderFlow Logo" width={32} height={32} />
-        <h1 className="text-lg font-bold font-headline">OrderFlow</h1>
+      <div className="flex items-center justify-center h-16 border-b border-white/10 px-4">
+        <Image 
+          src="/images/logo_blanco.png" 
+          alt="OrderFlow Logo" 
+          width={180} 
+          height={40}
+          priority
+        />
       </div>
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
         {navGroups.map((group, index) => (
