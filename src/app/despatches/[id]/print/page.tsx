@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { deliveryNotes, clients, projects, inventory, locations } from '@/lib/data';
 import type { DeliveryNote, Client, Project, InventoryItem, Location } from '@/lib/types';
-import { Bot, Printer } from 'lucide-react';
+import { Bot, Printer, Building, User, FolderKanban } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 
 interface EnrichedDeliveryNote extends DeliveryNote {
@@ -85,17 +85,25 @@ export default function DespatchPrintPage() {
       </header>
       
       <section className="grid grid-cols-2 gap-8 my-8">
-        <div>
-            <h3 className="text-sm uppercase font-bold text-gray-500 mb-2">Cliente</h3>
-            <p className="font-semibold">{note.client?.name}</p>
-            <p>{note.client?.contactPerson}</p>
-            <p>{note.client?.email}</p>
-            <p>{note.client?.phone}</p>
+        <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+            <h3 className="text-sm uppercase font-bold text-gray-500 mb-2 flex items-center gap-2">
+                <Building className="h-4 w-4"/>
+                Cliente
+            </h3>
+            <p className="font-semibold text-base">{note.client?.name}</p>
+            <div className="text-sm text-gray-700 mt-2">
+                <p className="flex items-center gap-2"><User className="h-3 w-3"/>{note.client?.contactPerson}</p>
+                <p>{note.client?.email}</p>
+                <p>{note.client?.phone}</p>
+            </div>
         </div>
-         <div>
-            <h3 className="text-sm uppercase font-bold text-gray-500 mb-2">Proyecto de Destino</h3>
-            <p className="font-semibold">{note.project?.name}</p>
-            <p>ID: {note.project?.id}</p>
+         <div className="bg-slate-50 border border-slate-200 p-4 rounded-lg">
+            <h3 className="text-sm uppercase font-bold text-gray-500 mb-2 flex items-center gap-2">
+                <FolderKanban className="h-4 w-4" />
+                Proyecto de Destino
+            </h3>
+            <p className="font-semibold text-base">{note.project?.name}</p>
+            <p className="text-sm text-gray-700">ID: {note.project?.id}</p>
             <h3 className="text-sm uppercase font-bold text-gray-500 mt-4 mb-2">Almacén de Origen</h3>
             <p className="font-semibold">{note.location?.name}</p>
         </div>

@@ -105,18 +105,18 @@ export default function PurchaseOrderPrintPage() {
             <p>{order.supplierDetails?.email}</p>
             <p>{order.supplierDetails?.phone}</p>
         </div>
-         <div>
-            <h3 className="text-sm uppercase font-bold text-gray-500 mb-2">Enviar a</h3>
-            <p className="font-semibold">{deliveryLocation?.name}</p>
+         <div className="bg-yellow-50 border-2 border-dashed border-yellow-300 p-4 rounded-lg space-y-2">
+            <h3 className="text-sm uppercase font-bold text-gray-600">⚠️ ENTREGA EXCLUSIVAMENTE EN:</h3>
+            <p className="font-bold text-lg uppercase">📍 {deliveryLocation?.name}</p>
             {deliveryLocation?.type === 'physical' && (
-              <>
+              <div className="text-sm text-gray-700">
                 <p>{deliveryLocation.street}, {deliveryLocation.number}</p>
                 <p>{deliveryLocation.postalCode}, {deliveryLocation.city}</p>
                 <p>{deliveryLocation.province}</p>
-              </>
+              </div>
             )}
              {deliveryLocation?.type === 'mobile' && (
-                <p>Almacén móvil. Contactar para coordinar entrega.</p>
+                <p className="text-sm text-gray-700">Almacén móvil. Contactar para coordinar entrega.</p>
              )}
         </div>
       </section>
