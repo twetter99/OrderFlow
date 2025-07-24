@@ -118,7 +118,7 @@ export function SupplierForm({ supplier, onSave, onCancel }: SupplierFormProps) 
               <FormItem>
                 <FormLabel>Calificación de Entrega</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.1" min="0" max="5" placeholder="4.5" {...field} />
+                  <Input type="number" step="0.1" min="0" max="5" placeholder="4.5" {...field} onFocus={(e) => e.target.select()} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -131,7 +131,7 @@ export function SupplierForm({ supplier, onSave, onCancel }: SupplierFormProps) 
               <FormItem>
                 <FormLabel>Calificación de Calidad</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.1" min="0" max="5" placeholder="4.8" {...field} />
+                  <Input type="number" step="0.1" min="0" max="5" placeholder="4.8" {...field} onFocus={(e) => e.target.select()} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

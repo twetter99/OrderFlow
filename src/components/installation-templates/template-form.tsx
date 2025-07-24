@@ -144,7 +144,7 @@ export function TemplateForm({ template, inventoryItems, onSave, onCancel }: Tem
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Tiempo Estimado (h)</FormLabel>
-                  <FormControl><Input type="number" step="0.5" {...field} /></FormControl>
+                  <FormControl><Input type="number" step="0.5" {...field} onFocus={(e) => e.target.select()} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -155,7 +155,7 @@ export function TemplateForm({ template, inventoryItems, onSave, onCancel }: Tem
               render={({ field }) => (
                 <FormItem>
                   <FormLabel>Técnicos Req.</FormLabel>
-                  <FormControl><Input type="number" {...field} /></FormControl>
+                  <FormControl><Input type="number" {...field} onFocus={(e) => e.target.select()} /></FormControl>
                   <FormMessage />
                 </FormItem>
               )}
@@ -197,7 +197,7 @@ export function TemplateForm({ template, inventoryItems, onSave, onCancel }: Tem
                                     </TableCell>
                                     <TableCell>
                                         <FormField control={form.control} name={`materiales.${index}.cantidad_estandar`} render={({ field }) => (
-                                            <FormItem><FormControl><Input type="number" step="0.1" {...field} /></FormControl><FormMessage/></FormItem>
+                                            <FormItem><FormControl><Input type="number" step="0.1" {...field} onFocus={(e) => e.target.select()} /></FormControl><FormMessage/></FormItem>
                                         )} />
                                     </TableCell>
                                     <TableCell>

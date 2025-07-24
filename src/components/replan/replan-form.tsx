@@ -164,7 +164,7 @@ export function ReplanForm({ replan, projects, templates, technicians, inventory
             <h3 className="text-lg font-medium">Materiales y Tiempos Ajustados</h3>
              <div className="flex items-center gap-4 pt-2">
                 <FormField control={form.control} name="tiempo_estimado_ajustado" render={({ field }) => (
-                    <FormItem className="flex-1"><FormLabel>Tiempo Estimado (h)</FormLabel><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                    <FormItem className="flex-1"><FormLabel>Tiempo Estimado (h)</FormLabel><FormControl><Input type="number" {...field} onFocus={(e) => e.target.select()} /></FormControl><FormMessage/></FormItem>
                 )}/>
             </div>
              <Table>
@@ -182,7 +182,7 @@ export function ReplanForm({ replan, projects, templates, technicians, inventory
                             </TableCell>
                             <TableCell>
                                 <FormField control={form.control} name={`materiales.${index}.cantidad_prevista`} render={({ field }) => (
-                                    <FormItem><FormControl><Input type="number" {...field}/></FormControl><FormMessage/></FormItem>
+                                    <FormItem><FormControl><Input type="number" {...field} onFocus={(e) => e.target.select()} /></FormControl><FormMessage/></FormItem>
                                 )}/>
                             </TableCell>
                             <TableCell>

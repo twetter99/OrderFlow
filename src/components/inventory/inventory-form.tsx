@@ -340,7 +340,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <FormItem>
                     <FormLabel>Costo Unitario (€)</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.01" placeholder="350,00" {...field} />
+                        <Input type="number" step="0.01" placeholder="350,00" {...field} onFocus={(e) => e.target.select()} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -359,7 +359,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                         <FormItem>
                         <FormLabel>Costo/Tarifa (€)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="75,00" {...field} />
+                            <Input type="number" step="0.01" placeholder="75,00" {...field} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -436,7 +436,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                             name={`components.${index}.quantity`}
                                             render={({ field }) => (
                                                 <FormItem>
-                                                    <Input type="number" {...field} />
+                                                    <Input type="number" {...field} onFocus={(e) => e.target.select()} />
                                                     <FormMessage/>
                                                 </FormItem>
                                             )}

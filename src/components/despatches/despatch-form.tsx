@@ -250,7 +250,7 @@ export function DespatchForm({ note, clients, projects, inventoryItems, location
                                     name={`items.${index}.quantity`}
                                     render={({ field }) => (
                                         <FormItem>
-                                            <Input type="number" {...field} disabled={isReadOnly} />
+                                            <Input type="number" {...field} disabled={isReadOnly} onFocus={e => e.target.select()} />
                                             <FormMessage />
                                         </FormItem>
                                     )}

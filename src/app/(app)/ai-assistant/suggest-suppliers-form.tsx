@@ -43,7 +43,7 @@ export function SuggestSuppliersForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="quantity">Cantidad</Label>
-            <Input id="quantity" name="quantity" type="number" placeholder="p. ej., 100" />
+            <Input id="quantity" name="quantity" type="number" placeholder="p. ej., 100" onFocus={(e) => e.target.select()} />
           </div>
         </CardContent>
         <CardFooter className="flex justify-between">

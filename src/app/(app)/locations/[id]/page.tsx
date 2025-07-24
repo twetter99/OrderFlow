@@ -35,7 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TransferForm } from "@/components/inventory-locations/transfer-form";
 import { db } from "@/lib/firebase";
-import { doc, onSnapshot } from "firebase/firestore";
+import { collection, doc, onSnapshot } from "firebase/firestore";
 
 function AddStockForm({
     location,
@@ -83,6 +83,7 @@ function AddStockForm({
                     type="number"
                     value={quantity}
                     onChange={(e) => setQuantity(Number(e.target.value))}
+                    onFocus={(e) => e.target.select()}
                     min="1"
                 />
             </div>

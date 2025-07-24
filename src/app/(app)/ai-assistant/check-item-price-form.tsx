@@ -42,7 +42,7 @@ export function CheckItemPriceForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="itemPrice">Precio del Artículo (€)</Label>
-            <Input id="itemPrice" name="itemPrice" type="number" step="0.01" placeholder="p. ej., 150,00" />
+            <Input id="itemPrice" name="itemPrice" type="number" step="0.01" placeholder="p. ej., 150,00" onFocus={(e) => e.target.select()} />
           </div>
           <div className="space-y-2">
             <Label htmlFor="supplierName">Nombre del Proveedor</Label>

@@ -135,6 +135,7 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                                       type="number"
                                       value={item.scanned}
                                       onChange={(e) => handleManualChange(item.id, parseInt(e.target.value, 10) || 0)}
+                                      onFocus={(e) => e.target.select()}
                                       className="w-20 text-center"
                                       disabled={!receivingLocationId}
                                     />

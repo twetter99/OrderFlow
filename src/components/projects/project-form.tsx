@@ -377,7 +377,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Presupuesto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="50000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                        <Input type="number" placeholder="50000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -390,7 +390,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Gasto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="23000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                        <Input type="number" placeholder="23000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -403,7 +403,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Margen Previsto (%)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} />
+                        <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>

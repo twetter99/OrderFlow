@@ -155,7 +155,7 @@ export function TransferForm({ inventoryItems, locations, inventoryLocations, on
                 <FormItem>
                 <FormLabel>Cantidad a Transferir</FormLabel>
                 <FormControl>
-                    <Input type="number" {...field} disabled={!selectedFromLocationId} min="1" max={availableQuantity} />
+                    <Input type="number" {...field} disabled={!selectedFromLocationId} min="1" max={availableQuantity} onFocus={e => e.target.select()} />
                 </FormControl>
                 {selectedFromLocationId && <FormMessage>Disponible: {availableQuantity}</FormMessage>}
                 </FormItem>
