@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -22,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -92,7 +90,7 @@ const convertTimestamps = (order: any): PurchaseOrder => {
 };
 
 
-const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"];
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
@@ -101,6 +99,7 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
     'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
     'Enviada al Proveedor': ['Recibida'],
     'Recibida': ['Almacenada'],
+    'Recibida Parcialmente': ['Almacenada'],
     'Almacenada': [],
 };
 
@@ -409,7 +408,7 @@ export function PurchasingClientPage() {
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
-    if (order.status === 'Almacenada' || order.status === 'Recibida') {
+    if (order.status === 'Almacenada' || order.status === 'Recibida' || order.status === 'Recibida Parcialmente') {
         return { text: 'Entregado', color: 'bg-green-100 text-green-800 border-green-200' };
     }
     const deliveryDate = new Date(order.estimatedDeliveryDate);
@@ -462,7 +461,7 @@ export function PurchasingClientPage() {
   const getModalTitle = () => {
     if (!selectedOrder) return "Crear Nuevo Pedido de Compra";
     const orderNumber = 'orderNumber' in selectedOrder ? selectedOrder.orderNumber : '';
-    const isEditable = selectedOrder.status === 'Pendiente de Aprobación' || selectedOrder.status === 'Aprobada';
+    const isEditable = !('id' in selectedOrder) || selectedOrder.status === 'Pendiente de Aprobación' || selectedOrder.status === 'Aprobada';
 
     if ('id' in selectedOrder && isEditable) {
         return `Editar Pedido ${orderNumber}`;
@@ -623,7 +622,21 @@ export function PurchasingClientPage() {
                       aria-label={`Seleccionar orden ${order.orderNumber}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                        <span>{order.orderNumber || order.id}</span>
+                        {order.originalOrderId && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Link2 className="h-4 w-4 text-muted-foreground"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Pendiente de la orden {order.originalOrderId}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    </div>
+                  </TableCell>
                   <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.projectName}</TableCell>
@@ -636,6 +649,7 @@ export function PurchasingClientPage() {
                           order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
                           order.status === "Pendiente de Aprobación" && "bg-orange-100 text-orange-800 border-orange-200 animate-pulse",
                           order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
+                          order.status === "Recibida Parcialmente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
                           order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
                           order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
                           order.status === "Rechazado" && "bg-destructive/20 text-destructive border-destructive/20"
