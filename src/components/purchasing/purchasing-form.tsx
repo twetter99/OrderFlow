@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -74,7 +73,7 @@ interface PurchasingFormProps {
 }
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects, locations }: PurchasingFormProps) {
-  const isEditable = order?.status === 'Pendiente de Aprobación' || order?.status === 'Aprobada';
+  const isEditable = !order || !('id' in order) || order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
   const isReadOnly = order && 'id' in order ? !isEditable : false;
   const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
   
@@ -259,8 +258,8 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                         <TableRow>
                             <TableHead className="w-[10%]">Tipo</TableHead>
                             <TableHead className="w-[20%]">Familia</TableHead>
-                            <TableHead className="w-[25%]">Descripción</TableHead>
-                            <TableHead className="w-[10%]">Cantidad</TableHead>
+                            <TableHead className="w-[20%]">Descripción</TableHead>
+                            <TableHead className="w-[15%]">Cantidad</TableHead>
                             <TableHead className="w-[10%]">Unidad</TableHead>
                             <TableHead className="w-[15%]">Precio Unitario (€)</TableHead>
                             {!isReadOnly && <TableHead className="w-[10%] text-right"></TableHead>}
