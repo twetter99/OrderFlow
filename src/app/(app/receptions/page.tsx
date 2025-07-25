@@ -21,7 +21,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { QrCode, Anchor } from "lucide-react";
+import { QrCode, Anchor, Link2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -32,9 +32,10 @@ import {
 import type { InventoryItem, PurchaseOrder, InventoryLocation, Location, PurchaseOrderItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
-import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion } from "firebase/firestore";
+import { collection, onSnapshot, doc, writeBatch, Timestamp, getDoc, getDocs, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { createPurchaseOrder } from "../purchasing/actions";
+import { Tooltip, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
@@ -86,11 +87,14 @@ export default function ReceptionsPage() {
     receptionNotes: string,
     isPartial: boolean
   ) => {
-    const originalOrder = purchaseOrders.find(po => po.id === orderId);
-    if (!originalOrder) {
+    const orderDocRef = doc(db, "purchaseOrders", orderId);
+    const orderSnap = await getDoc(orderDocRef);
+
+    if (!orderSnap.exists()) {
         toast({ variant: "destructive", title: "Error", description: "No se encontró la orden de compra original."});
         return;
     }
+    const originalOrder = orderSnap.data() as PurchaseOrder;
 
     const batch = writeBatch(db);
     const poRef = doc(db, "purchaseOrders", orderId);
@@ -138,20 +142,22 @@ export default function ReceptionsPage() {
             
             const cleanOriginalOrder = {
               ...originalOrder,
-              date: new Date(originalOrder.date).toISOString(),
-              estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate).toISOString(),
+              date: originalOrder.date,
+              estimatedDeliveryDate: originalOrder.estimatedDeliveryDate,
               statusHistory: [],
             };
 
             const backorderData: Partial<PurchaseOrder> = {
                 ...cleanOriginalOrder,
-                date: new Date(),
-                estimatedDeliveryDate: new Date(),
+                status: 'Enviada al Proveedor', // Directamente a recepciones
+                originalOrderId: orderId,
                 items: pendingItems,
-                status: 'Pendiente de Aprobación',
-                originalOrderId: originalOrder.id,
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
-                statusHistory: [{ status: 'Pendiente de Aprobación', date: new Date(), comment: `Backorder de la orden ${originalOrder.orderNumber}` }]
+                statusHistory: [{ 
+                    status: 'Enviada al Proveedor', 
+                    date: new Date(), 
+                    comment: `Backorder de la orden ${originalOrder.orderNumber}. Notas originales: ${receptionNotes}` 
+                }]
             };
             delete backorderData.id;
             delete backorderData.orderNumber;
@@ -217,6 +223,7 @@ export default function ReceptionsPage() {
             </CardDescription>
         </CardHeader>
         <CardContent className="pt-6">
+        <TooltipProvider>
           <Table>
             <TableHeader>
               <TableRow>
@@ -230,7 +237,21 @@ export default function ReceptionsPage() {
             <TableBody>
               {ordersToReceive.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell className="font-medium">{order.orderNumber}</TableCell>
+                  <TableCell className="font-medium">
+                     <div className="flex items-center gap-2">
+                        <span>{order.orderNumber}</span>
+                        {order.originalOrderId && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Link2 className="h-4 w-4 text-muted-foreground"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Material pendiente de la orden {order.originalOrderId}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    </div>
+                  </TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toLocaleDateString() : new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
                   <TableCell>
@@ -258,6 +279,7 @@ export default function ReceptionsPage() {
                )}
             </TableBody>
           </Table>
+          </TooltipProvider>
         </CardContent>
       </Card>
       
