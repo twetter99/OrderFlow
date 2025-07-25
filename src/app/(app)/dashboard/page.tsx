@@ -39,6 +39,10 @@ const convertPurchaseOrderTimestamps = (order: any): PurchaseOrder => {
       id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
+      statusHistory: (order.statusHistory || []).map((h: any) => ({
+            ...h,
+            date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
+      }))
     };
 };
 
