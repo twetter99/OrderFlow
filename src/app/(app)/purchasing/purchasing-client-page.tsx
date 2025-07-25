@@ -621,7 +621,7 @@ export function PurchasingClientPage() {
                         )}
                     </div>
                   </TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.projectName}</TableCell>
                   <TableCell>
@@ -655,7 +655,7 @@ export function PurchasingClientPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                        <span>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</span>
+                        <span>{new Date(order.estimatedDeliveryDate as string).toLocaleDateString()}</span>
                         <Badge variant="outline" className={cn("capitalize w-fit", deliveryStatus.color)}>
                             {deliveryStatus.text}
                         </Badge>
