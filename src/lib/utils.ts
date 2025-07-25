@@ -8,14 +8,16 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const convertPurchaseOrderTimestamps = (orderData: any): PurchaseOrder => {
+  const convertedHistory = (orderData.statusHistory || []).map((h: any) => ({
+      ...h,
+      date: h.date?.toDate ? h.date.toDate().toISOString() : h.date,
+  }));
+
   return {
     ...orderData,
     id: orderData.id,
-    date: orderData.date instanceof Timestamp ? orderData.date.toDate().toISOString() : orderData.date,
-    estimatedDeliveryDate: orderData.estimatedDeliveryDate instanceof Timestamp ? orderData.estimatedDeliveryDate.toDate().toISOString() : orderData.estimatedDeliveryDate,
-    statusHistory: (orderData.statusHistory || []).map((h: any) => ({
-      ...h,
-      date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-    })),
+    date: orderData.date?.toDate ? orderData.date.toDate().toISOString() : orderData.date,
+    estimatedDeliveryDate: orderData.estimatedDeliveryDate?.toDate ? orderData.estimatedDeliveryDate.toDate().toISOString() : orderData.estimatedDeliveryDate,
+    statusHistory: convertedHistory,
   };
 };
