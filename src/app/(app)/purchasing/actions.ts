@@ -28,11 +28,11 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
       dataToSave.statusHistory = [{ status: data.status, date: Timestamp.now() }];
     }
 
-    if (data.date && !(data.date instanceof Timestamp)) {
-        dataToSave.date = Timestamp.fromDate(new Date(data.date as string));
+    if (data.date && (typeof data.date === 'string' || data.date instanceof Date)) {
+        dataToSave.date = Timestamp.fromDate(new Date(data.date));
     }
-    if (data.estimatedDeliveryDate && !(data.estimatedDeliveryDate instanceof Timestamp)) {
-        dataToSave.estimatedDeliveryDate = Timestamp.fromDate(new Date(data.estimatedDeliveryDate as string));
+    if (data.estimatedDeliveryDate && (typeof data.estimatedDeliveryDate === 'string' || data.estimatedDeliveryDate instanceof Date)) {
+        dataToSave.estimatedDeliveryDate = Timestamp.fromDate(new Date(data.estimatedDeliveryDate));
     }
     
     const docRef = await addDoc(poCollection, dataToSave);
@@ -132,3 +132,5 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
 }
 
 export { createPurchaseOrder };
+
+    
