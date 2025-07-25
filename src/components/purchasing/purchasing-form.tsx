@@ -74,7 +74,8 @@ interface PurchasingFormProps {
 }
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects, locations }: PurchasingFormProps) {
-  const isReadOnly = order && 'id' in order && !canApprove;
+  const isEditable = order?.status === 'Pendiente de Aprobación' || order?.status === 'Aprobada';
+  const isReadOnly = order && 'id' in order ? !isEditable : false;
   const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
   
   const defaultValues = order
@@ -487,7 +488,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             {isReadOnly ? "Cerrar" : "Cancelar"}
           </Button>
           {!isReadOnly && (
-            <Button type="submit">Guardar Pedido</Button>
+            <Button type="submit">Guardar Cambios</Button>
           )}
         </div>
       </form>

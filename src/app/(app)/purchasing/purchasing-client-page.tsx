@@ -458,6 +458,20 @@ export function PurchasingClientPage() {
     }
     return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
   };
+  
+  const getModalTitle = () => {
+    if (!selectedOrder) return "Crear Nuevo Pedido de Compra";
+    const orderNumber = 'orderNumber' in selectedOrder ? selectedOrder.orderNumber : '';
+    const isEditable = selectedOrder.status === 'Pendiente de Aprobación' || selectedOrder.status === 'Aprobada';
+
+    if ('id' in selectedOrder && isEditable) {
+        return `Editar Pedido ${orderNumber}`;
+    }
+    if ('id' in selectedOrder) {
+        return `Detalles del Pedido ${orderNumber}`;
+    }
+    return "Crear Nuevo Pedido de Compra";
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -665,7 +679,7 @@ export function PurchasingClientPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(order)}>
                             <Eye className="mr-2 h-4 w-4"/>
-                            {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
+                            Ver Detalles
                           </DropdownMenuItem>
                           {isEditable && (
                             <DropdownMenuItem onClick={() => handleEditClick(order)}>
@@ -738,11 +752,11 @@ export function PurchasingClientPage() {
         <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder && ('id' in selectedOrder || 'items' in selectedOrder) ? (canApprove ? `Revisar Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}` : `Detalles del Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}`) : "Crear Nuevo Pedido de Compra"}
+                {getModalTitle()}
             </DialogTitle>
             <DialogDescription>
-              {selectedOrder
-                ? "Edita la información del pedido de compra."
+              {selectedOrder && 'id' in selectedOrder
+                ? "Revisa o modifica la información del pedido de compra."
                 : "Rellena los detalles para crear un nuevo pedido."}
             </DialogDescription>
           </DialogHeader>
