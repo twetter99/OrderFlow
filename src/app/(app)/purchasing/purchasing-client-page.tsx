@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -599,6 +599,7 @@ export function PurchasingClientPage() {
             <TableBody>
               {activePurchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
+                const isEditable = order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
                 return (
                 <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-orange-50 dark:bg-orange-900/20")}>
                   <TableCell padding="checkbox">
@@ -666,6 +667,12 @@ export function PurchasingClientPage() {
                             <Eye className="mr-2 h-4 w-4"/>
                             {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
                           </DropdownMenuItem>
+                          {isEditable && (
+                            <DropdownMenuItem onClick={() => handleEditClick(order)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
                             <History className="mr-2 h-4 w-4"/>
                             Trazabilidad
