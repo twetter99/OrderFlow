@@ -59,6 +59,7 @@ export type PurchaseOrderItem = {
 export type StatusHistoryEntry = {
   status: PurchaseOrder['status'];
   date: string | Timestamp;
+  comment?: string;
 };
 
 export type PurchaseOrder = {
@@ -67,13 +68,16 @@ export type PurchaseOrder = {
   project: string;
   supplier: string;
   deliveryLocationId: string;
-  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Almacenada' | 'Rechazado';
+  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Almacenada' | 'Rechazado';
   date: string | Timestamp;
   estimatedDeliveryDate: string | Timestamp;
   total: number;
   items: PurchaseOrderItem[];
   rejectionReason?: string;
+  receptionNotes?: string;
   statusHistory?: StatusHistoryEntry[];
+  originalOrderId?: string; // ID de la orden original si esta es un backorder
+  backorderIds?: string[]; // IDs de los backorders generados desde esta orden
 };
 
 export type Supplier = {

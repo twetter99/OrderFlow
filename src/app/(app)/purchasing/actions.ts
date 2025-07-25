@@ -7,24 +7,39 @@ import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs, getD
 import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
 
-export async function addPurchaseOrder(data: any) {
-  try {
+async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     const poCollection = collection(db, 'purchaseOrders');
     const poSnapshot = await getDocs(poCollection);
     const orderCount = poSnapshot.size;
-    const newOrderNumber = `WF-PO-${new Date().getFullYear()}-${String(orderCount + 1).padStart(3, '0')}`;
-    
-    const initialStatus = 'Pendiente de Aprobación';
+    const year = new Date().getFullYear();
+    const newOrderNumber = `WF-PO-${year}-${String(orderCount + 1).padStart(4, '0')}`;
 
     const dataToSave = {
         ...data,
         orderNumber: newOrderNumber,
-        date: Timestamp.fromDate(new Date(data.date)),
-        estimatedDeliveryDate: Timestamp.fromDate(new Date(data.estimatedDeliveryDate)),
+        statusHistory: data.statusHistory || [{ status: data.status, date: Timestamp.now() }],
+    };
+
+    if (data.date && !(data.date instanceof Timestamp)) {
+        dataToSave.date = Timestamp.fromDate(new Date(data.date as string));
+    }
+    if (data.estimatedDeliveryDate && !(data.estimatedDeliveryDate instanceof Timestamp)) {
+        dataToSave.estimatedDeliveryDate = Timestamp.fromDate(new Date(data.estimatedDeliveryDate as string));
+    }
+    
+    const docRef = await addDoc(poCollection, dataToSave);
+    return { ...dataToSave, id: docRef.id };
+}
+
+
+export async function addPurchaseOrder(data: any) {
+  try {
+    const initialStatus = 'Pendiente de Aprobación';
+    await createPurchaseOrder({
+        ...data,
         status: initialStatus,
         statusHistory: [{ status: initialStatus, date: Timestamp.now() }],
-    };
-    await addDoc(poCollection, dataToSave);
+    });
     revalidatePath('/purchasing');
     revalidatePath('/dashboard');
     return { success: true, message: 'Pedido de compra añadido correctamente.' };
@@ -107,3 +122,5 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
         return { success: false, message: 'No se pudo actualizar el estado del pedido.' };
     }
 }
+
+export { createPurchaseOrder };

@@ -2,7 +2,7 @@
 
 "use client";
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Check, AlertTriangle, QrCode, FileWarning, PackageCheck, Anchor, Warehouse } from "lucide-react";
@@ -13,13 +13,13 @@ import { Textarea } from '../ui/textarea';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '../ui/alert-dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
-type ItemStatus = 'pending' | 'ok' | 'discrepancy';
+type ItemStatus = 'pending' | 'ok' | 'discrepancy' | 'extra';
 
 interface ChecklistItem {
-    id: string; // This is now itemName for services, or itemId for materials
+    id: string; // This is now itemId for materials
     name: string;
     expected: number;
-    scanned: number;
+    received: number;
     status: ItemStatus;
     type: 'Material' | 'Servicio';
 }
@@ -27,11 +27,11 @@ interface ChecklistItem {
 interface ReceptionChecklistProps {
     order: PurchaseOrder;
     locations: Location[];
-    onUpdateStatus: (orderId: string, status: PurchaseOrder['status'], receivingLocationId?: string, receivedItems?: { itemId: string; quantity: number }[]) => void;
+    onConfirmReception: (orderId: string, receivingLocationId: string, receivedItems: { itemId: string; quantity: number }[], receptionNotes: string, isPartial: boolean) => void;
     onCancel: () => void;
 }
 
-export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel }: ReceptionChecklistProps) {
+export function ReceptionChecklist({ order, locations, onConfirmReception, onCancel }: ReceptionChecklistProps) {
     const itemsForReception = useMemo(() => 
         order.items
             .filter(item => item.type === 'Material' && item.itemId)
@@ -39,7 +39,7 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                 id: item.itemId!,
                 name: item.itemName,
                 expected: item.quantity,
-                scanned: 0,
+                received: 0,
                 status: 'pending' as ItemStatus,
                 type: item.type,
             })),
@@ -47,33 +47,29 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
     );
     
     const [items, setItems] = useState<ChecklistItem[]>(itemsForReception);
-    const [notes, setNotes] = useState('');
+    const [receptionNotes, setReceptionNotes] = useState('');
     const [receivingLocationId, setReceivingLocationId] = useState<string>("");
 
-    const handleScan = (itemId: string) => {
-        setItems(prevItems => prevItems.map(item => {
-            if (item.id === itemId && item.scanned < item.expected) {
-                const newScanned = item.scanned + 1;
-                const newStatus = newScanned === item.expected ? 'ok' : 'pending';
-                return { ...item, scanned: newScanned, status: newStatus };
-            }
-            return item;
-        }));
-    };
+    const updateItemStatus = (item: ChecklistItem): ItemStatus => {
+        if (item.received === item.expected) return 'ok';
+        if (item.received > 0) return 'discrepancy';
+        return 'pending';
+    }
     
-    const handleManualChange = (itemId: string, value: number) => {
+    const handleManualChange = (itemId: string, value: string) => {
+         const receivedQty = parseInt(value, 10);
+         if (isNaN(receivedQty)) return;
+
          setItems(prevItems => prevItems.map(item => {
             if (item.id === itemId) {
-                const newScanned = Math.max(0, value);
-                const newStatus: ItemStatus = newScanned === item.expected ? 'ok' : 'discrepancy';
-                return { ...item, scanned: newScanned, status: newStatus };
+                const updatedItem = { ...item, received: receivedQty };
+                return { ...updatedItem, status: updateItemStatus(updatedItem) };
             }
             return item;
         }));
     }
 
-    const allItemsOk = items.every(item => item.status === 'ok');
-    const hasDiscrepancy = items.some(item => item.status === 'discrepancy' || (item.scanned !== item.expected && item.status !== 'ok'));
+    const isPartialReception = items.some(item => item.received < item.expected && item.received >= 0);
 
     const getStatusIcon = (status: ItemStatus) => {
         switch (status) {
@@ -84,14 +80,14 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
     };
 
     const handleConfirm = () => {
-        const receivedItems = items
-            .filter(item => item.scanned > 0)
-            .map(item => ({ itemId: item.id, quantity: item.scanned }));
+        const receivedItemsForUpdate = items
+            .map(item => ({ itemId: item.id, quantity: item.received }));
 
-        onUpdateStatus(order.id, 'Recibida', receivingLocationId, receivedItems);
+        onConfirmReception(order.id, receivingLocationId, receivedItemsForUpdate, receptionNotes, isPartialReception);
     }
     
     const canConfirm = !!receivingLocationId && items.length > 0;
+    const allItemsOk = items.every(item => item.status === 'ok');
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -133,17 +129,14 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                                 <div className="flex items-center gap-2">
                                     <Input
                                       type="number"
-                                      value={item.scanned}
-                                      onChange={(e) => handleManualChange(item.id, parseInt(e.target.value, 10) || 0)}
+                                      value={item.received}
+                                      onChange={(e) => handleManualChange(item.id, e.target.value)}
                                       onFocus={(e) => e.target.select()}
                                       className="w-20 text-center"
                                       disabled={!receivingLocationId}
                                     />
                                     <span className="text-muted-foreground">/ {item.expected}</span>
                                 </div>
-                                <Button size="icon" variant="outline" onClick={() => handleScan(item.id)} disabled={!receivingLocationId}>
-                                    <QrCode className="w-5 h-5" />
-                                </Button>
                             </div>
                         )) : (
                             <div className="text-center py-8 text-muted-foreground">
@@ -165,25 +158,25 @@ export function ReceptionChecklist({ order, locations, onUpdateStatus, onCancel 
                             <Label htmlFor="notes">Notas de Recepción</Label>
                             <Textarea 
                                 id="notes" 
-                                placeholder="Añade cualquier observación sobre la entrega (ej. caja dañada, etc.)"
-                                value={notes}
-                                onChange={(e) => setNotes(e.target.value)}
+                                placeholder="Añade cualquier observación sobre la entrega (ej. caja dañada, motivo de la discrepancia, etc.)"
+                                value={receptionNotes}
+                                onChange={(e) => setReceptionNotes(e.target.value)}
                             />
                        </div>
                     </CardContent>
                     <CardFooter className="flex flex-col gap-2">
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                 <Button className="w-full" disabled={!canConfirm || !hasDiscrepancy}>
+                                 <Button className="w-full" disabled={!canConfirm || !isPartialReception}>
                                     <FileWarning className="mr-2 h-4 w-4" />
-                                    Recibir con Incidencia
+                                    Recibir Parcialmente
                                 </Button>
                             </AlertDialogTrigger>
                             <AlertDialogContent>
                                 <AlertDialogHeader>
-                                <AlertDialogTitle>Confirmar Recepción con Incidencia</AlertDialogTitle>
+                                <AlertDialogTitle>Confirmar Recepción Parcial</AlertDialogTitle>
                                 <AlertDialogDescription>
-                                    Se registrará una incidencia y se recibirá la cantidad escaneada. El inventario se actualizará y la orden se marcará como "Recibida". ¿Deseas continuar?
+                                    Se registrará una recepción parcial. El stock se actualizará con las cantidades introducidas y se generará una nueva orden de compra (backorder) con los artículos pendientes. ¿Deseas continuar?
                                 </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>
