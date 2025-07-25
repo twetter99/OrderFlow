@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -98,14 +99,15 @@ export default function ReceptionsPage() {
         toast({ variant: "destructive", title: "Error", description: "No se encontró la orden de compra original."});
         return;
     }
-    const originalOrderData = orderSnap.data() as PurchaseOrder;
+    const originalOrderData = orderSnap.data();
 
     // Convert timestamps to ISO strings immediately after fetching
     const originalOrder = {
         ...originalOrderData,
+        id: orderSnap.id,
         date: originalOrderData.date instanceof Timestamp ? originalOrderData.date.toDate().toISOString() : String(originalOrderData.date),
         estimatedDeliveryDate: originalOrderData.estimatedDeliveryDate instanceof Timestamp ? originalOrderData.estimatedDeliveryDate.toDate().toISOString() : String(originalOrderData.estimatedDeliveryDate)
-    };
+    } as PurchaseOrder;
 
 
     const batch = writeBatch(db);
@@ -154,9 +156,6 @@ export default function ReceptionsPage() {
             
             const cleanOriginalOrder = {
               ...originalOrder,
-              date: originalOrder.date,
-              estimatedDeliveryDate: originalOrder.estimatedDeliveryDate,
-              statusHistory: [],
             };
 
             const backorderData: Partial<PurchaseOrder> = {
