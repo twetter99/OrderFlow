@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -19,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
 import { MoreHorizontal, Printer, Eye, Trash2, History, Mail, Copy } from "lucide-react";
 import {
   DropdownMenu,
@@ -55,20 +56,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 
-
-const convertTimestamps = (order: any): PurchaseOrder => {
-    return {
-      ...order,
-      id: order.id,
-      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
-      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
-      statusHistory: (order.statusHistory || []).map((h: any) => ({
-        ...h,
-        date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      })),
-    };
-};
-
 export default function CompletedOrdersPage() {
   const { toast } = useToast();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -87,10 +74,7 @@ export default function CompletedOrdersPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id });
-        });
+        const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
         setPurchaseOrders(ordersData);
         setLoading(false);
     });
@@ -436,5 +420,4 @@ export default function CompletedOrdersPage() {
       </AlertDialog>
     </div>
   )
-
-    
+}

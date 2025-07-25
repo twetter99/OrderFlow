@@ -11,6 +11,7 @@ import { collection, query, where, onSnapshot, Timestamp } from "firebase/firest
 import { db } from '@/lib/firebase';
 import type { PurchaseOrder, InventoryItem, Project, InventoryLocation } from '@/lib/types';
 import { Skeleton } from '@/components/ui/skeleton';
+import { convertPurchaseOrderTimestamps } from '@/lib/utils';
 
 function DashboardSkeleton() {
   return (
@@ -32,19 +33,6 @@ function DashboardSkeleton() {
     </div>
   );
 }
-
-const convertPurchaseOrderTimestamps = (order: any): PurchaseOrder => {
-    return {
-      ...order,
-      id: order.id,
-      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
-      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
-      statusHistory: (order.statusHistory || []).map((h: any) => ({
-            ...h,
-            date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      }))
-    };
-};
 
 export default function DashboardPage() {
     const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -135,5 +123,3 @@ export default function DashboardPage() {
     </div>
   );
 }
-
-    

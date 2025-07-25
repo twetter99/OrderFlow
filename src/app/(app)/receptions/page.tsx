@@ -36,6 +36,7 @@ import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc,
 import { db } from "@/lib/firebase";
 import { createPurchaseOrder } from "../purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
+import { convertPurchaseOrderTimestamps } from "@/lib/utils";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
@@ -48,20 +49,7 @@ export default function ReceptionsPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, 'purchaseOrders'), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            const order: PurchaseOrder = {
-                ...data,
-                id: doc.id,
-                date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
-                estimatedDeliveryDate: data.estimatedDeliveryDate instanceof Timestamp ? data.estimatedDeliveryDate.toDate().toISOString() : data.estimatedDeliveryDate,
-                statusHistory: (data.statusHistory || []).map((h: any) => ({
-                    ...h,
-                    date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-                }))
-            } as PurchaseOrder;
-            return order;
-        });
+        const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
         setPurchaseOrders(ordersData);
         setLoading(false);
     });
@@ -99,15 +87,9 @@ export default function ReceptionsPage() {
         toast({ variant: "destructive", title: "Error", description: "No se encontró la orden de compra original."});
         return;
     }
-    const originalOrderData = orderSnap.data();
-
-    // Convert timestamps to ISO strings immediately after fetching
-    const originalOrder = {
-        ...originalOrderData,
-        id: orderSnap.id,
-        date: originalOrderData.date instanceof Timestamp ? originalOrderData.date.toDate().toISOString() : String(originalOrderData.date),
-        estimatedDeliveryDate: originalOrderData.estimatedDeliveryDate instanceof Timestamp ? originalOrderData.estimatedDeliveryDate.toDate().toISOString() : String(originalOrderData.estimatedDeliveryDate)
-    } as PurchaseOrder;
+    
+    // Immediately convert the fetched data to a plain object
+    const originalOrder = convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderSnap.data() });
 
 
     const batch = writeBatch(db);
@@ -154,19 +136,15 @@ export default function ReceptionsPage() {
         
         if (pendingItems.length > 0) {
             
-            const cleanOriginalOrder = {
-              ...originalOrder,
-            };
-
             const backorderData: Partial<PurchaseOrder> = {
-                ...cleanOriginalOrder,
+                ...originalOrder,
                 status: 'Enviada al Proveedor', // Directamente a recepciones
                 originalOrderId: orderId,
                 items: pendingItems,
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
-                    date: new Date(), 
+                    date: new Date().toISOString(), 
                     comment: `Backorder de la orden ${originalOrder.orderNumber}. Notas originales: ${receptionNotes}` 
                 }]
             };
@@ -174,7 +152,7 @@ export default function ReceptionsPage() {
             delete backorderData.orderNumber;
             delete backorderData.backorderIds;
 
-            const newBackorder = await createPurchaseOrder(backorderData as any);
+            const newBackorder = await createPurchaseOrder(backorderData);
             backorderId = newBackorder.id;
         }
     }
@@ -264,7 +242,7 @@ export default function ReceptionsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toLocaleDateString() : new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

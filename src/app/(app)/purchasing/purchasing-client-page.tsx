@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -20,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2 } from "lucide-react";
 import {
   DropdownMenu,
@@ -75,20 +76,6 @@ import { useRouter } from "next/navigation";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
-
-const convertTimestamps = (order: any): PurchaseOrder => {
-    return {
-      ...order,
-      id: order.id,
-      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
-      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
-      statusHistory: (order.statusHistory || []).map((h: any) => ({
-        ...h,
-        date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      }))
-    };
-};
-
 
 const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"];
 
@@ -149,10 +136,7 @@ export function PurchasingClientPage() {
   
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id });
-        });
+        const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
         setPurchaseOrders(ordersData);
         setLoading(false);
     });
@@ -864,5 +848,3 @@ export function PurchasingClientPage() {
     </div>
   )
 }
-
-    
