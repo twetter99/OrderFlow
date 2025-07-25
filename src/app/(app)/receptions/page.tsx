@@ -88,9 +88,7 @@ export default function ReceptionsPage() {
         return;
     }
     
-    // Immediately convert the fetched data to a plain object
-    const originalOrder = convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderSnap.data() });
-
+    const originalOrder = convertPurchaseOrderTimestamps(orderSnap.data());
 
     const batch = writeBatch(db);
     const poRef = doc(db, "purchaseOrders", orderId);
@@ -136,11 +134,13 @@ export default function ReceptionsPage() {
         
         if (pendingItems.length > 0) {
             
-            const backorderData: Partial<PurchaseOrder> = {
+             const backorderData: Partial<PurchaseOrder> = {
                 ...originalOrder,
-                status: 'Enviada al Proveedor', // Directamente a recepciones
+                status: 'Enviada al Proveedor', 
                 originalOrderId: orderId,
                 items: pendingItems,
+                date: originalOrder.date,
+                estimatedDeliveryDate: originalOrder.estimatedDeliveryDate,
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
@@ -295,3 +295,5 @@ export default function ReceptionsPage() {
     </div>
   )
 }
+
+    
