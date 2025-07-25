@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -78,14 +79,13 @@ const APPROVAL_PIN = '0707';
 const convertTimestamps = (order: any): PurchaseOrder => {
     return {
       ...order,
+      id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
-      statusHistory: order.statusHistory?.map((h: any) => ({
+      statusHistory: (order.statusHistory || []).map((h: any) => ({
         ...h,
         date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      })) || [],
-      // Ensure the id is always the firestore doc id
-      id: order.id
+      }))
     };
 };
 
@@ -864,3 +864,5 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+    
