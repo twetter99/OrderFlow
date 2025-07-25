@@ -29,11 +29,12 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { InventoryItem, PurchaseOrder, InventoryLocation, Location } from "@/lib/types";
+import type { InventoryItem, PurchaseOrder, InventoryLocation, Location, PurchaseOrderItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
-import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs } from "firebase/firestore";
+import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { createPurchaseOrder } from "../purchasing/actions";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
@@ -69,23 +70,28 @@ export default function ReceptionsPage() {
     setIsChecklistOpen(true);
   };
   
-  const handleUpdateOrderStatus = async (orderId: string, status: PurchaseOrder['status'], receivingLocationId?: string, receivedItems?: { itemId: string; quantity: number }[]) => {
-    if (status !== 'Recibida' || !receivingLocationId || !receivedItems) {
-        // Handle other status updates if necessary, or just return.
-        // For now, this function is only for reception.
+  const handleUpdateOrderStatus = async (
+    orderId: string, 
+    receivingLocationId: string, 
+    receivedItems: { itemId: string; quantity: number }[],
+    receptionNotes: string,
+    isPartial: boolean
+  ) => {
+    const originalOrder = purchaseOrders.find(po => po.id === orderId);
+    if (!originalOrder) {
+        toast({ variant: "destructive", title: "Error", description: "No se encontró la orden de compra original."});
         return;
     }
 
     const batch = writeBatch(db);
-
-    // 1. Update Purchase Order Status
     const poRef = doc(db, "purchaseOrders", orderId);
-    batch.update(poRef, { status: status, statusHistory: [...(purchaseOrders.find(po => po.id === orderId)?.statusHistory || []), { status: status, date: Timestamp.now() }] });
+    let newStatus: PurchaseOrder['status'] = isPartial ? 'Recibida Parcialmente' : 'Recibida';
 
-    // 2. Update Inventory in the selected location
+    // 1. Update Inventory in the selected location
     const inventoryUpdates = receivedItems.map(async (itemToReceive) => {
+        if(itemToReceive.quantity === 0) return;
         const q = collection(db, "inventoryLocations");
-        const querySnapshot = await getDocs(q); // In a real app, query directly: where("itemId", "==", itemToReceive.itemId), where("locationId", "==", receivingLocationId)
+        const querySnapshot = await getDocs(q); 
         const docToUpdate = querySnapshot.docs.find(d => d.data().itemId === itemToReceive.itemId && d.data().locationId === receivingLocationId);
 
         if (docToUpdate) {
@@ -100,13 +106,66 @@ export default function ReceptionsPage() {
             });
         }
     });
+    
+    await Promise.all(inventoryUpdates);
+
+    let backorderId: string | undefined = undefined;
+
+    // 2. If partial, create a backorder
+    if (isPartial) {
+        const pendingItems: PurchaseOrderItem[] = [];
+        originalOrder.items.forEach(originalItem => {
+            const received = receivedItems.find(r => r.itemId === originalItem.itemId);
+            const receivedQty = received ? received.quantity : 0;
+            if (receivedQty < originalItem.quantity) {
+                pendingItems.push({
+                    ...originalItem,
+                    quantity: originalItem.quantity - receivedQty,
+                });
+            }
+        });
+        
+        if (pendingItems.length > 0) {
+            const backorderData: Partial<PurchaseOrder> = {
+                ...originalOrder,
+                date: new Date(),
+                estimatedDeliveryDate: new Date(),
+                items: pendingItems,
+                status: 'Pendiente de Aprobación',
+                originalOrderId: originalOrder.id,
+                total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
+                statusHistory: [{ status: 'Pendiente de Aprobación', date: Timestamp.now(), comment: `Backorder de la orden ${originalOrder.orderNumber}` }]
+            };
+            delete backorderData.id;
+            delete backorderData.orderNumber;
+            delete backorderData.backorderIds;
+
+            const newBackorder = await createPurchaseOrder(backorderData);
+            backorderId = newBackorder.id;
+        }
+    }
+
+    // 3. Update original Purchase Order
+    const historyComment = isPartial 
+      ? `Recepción parcial. Backorder ${backorderId} creado. Notas: ${receptionNotes}`
+      : `Recepción completa. Notas: ${receptionNotes}`;
+
+    const newHistoryEntry = { status: newStatus, date: Timestamp.now(), comment: historyComment };
+    const updateData: Partial<PurchaseOrder> = {
+      status: newStatus,
+      receptionNotes,
+      statusHistory: arrayUnion(newHistoryEntry) as any,
+    };
+    if (backorderId) {
+        updateData.backorderIds = arrayUnion(backorderId) as any;
+    }
+    batch.update(poRef, updateData);
 
     try {
-        await Promise.all(inventoryUpdates);
         await batch.commit();
         toast({
-            title: "Recepción Confirmada",
-            description: `La orden ${selectedOrder?.orderNumber} ha sido marcada como "Recibida" y el stock ha sido actualizado.`
+            title: "Recepción Procesada",
+            description: `La orden ${originalOrder?.orderNumber} ha sido actualizada y el stock ajustado.`
         });
         setIsChecklistOpen(false);
     } catch (error) {
@@ -199,7 +258,7 @@ export default function ReceptionsPage() {
             <ReceptionChecklist 
                 order={selectedOrder}
                 locations={locations}
-                onUpdateStatus={handleUpdateOrderStatus}
+                onConfirmReception={handleUpdateOrderStatus}
                 onCancel={() => setIsChecklistOpen(false)}
             />
           )}
