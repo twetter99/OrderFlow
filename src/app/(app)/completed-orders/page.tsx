@@ -62,6 +62,10 @@ const convertTimestamps = (order: any): PurchaseOrder => {
       id: order.id,
       date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
       estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
+      statusHistory: order.statusHistory?.map((h: any) => ({
+        ...h,
+        date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
+      })) || [],
     };
 };
 
@@ -292,7 +296,7 @@ export default function CompletedOrdersPage() {
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                    <TableCell>{projects.find(p => p.id === order.project)?.name || order.project}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
@@ -432,4 +436,5 @@ export default function CompletedOrdersPage() {
       </AlertDialog>
     </div>
   )
-}
+
+    
