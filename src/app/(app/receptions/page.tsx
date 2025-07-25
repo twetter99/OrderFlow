@@ -47,7 +47,16 @@ export default function ReceptionsPage() {
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, 'purchaseOrders'), (snapshot) => {
-        setPurchaseOrders(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder)));
+        const ordersData = snapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+                ...data,
+                id: doc.id,
+                date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
+                estimatedDeliveryDate: data.estimatedDeliveryDate instanceof Timestamp ? data.estimatedDeliveryDate.toDate().toISOString() : data.estimatedDeliveryDate,
+            } as PurchaseOrder;
+        });
+        setPurchaseOrders(ordersData);
         setLoading(false);
     });
      const unsubLocations = onSnapshot(collection(db, 'locations'), (snapshot) => {
@@ -126,21 +135,29 @@ export default function ReceptionsPage() {
         });
         
         if (pendingItems.length > 0) {
+            
+            const cleanOriginalOrder = {
+              ...originalOrder,
+              date: new Date(originalOrder.date).toISOString(),
+              estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate).toISOString(),
+              statusHistory: [],
+            };
+
             const backorderData: Partial<PurchaseOrder> = {
-                ...originalOrder,
+                ...cleanOriginalOrder,
                 date: new Date(),
                 estimatedDeliveryDate: new Date(),
                 items: pendingItems,
                 status: 'Pendiente de Aprobación',
                 originalOrderId: originalOrder.id,
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
-                statusHistory: [{ status: 'Pendiente de Aprobación', date: Timestamp.now(), comment: `Backorder de la orden ${originalOrder.orderNumber}` }]
+                statusHistory: [{ status: 'Pendiente de Aprobación', date: new Date(), comment: `Backorder de la orden ${originalOrder.orderNumber}` }]
             };
             delete backorderData.id;
             delete backorderData.orderNumber;
             delete backorderData.backorderIds;
 
-            const newBackorder = await createPurchaseOrder(backorderData);
+            const newBackorder = await createPurchaseOrder(backorderData as any);
             backorderId = newBackorder.id;
         }
     }

@@ -14,11 +14,19 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     const year = new Date().getFullYear();
     const newOrderNumber = `WF-PO-${year}-${String(orderCount + 1).padStart(4, '0')}`;
 
-    const dataToSave = {
+    const dataToSave: { [key: string]: any } = {
         ...data,
         orderNumber: newOrderNumber,
-        statusHistory: data.statusHistory || [{ status: data.status, date: Timestamp.now() }],
     };
+
+    if (data.statusHistory) {
+      dataToSave.statusHistory = data.statusHistory.map(h => ({
+        ...h,
+        date: h.date instanceof Date ? Timestamp.fromDate(h.date) : h.date
+      }));
+    } else {
+      dataToSave.statusHistory = [{ status: data.status, date: Timestamp.now() }];
+    }
 
     if (data.date && !(data.date instanceof Timestamp)) {
         dataToSave.date = Timestamp.fromDate(new Date(data.date as string));
