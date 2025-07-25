@@ -49,12 +49,17 @@ export default function ReceptionsPage() {
     const unsubPO = onSnapshot(collection(db, 'purchaseOrders'), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => {
             const data = doc.data();
-            return {
+            const order: PurchaseOrder = {
                 ...data,
                 id: doc.id,
                 date: data.date instanceof Timestamp ? data.date.toDate().toISOString() : data.date,
                 estimatedDeliveryDate: data.estimatedDeliveryDate instanceof Timestamp ? data.estimatedDeliveryDate.toDate().toISOString() : data.estimatedDeliveryDate,
+                statusHistory: (data.statusHistory || []).map((h: any) => ({
+                    ...h,
+                    date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
+                }))
             } as PurchaseOrder;
+            return order;
         });
         setPurchaseOrders(ordersData);
         setLoading(false);
@@ -98,8 +103,8 @@ export default function ReceptionsPage() {
     // Convert timestamps to ISO strings immediately after fetching
     const originalOrder = {
         ...originalOrderData,
-        date: originalOrderData.date instanceof Timestamp ? originalOrderData.date.toDate().toISOString() : originalOrderData.date,
-        estimatedDeliveryDate: originalOrderData.estimatedDeliveryDate instanceof Timestamp ? originalOrderData.estimatedDeliveryDate.toDate().toISOString() : originalOrderData.estimatedDeliveryDate
+        date: originalOrderData.date instanceof Timestamp ? originalOrderData.date.toDate().toISOString() : String(originalOrderData.date),
+        estimatedDeliveryDate: originalOrderData.estimatedDeliveryDate instanceof Timestamp ? originalOrderData.estimatedDeliveryDate.toDate().toISOString() : String(originalOrderData.estimatedDeliveryDate)
     };
 
 
@@ -313,5 +318,3 @@ export default function ReceptionsPage() {
     </div>
   )
 }
-
-  
