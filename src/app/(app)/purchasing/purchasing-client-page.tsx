@@ -395,7 +395,7 @@ export function PurchasingClientPage() {
     if (order.status === 'Almacenada' || order.status === 'Recibida' || order.status === 'Recibida Parcialmente') {
         return { text: 'Entregado', color: 'bg-green-100 text-green-800 border-green-200' };
     }
-    const deliveryDate = new Date(order.estimatedDeliveryDate);
+    const deliveryDate = new Date(order.estimatedDeliveryDate as string);
     if (isPast(deliveryDate) && !isToday(deliveryDate)) {
         return { text: 'Retrasado', color: 'bg-destructive/20 text-destructive border-destructive/20' };
     }

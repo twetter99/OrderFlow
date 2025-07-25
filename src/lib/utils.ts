@@ -1,3 +1,4 @@
+
 import { clsx, type ClassValue } from "clsx"
 import { twMerge } from "tailwind-merge"
 import { Timestamp } from "firebase/firestore"
@@ -8,16 +9,29 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 export const convertPurchaseOrderTimestamps = (orderData: any): PurchaseOrder => {
-  const convertedHistory = (orderData.statusHistory || []).map((h: any) => ({
-      ...h,
-      date: h.date?.toDate ? h.date.toDate().toISOString() : h.date,
-  }));
+  if (!orderData) return orderData;
 
-  return {
-    ...orderData,
-    id: orderData.id,
-    date: orderData.date?.toDate ? orderData.date.toDate().toISOString() : orderData.date,
-    estimatedDeliveryDate: orderData.estimatedDeliveryDate?.toDate ? orderData.estimatedDeliveryDate.toDate().toISOString() : orderData.estimatedDeliveryDate,
-    statusHistory: convertedHistory,
+  const convert = (data: any): any => {
+    if (!data) return data;
+
+    if (Array.isArray(data)) {
+      return data.map(item => convert(item));
+    }
+
+    if (data instanceof Timestamp) {
+      return data.toDate().toISOString();
+    }
+
+    if (typeof data === 'object' && data !== null) {
+      const newObj: { [key: string]: any } = {};
+      for (const key in data) {
+        newObj[key] = convert(data[key]);
+      }
+      return newObj;
+    }
+
+    return data;
   };
+  
+  return convert(orderData)
 };

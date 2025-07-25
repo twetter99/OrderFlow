@@ -242,7 +242,7 @@ export default function ReceptionsPage() {
                     </div>
                   </TableCell>
                   <TableCell>{order.supplier}</TableCell>
-                  <TableCell>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.estimatedDeliveryDate as string).toLocaleDateString()}</TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"

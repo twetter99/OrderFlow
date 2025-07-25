@@ -22,7 +22,7 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     if (data.statusHistory) {
       dataToSave.statusHistory = data.statusHistory.map(h => ({
         ...h,
-        date: h.date instanceof Date ? Timestamp.fromDate(h.date) : h.date
+        date: h.date instanceof Date || typeof h.date === 'string' ? Timestamp.fromDate(new Date(h.date)) : h.date
       }));
     } else {
       dataToSave.statusHistory = [{ status: data.status, date: Timestamp.now() }];
@@ -46,7 +46,7 @@ export async function addPurchaseOrder(data: any) {
     await createPurchaseOrder({
         ...data,
         status: initialStatus,
-        statusHistory: [{ status: initialStatus, date: Timestamp.now() }],
+        statusHistory: [{ status: initialStatus, date: new Date() }],
     });
     revalidatePath('/purchasing');
     revalidatePath('/dashboard');
