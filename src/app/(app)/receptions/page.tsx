@@ -144,7 +144,7 @@ export default function ReceptionsPage() {
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
-                    date: new Date().toISOString(), 
+                    date: new Date(),
                     comment: `Backorder de la orden ${originalOrder.orderNumber}. Notas originales: ${receptionNotes}` 
                 }]
             };
@@ -162,7 +162,7 @@ export default function ReceptionsPage() {
       ? `Recepción parcial. Backorder ${backorderId} creado. Notas: ${receptionNotes}`
       : `Recepción completa. Notas: ${receptionNotes}`;
 
-    const newHistoryEntry = { status: newStatus, date: Timestamp.now(), comment: historyComment };
+    const newHistoryEntry = { status: newStatus, date: new Date(), comment: historyComment };
     const updateData: Partial<PurchaseOrder> = {
       status: newStatus,
       receptionNotes,
