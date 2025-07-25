@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -33,7 +34,7 @@ import { ReceptionChecklist } from "@/components/receptions/reception-checklist"
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { createPurchaseOrder } from "../purchasing/actions";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
@@ -92,7 +93,15 @@ export default function ReceptionsPage() {
         toast({ variant: "destructive", title: "Error", description: "No se encontró la orden de compra original."});
         return;
     }
-    const originalOrder = orderSnap.data() as PurchaseOrder;
+    const originalOrderData = orderSnap.data() as PurchaseOrder;
+
+    // Convert timestamps to ISO strings immediately after fetching
+    const originalOrder = {
+        ...originalOrderData,
+        date: originalOrderData.date instanceof Timestamp ? originalOrderData.date.toDate().toISOString() : originalOrderData.date,
+        estimatedDeliveryDate: originalOrderData.estimatedDeliveryDate instanceof Timestamp ? originalOrderData.estimatedDeliveryDate.toDate().toISOString() : originalOrderData.estimatedDeliveryDate
+    };
+
 
     const batch = writeBatch(db);
     const poRef = doc(db, "purchaseOrders", orderId);
@@ -140,8 +149,8 @@ export default function ReceptionsPage() {
             
             const cleanOriginalOrder = {
               ...originalOrder,
-              date: new Date(originalOrder.date as string).toISOString(),
-              estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate as string).toISOString(),
+              date: originalOrder.date,
+              estimatedDeliveryDate: originalOrder.estimatedDeliveryDate,
               statusHistory: [],
             };
 
@@ -304,3 +313,5 @@ export default function ReceptionsPage() {
     </div>
   )
 }
+
+  
