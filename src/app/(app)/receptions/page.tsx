@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useEffect, useRef } from "react";
@@ -35,7 +34,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "../purchasing/actions";
+import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "@/app/(app)/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
 
