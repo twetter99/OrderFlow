@@ -78,6 +78,7 @@ export type PurchaseOrder = {
   statusHistory?: StatusHistoryEntry[];
   originalOrderId?: string; // ID de la orden original si esta es un backorder
   backorderIds?: string[]; // IDs de los backorders generados desde esta orden
+  deliveryNoteUrls?: string[]; // URLs de los albaranes adjuntos
 };
 
 export type Supplier = {

@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -44,6 +45,9 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
         ...data,
         id: docRef.id,
         orderNumber: newOrderNumber,
+        // Ensure dates are strings for the return value
+        date: typeof data.date === 'string' ? data.date : new Date(data.date!).toISOString(),
+        estimatedDeliveryDate: typeof data.estimatedDeliveryDate === 'string' ? data.estimatedDeliveryDate : new Date(data.estimatedDeliveryDate!).toISOString()
     };
 }
 
@@ -138,5 +142,21 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
         return { success: false, message: 'No se pudo actualizar el estado del pedido.' };
     }
 }
+
+export async function linkDeliveryNoteToPurchaseOrder(orderId: string, urls: string[]) {
+    try {
+        const poRef = doc(db, 'purchaseOrders', orderId);
+        await updateDoc(poRef, {
+            deliveryNoteUrls: arrayUnion(...urls)
+        });
+        revalidatePath('/purchasing');
+        revalidatePath('/receptions');
+        return { success: true, message: 'Albarán vinculado correctamente.' };
+    } catch (error) {
+        console.error("Error linking delivery note:", error);
+        return { success: false, message: 'No se pudo vincular el albarán.' };
+    }
+}
+
 
 export { createPurchaseOrder };
