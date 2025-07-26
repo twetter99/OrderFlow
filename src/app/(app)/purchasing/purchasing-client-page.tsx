@@ -84,9 +84,9 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
     'Pendiente de Aprobación': ['Aprobada', 'Rechazado'],
     'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Permitir revertir a pendiente
     'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
-    'Enviada al Proveedor': ['Recibida'],
+    'Enviada al Proveedor': ['Recibida', 'Recibida Parcialmente'],
     'Recibida': ['Almacenada'],
-    'Recibida Parcialmente': ['Almacenada'],
+    'Recibida Parcialmente': ['Almacenada', 'Recibida'], // Puede pasar a recibida si llegan los items restantes
     'Almacenada': [],
 };
 
@@ -287,17 +287,17 @@ export function PurchasingClientPage() {
   };
   
   const handleStatusChange = async (id: string, currentStatus: PurchaseOrder['status'], newStatus: PurchaseOrder['status']) => {
-    if (newStatus === 'Recibida') {
-        setIsReceptionAlertOpen(true);
-        return;
-    }
-
     if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(newStatus)) {
         toast({
             variant: "destructive",
-            title: "Transición de Estado No Válida",
-            description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}".`,
+            title: "Cambio de estado no permitido",
+            description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}". Sigue el flujo correcto.`,
         });
+        return;
+    }
+
+    if (newStatus === 'Recibida' || newStatus === 'Recibida Parcialmente') {
+        setIsReceptionAlertOpen(true);
         return;
     }
     
