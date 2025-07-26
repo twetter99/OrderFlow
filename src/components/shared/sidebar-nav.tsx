@@ -32,10 +32,15 @@ import {
     QrCode,
     ShieldCheck,
     Anchor,
+    Pin,
+    PinOff,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import React from "react";
+import { useSidebar } from "../ui/sidebar";
+import { Button } from "../ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
 
 
 const navGroups = [
@@ -123,30 +128,76 @@ const navGroups = [
   }
 ];
 
-
 export function SidebarNav() {
   const pathname = usePathname();
+  const { open, setOpen, isMobile } = useSidebar();
+  const [isHovered, setIsHovered] = React.useState(false);
+
+  const isPinned = open;
+  const isExpanded = isPinned || isHovered;
+
+  const handleMouseEnter = () => {
+    if (!isPinned) {
+      setIsHovered(true);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsHovered(false);
+  };
+  
+  const handlePinToggle = () => {
+    setOpen(!open);
+  }
 
   const isSubItemActive = (subItems: any[]) => {
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
 
+  if (isMobile) return null;
+
   return (
-    <aside className="hidden md:flex flex-col w-64 border-r bg-secondary text-secondary-foreground">
-      <div className="flex items-center justify-center h-16 border-b border-white/10 px-4">
+    <div
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      className={cn(
+        "flex flex-col w-64 border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
+        !isExpanded && "w-16",
+      )}
+    >
+      <div className={cn(
+        "flex items-center h-16 border-b border-white/10 px-4",
+        isExpanded ? "justify-between" : "justify-center"
+      )}>
         <Image 
           src="/images/logo_blanco.png" 
           alt="OrderFlow Logo" 
-          width={180} 
-          height={40}
+          width={isExpanded ? 150 : 32} 
+          height={isExpanded ? 40 : 32}
           priority
+          className={cn(
+            "transition-all duration-300 ease-in-out",
+             !isExpanded && "w-8 h-8 object-contain"
+          )}
         />
+        {isExpanded && (
+             <Tooltip>
+                <TooltipTrigger asChild>
+                     <Button variant="ghost" size="icon" onClick={handlePinToggle} className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8">
+                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                     </Button>
+                </TooltipTrigger>
+                <TooltipContent side="right">
+                    <p>{isPinned ? 'Desanclar barra lateral' : 'Anclar barra lateral'}</p>
+                </TooltipContent>
+            </Tooltip>
+        )}
       </div>
       <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {navGroups.map((group, index) => (
+        {navGroups.map((group) => (
           <div key={group.title} className="space-y-1">
             {group.title && (
-                 <h2 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50">{group.title}</h2>
+                 <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
             )}
             {group.items.map((item) => {
               const uniqueKey = `${item.label}`;
@@ -154,20 +205,26 @@ export function SidebarNav() {
               
               return (
                 <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
-                  <CollapsibleTrigger className="w-full">
-                     <div
-                      className={cn(
-                        "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
-                         isActive && "bg-white/10 text-white"
-                      )}
-                    >
-                       <div className="flex items-center gap-3">
-                          <item.icon className="h-4 w-4" />
-                          <span>{item.label}</span>
-                       </div>
-                       <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>
-                    </div>
-                  </CollapsibleTrigger>
+                  <Tooltip>
+                     <TooltipTrigger asChild>
+                         <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
+                            <div
+                            className={cn(
+                                "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
+                                isActive && "bg-white/10 text-white"
+                            )}
+                            >
+                            <div className="flex items-center gap-3">
+                                <item.icon className="h-5 w-5 shrink-0" />
+                                <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
+                            </div>
+                            {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
+                            </div>
+                        </CollapsibleTrigger>
+                     </TooltipTrigger>
+                     {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
+                  </Tooltip>
+                  {isExpanded && (
                   <CollapsibleContent>
                      <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
                       {item.subItems.map(subItem => {
@@ -190,6 +247,7 @@ export function SidebarNav() {
                       })}
                      </div>
                   </CollapsibleContent>
+                  )}
                 </Collapsible>
               );
             })}
