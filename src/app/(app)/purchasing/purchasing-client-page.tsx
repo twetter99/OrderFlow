@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -128,6 +128,10 @@ export function PurchasingClientPage() {
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [isStateTransitionAlertOpen, setIsStateTransitionAlertOpen] = useState(false);
+  const [stateTransitionAlertMessage, setStateTransitionAlertMessage] = useState({ title: "", description: ""});
+
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
       column: 'date',
@@ -288,11 +292,11 @@ export function PurchasingClientPage() {
   
   const handleStatusChange = async (id: string, currentStatus: PurchaseOrder['status'], newStatus: PurchaseOrder['status']) => {
     if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(newStatus)) {
-        toast({
-            variant: "destructive",
-            title: "Cambio de estado no permitido",
-            description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}". Sigue el flujo correcto.`,
-        });
+        setStateTransitionAlertMessage({
+            title: "⚠️ Flujo de Proceso",
+            description: `No puedes cambiar el estado de "${currentStatus}" a "${newStatus}". Para continuar, debes seguir el orden lógico de los estados.`,
+        })
+        setIsStateTransitionAlertOpen(true);
         return;
     }
 
@@ -821,6 +825,23 @@ export function PurchasingClientPage() {
             <AlertDialogAction onClick={() => router.push('/receptions')}>
               Ir a Recepciones
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={isStateTransitionAlertOpen} onOpenChange={setIsStateTransitionAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-6 w-6 text-orange-500" />
+                {stateTransitionAlertMessage.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {stateTransitionAlertMessage.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsStateTransitionAlertOpen(false)}>Entendido</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
