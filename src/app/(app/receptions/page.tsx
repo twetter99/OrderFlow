@@ -33,7 +33,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createPurchaseOrder } from "../purchasing/actions";
+import { createPurchaseOrder } from "@/app/(app)/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
 
@@ -246,7 +246,7 @@ export default function ReceptionsPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn("capitalize bg-blue-100 text-blue-800 border-blue-200")}
+                      className={cn("capitalize bg-blue-100 text-blue-200")}
                     >
                       {order.status}
                     </Badge>
