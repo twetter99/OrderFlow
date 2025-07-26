@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import Link from "next/link";
@@ -40,7 +39,7 @@ import { cn } from "@/lib/utils";
 import React from "react";
 import { useSidebar } from "../ui/sidebar";
 import { Button } from "../ui/button";
-import { Tooltip, TooltipContent, TooltipTrigger } from "../ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
 
 const navGroups = [
@@ -157,7 +156,8 @@ export function SidebarNav() {
   if (isMobile) return null;
 
   return (
-    <div
+    <TooltipProvider>
+    <aside
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
       className={cn(
@@ -255,5 +255,6 @@ export function SidebarNav() {
         ))}
       </nav>
     </aside>
+    </TooltipProvider>
   );
 }
