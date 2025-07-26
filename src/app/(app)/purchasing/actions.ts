@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
 import { convertPurchaseOrderTimestamps } from '@/lib/utils';
 
-async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
+export async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     const poCollection = collection(db, 'purchaseOrders');
     const poSnapshot = await getDocs(poCollection);
     const orderCount = poSnapshot.size;
@@ -38,16 +38,14 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     
     const docRef = await addDoc(poCollection, dataToSave);
     
-    // Return a serializable object based on the original input data
-    // and add the new server-generated fields. This avoids sending back
-    // Firestore Timestamps to the client.
-    return { 
-        ...data,
-        id: docRef.id,
-        orderNumber: newOrderNumber,
-        // Ensure dates are strings for the return value
-        date: typeof data.date === 'string' ? data.date : new Date(data.date!).toISOString(),
-        estimatedDeliveryDate: typeof data.estimatedDeliveryDate === 'string' ? data.estimatedDeliveryDate : new Date(data.estimatedDeliveryDate!).toISOString()
+    // No retornamos `dataToSave` porque contiene Timestamps.
+    // Retornamos un objeto limpio y serializable basado en los datos originales.
+    return {
+      id: docRef.id,
+      orderNumber: newOrderNumber,
+      ...data,
+      date: typeof data.date === 'string' ? data.date : new Date(data.date!).toISOString(),
+      estimatedDeliveryDate: typeof data.estimatedDeliveryDate === 'string' ? data.estimatedDeliveryDate : new Date(data.estimatedDeliveryDate!).toISOString(),
     };
 }
 
@@ -157,6 +155,3 @@ export async function linkDeliveryNoteToPurchaseOrder(orderId: string, urls: str
         return { success: false, message: 'No se pudo vincular el albarán.' };
     }
 }
-
-
-export { createPurchaseOrder };

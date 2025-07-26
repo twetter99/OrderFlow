@@ -254,7 +254,7 @@ export default function ReceptionsPage() {
       ? `Recepción parcial. Backorder ${backorderId} creado. Notas: ${receptionNotes}`
       : `Recepción completa. Notas: ${receptionNotes}`;
 
-    const newHistoryEntry = { status: newStatus, date: new Date().toISOString(), comment: historyComment };
+    const newHistoryEntry = { status: newStatus, date: new Date(), comment: historyComment };
     const updateData: Partial<PurchaseOrder> = {
       status: newStatus,
       receptionNotes,
