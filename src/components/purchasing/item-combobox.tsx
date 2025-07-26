@@ -52,9 +52,10 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
       setSearchValue("");
     } else {
       // Pre-fill search with current value if it exists, allowing for editing
-      setSearchValue(value || "");
+      const currentItem = inventoryItems.find(item => item.name === value);
+      setSearchValue(currentItem ? `${currentItem.sku} - ${currentItem.name}` : value || "");
     }
-  }, [open, value]);
+  }, [open, value, inventoryItems]);
   
   const filteredItems = React.useMemo(() => {
     if (!searchValue) return inventoryItems;
@@ -104,7 +105,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
               {filteredItems.map((item) => (
                 <CommandItem
                   key={item.id}
-                  value={item.name}
+                  value={`${item.sku} - ${item.name}`}
                   onSelect={() => handleSelect(item)}
                   className="flex justify-between items-start gap-2"
                 >
@@ -117,8 +118,8 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
                         />
                         <div className="flex-grow">
                             <span className="font-medium">{item.name}</span>
-                            <div className="text-xs text-muted-foreground">
-                                SKU: {item.sku}
+                            <div className="text-xs text-muted-foreground font-mono">
+                                {item.sku}
                             </div>
                             <div className="text-xs text-muted-foreground">
                                 Coste: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)} / {item.unit}

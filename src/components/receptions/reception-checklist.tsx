@@ -126,7 +126,7 @@ export function ReceptionChecklist({ order, locations, onConfirmReception, onCan
                                 </div>
                                 <div className="flex-grow">
                                     <p className="font-medium">{item.name}</p>
-                                    <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
+                                    <p className="text-sm text-muted-foreground font-mono">{item.sku}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Input

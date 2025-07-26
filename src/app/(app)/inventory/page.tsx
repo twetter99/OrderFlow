@@ -295,7 +295,6 @@ export default function InventoryPage() {
                     aria-label="Seleccionar todo"
                   />
                 </TableHead>
-                <TableHead>SKU</TableHead>
                 <TableHead>Nombre del Artículo</TableHead>
                 <TableHead>Cantidad Total</TableHead>
                 <TableHead>Proveedor</TableHead>
@@ -318,12 +317,14 @@ export default function InventoryPage() {
                         aria-label={`Seleccionar artículo ${item.name}`}
                       />
                     </TableCell>
-                    <TableCell className="font-medium">{item.sku}</TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         {item.type === 'composite' && <Boxes className="h-4 w-4 text-muted-foreground" title="Kit/Compuesto" />}
                         {item.type === 'service' && <Wrench className="h-4 w-4 text-muted-foreground" title="Servicio" />}
-                        <span>{item.name}</span>
+                        <div>
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground font-mono">{item.sku}</p>
+                        </div>
                       </div>
                     </TableCell>
                     <TableCell>
@@ -373,7 +374,7 @@ export default function InventoryPage() {
               })}
               {filteredInventory.length === 0 && (
                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-16">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-16">
                         No se encontraron artículos con los criterios de búsqueda actuales.
                     </TableCell>
                  </TableRow>
@@ -456,3 +457,4 @@ export default function InventoryPage() {
     </div>
   )
 }
+

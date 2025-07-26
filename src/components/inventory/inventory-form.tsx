@@ -421,7 +421,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                                         </FormControl>
                                                         <SelectContent>
                                                             {simpleInventoryItems.map(i => (
-                                                                <SelectItem key={i.id} value={i.id}>{i.name} ({i.sku})</SelectItem>
+                                                                <SelectItem key={i.id} value={i.id}>{i.sku} - {i.name}</SelectItem>
                                                             ))}
                                                         </SelectContent>
                                                     </Select>
@@ -505,3 +505,4 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     </Form>
   );
 }
+
