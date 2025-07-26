@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from "react";
@@ -88,6 +87,7 @@ export default function ReceptionsPage() {
         return;
     }
     
+    // Convertir Timestamps a ISOString inmediatamente después de leer
     const originalOrder = convertPurchaseOrderTimestamps(orderSnap.data());
 
     const batch = writeBatch(db);
@@ -139,8 +139,8 @@ export default function ReceptionsPage() {
                 status: 'Enviada al Proveedor', 
                 originalOrderId: orderId,
                 items: pendingItems,
-                date: new Date(originalOrder.date).toISOString(),
-                estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate).toISOString(),
+                date: new Date(originalOrder.date as string).toISOString(),
+                estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate as string).toISOString(),
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
