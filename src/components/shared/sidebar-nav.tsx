@@ -169,17 +169,31 @@ export function SidebarNav() {
         "flex items-center h-16 border-b border-white/10 px-4",
         isExpanded ? "justify-between" : "justify-center"
       )}>
-        <Image 
-          src="/images/logo_blanco.png" 
-          alt="OrderFlow Logo" 
-          width={isExpanded ? 150 : 32} 
-          height={isExpanded ? 40 : 32}
-          priority
-          className={cn(
-            "transition-all duration-300 ease-in-out",
-             !isExpanded && "w-8 h-8 object-contain"
-          )}
-        />
+        <div className="relative" style={{ width: isExpanded ? 150 : 32, height: 40 }}>
+            <Image 
+                src="/images/logo_icon_blanco.png" 
+                alt="OrderFlow Icon" 
+                width={32} 
+                height={32}
+                priority
+                className={cn(
+                    "transition-opacity duration-300 ease-in-out absolute top-1/2 -translate-y-1/2",
+                    isExpanded ? "opacity-0" : "opacity-100"
+                )}
+            />
+            <Image 
+                src="/images/logo_blanco.png" 
+                alt="OrderFlow Logo" 
+                width={150} 
+                height={40}
+                priority
+                className={cn(
+                    "transition-opacity duration-300 ease-in-out absolute top-1/2 -translate-y-1/2",
+                    isExpanded ? "opacity-100" : "opacity-0"
+                )}
+            />
+        </div>
+
         {isExpanded && (
              <Tooltip>
                 <TooltipTrigger asChild>
