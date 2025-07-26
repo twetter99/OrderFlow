@@ -231,8 +231,8 @@ export default function ReceptionsPage() {
                 status: 'Enviada al Proveedor', 
                 originalOrderId: orderId,
                 items: pendingItems,
-                date: typeof originalOrder.date === 'string' ? originalOrder.date : new Date(originalOrder.date).toISOString(),
-                estimatedDeliveryDate: typeof originalOrder.estimatedDeliveryDate === 'string' ? originalOrder.estimatedDeliveryDate : new Date(originalOrder.estimatedDeliveryDate).toISOString(),
+                date: typeof originalOrder.date === 'string' ? originalOrder.date : new Date(originalOrder.date as any).toISOString(),
+                estimatedDeliveryDate: typeof originalOrder.estimatedDeliveryDate === 'string' ? originalOrder.estimatedDeliveryDate : new Date(originalOrder.estimatedDeliveryDate as any).toISOString(),
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
