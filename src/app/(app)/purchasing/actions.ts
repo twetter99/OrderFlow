@@ -1,11 +1,11 @@
 
-
 'use server';
 
 import { db } from '@/lib/firebase';
 import { collection, addDoc, doc, updateDoc, deleteDoc, Timestamp, getDocs, getDoc, arrayUnion } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 import type { PurchaseOrder } from '@/lib/types';
+import { convertPurchaseOrderTimestamps } from '@/lib/utils';
 
 async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     const poCollection = collection(db, 'purchaseOrders');
@@ -36,7 +36,15 @@ async function createPurchaseOrder(data: Partial<Omit<PurchaseOrder, 'id'>>) {
     }
     
     const docRef = await addDoc(poCollection, dataToSave);
-    return { ...dataToSave, id: docRef.id };
+    
+    // Return a serializable object based on the original input data
+    // and add the new server-generated fields. This avoids sending back
+    // Firestore Timestamps to the client.
+    return { 
+        ...data,
+        id: docRef.id,
+        orderNumber: newOrderNumber,
+    };
 }
 
 
