@@ -17,6 +17,7 @@ type ItemStatus = 'pending' | 'ok' | 'discrepancy' | 'extra';
 
 interface ChecklistItem {
     id: string; // This is now itemId for materials
+    sku: string;
     name: string;
     expected: number;
     received: number;
@@ -37,6 +38,7 @@ export function ReceptionChecklist({ order, locations, onConfirmReception, onCan
             .filter(item => item.type === 'Material' && item.itemId)
             .map(item => ({
                 id: item.itemId!,
+                sku: item.itemSku || 'N/A',
                 name: item.itemName,
                 expected: item.quantity,
                 received: 0,
@@ -124,7 +126,7 @@ export function ReceptionChecklist({ order, locations, onConfirmReception, onCan
                                 </div>
                                 <div className="flex-grow">
                                     <p className="font-medium">{item.name}</p>
-                                    <p className="text-sm text-muted-foreground">{item.id}</p>
+                                    <p className="text-sm text-muted-foreground">SKU: {item.sku}</p>
                                 </div>
                                 <div className="flex items-center gap-2">
                                     <Input
