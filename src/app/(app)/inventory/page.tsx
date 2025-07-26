@@ -14,11 +14,14 @@ import {
 import {
   Card,
   CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2 } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Boxes, View, Wrench, Trash2, Search } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -54,6 +57,16 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { addInventoryItem, updateInventoryItem, deleteInventoryItem, deleteMultipleInventoryItems } from "./actions";
 import { addSupplier } from "../suppliers/actions";
+import { Input } from "@/components/ui/input";
+
+// Función para normalizar texto (quitar acentos y convertir a minúsculas)
+const normalizeText = (text: string) => {
+  if (!text) return '';
+  return text
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
+};
 
 export default function InventoryPage() {
   const { toast } = useToast();
@@ -61,6 +74,7 @@ export default function InventoryPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSupplierModalOpen, setIsSupplierModalOpen] = useState(false);
@@ -88,28 +102,51 @@ export default function InventoryPage() {
     }
   }, []);
 
-  const inventoryWithCalculations = useMemo(() => {
-    return inventory.map(item => {
+  const filteredInventory = useMemo(() => {
+    const inventoryWithCalculations = inventory.map(item => {
       const totalQuantity = inventoryLocations
         .filter(loc => loc.itemId === item.id)
         .reduce((sum, loc) => sum + loc.quantity, 0);
       
       let buildableQuantity = totalQuantity;
-      if (item.type === 'composite') {
+      if (item.type === 'composite' && item.components) {
         buildableQuantity = Math.min(
           ...(item.components?.map(c => {
-            const componentItem = inventory.find(i => i.id === c.itemId);
             const componentTotalQuantity = inventoryLocations
               .filter(loc => loc.itemId === c.itemId)
               .reduce((sum, loc) => sum + loc.quantity, 0);
-            return componentItem ? Math.floor(componentTotalQuantity / c.quantity) : 0;
+            return Math.floor(componentTotalQuantity / c.quantity);
           }) || [0])
         );
       }
       
-      return { ...item, quantity: totalQuantity, buildableQuantity };
+      const supplierNames = (item.suppliers || [])
+        .map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
+        .filter(Boolean)
+        .join(', ');
+        
+      return { ...item, quantity: totalQuantity, buildableQuantity, supplierNames };
     });
-  }, [inventory, inventoryLocations]);
+
+    if (!searchQuery) {
+        return inventoryWithCalculations;
+    }
+
+    const normalizedQuery = normalizeText(searchQuery);
+    const queryKeywords = normalizedQuery.split(' ').filter(kw => kw);
+
+    return inventoryWithCalculations.filter(item => {
+        const searchableText = normalizeText([
+            item.sku,
+            item.name,
+            item.supplierNames,
+            item.observations,
+            item.family
+        ].join(' '));
+
+        return queryKeywords.every(keyword => searchableText.includes(keyword));
+    });
+  }, [inventory, inventoryLocations, suppliers, searchQuery]);
 
 
   const handleAddClick = () => {
@@ -228,14 +265,32 @@ export default function InventoryPage() {
         </Button>
         )}
       </div>
+
+       <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+          <Input
+              type="search"
+              placeholder="Buscar por SKU, nombre, proveedor, familia, notas..."
+              className="w-full pl-10"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+          />
+       </div>
+
       <Card>
-        <CardContent className="pt-6">
+        <CardHeader>
+            <CardTitle>Listado de Artículos</CardTitle>
+            <CardDescription>
+                Se encontraron {filteredInventory.length} artículos que coinciden con tu búsqueda.
+            </CardDescription>
+        </CardHeader>
+        <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead padding="checkbox" className="w-[50px]">
                   <Checkbox
-                    checked={selectedRowIds.length === inventory.length && inventory.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    checked={selectedRowIds.length === filteredInventory.length && filteredInventory.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
                     onCheckedChange={(checked) => handleSelectAll(checked)}
                     aria-label="Seleccionar todo"
                   />
@@ -249,14 +304,10 @@ export default function InventoryPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {inventoryWithCalculations.map((item) => {
+              {filteredInventory.map((item) => {
                 const isPhysical = item.type === 'simple' || item.type === 'composite';
                 // @ts-ignore
                 const quantityToShow = item.type === 'composite' ? item.buildableQuantity : item.quantity;
-                const supplierNames = (item.suppliers || [])
-                    .map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
-                    .filter(Boolean)
-                    .join(', ');
                 
                 return (
                   <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) ? "selected" : ""}>
@@ -284,7 +335,7 @@ export default function InventoryPage() {
                         </div>
                       )}
                     </TableCell>
-                    <TableCell>{isPhysical ? (supplierNames || 'N/A') : 'N/A'}</TableCell>
+                    <TableCell>{isPhysical ? (item.supplierNames || 'N/A') : 'N/A'}</TableCell>
                     <TableCell>
                       {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(item.unitCost)}
                     </TableCell>
@@ -320,6 +371,13 @@ export default function InventoryPage() {
                   </TableRow>
                 );
               })}
+              {filteredInventory.length === 0 && (
+                 <TableRow>
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-16">
+                        No se encontraron artículos con los criterios de búsqueda actuales.
+                    </TableCell>
+                 </TableRow>
+              )}
             </TableBody>
           </Table>
         </CardContent>
