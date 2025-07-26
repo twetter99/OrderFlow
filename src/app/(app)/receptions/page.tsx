@@ -139,8 +139,8 @@ export default function ReceptionsPage() {
                 status: 'Enviada al Proveedor', 
                 originalOrderId: orderId,
                 items: pendingItems,
-                date: originalOrder.date,
-                estimatedDeliveryDate: originalOrder.estimatedDeliveryDate,
+                date: typeof originalOrder.date === 'string' ? originalOrder.date : new Date(originalOrder.date).toISOString(),
+                estimatedDeliveryDate: typeof originalOrder.estimatedDeliveryDate === 'string' ? originalOrder.estimatedDeliveryDate : new Date(originalOrder.estimatedDeliveryDate).toISOString(),
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
@@ -246,7 +246,7 @@ export default function ReceptionsPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn("capitalize bg-blue-100 text-blue-800 border-blue-200")}
+                      className={cn("capitalize bg-blue-100 text-blue-200")}
                     >
                       {order.status}
                     </Badge>
@@ -295,7 +295,3 @@ export default function ReceptionsPage() {
     </div>
   )
 }
-
-    
-
-    
