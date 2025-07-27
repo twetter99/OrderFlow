@@ -24,7 +24,7 @@ export async function addProject(data: ProjectData) {
     if (data.margen_previsto === undefined) delete dataToSave.margen_previsto;
 
     await addDoc(collection(db, 'projects'), dataToSave);
-    revalidatePath('/projects');
+    revalidatePath('/main/projects');
     return { success: true, message: 'Proyecto añadido correctamente.' };
   } catch (error) {
     console.error("Error adding project to Firestore:", error);
@@ -50,7 +50,7 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
         if (data.margen_previsto === undefined) delete dataToUpdate.margen_previsto;
 
         await updateDoc(projectRef, dataToUpdate);
-        revalidatePath('/projects');
+        revalidatePath('/main/projects');
         return { success: true, message: 'Proyecto actualizado correctamente.' };
     } catch (error) {
         console.error("Error updating project in Firestore:", error);
@@ -61,7 +61,7 @@ export async function updateProject(id: string, data: Partial<ProjectData>) {
 export async function deleteProject(id: string) {
     try {
         await deleteDoc(doc(db, 'projects', id));
-        revalidatePath('/projects');
+        revalidatePath('/main/projects');
         return { success: true, message: 'Proyecto eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting project from Firestore:", error);
@@ -73,7 +73,7 @@ export async function deleteMultipleProjects(ids: string[]) {
     try {
         const deletePromises = ids.map(id => deleteDoc(doc(db, 'projects', id)));
         await Promise.all(deletePromises);
-        revalidatePath('/projects');
+        revalidatePath('/main/projects');
         return { success: true, message: 'Proyectos eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple projects from Firestore:", error);
@@ -119,3 +119,5 @@ export async function getProjectUsers(projectId: string): Promise<{ projectManag
     return { projectManager: null, team: [] };
   }
 }
+
+    

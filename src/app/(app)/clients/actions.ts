@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -8,7 +9,7 @@ import { revalidatePath } from 'next/cache';
 export async function addClient(data: { name: string; contactPerson: string; email: string; phone: string; }) {
   try {
     await addDoc(collection(db, 'clients'), data);
-    revalidatePath('/clients');
+    revalidatePath('/main/clients');
     return { success: true, message: 'Cliente añadido correctamente.' };
   } catch (error) {
     console.error("Error adding client to Firestore:", error);
@@ -20,7 +21,7 @@ export async function updateClient(id: string, data: { name: string; contactPers
     try {
         const clientRef = doc(db, 'clients', id);
         await updateDoc(clientRef, data);
-        revalidatePath('/clients');
+        revalidatePath('/main/clients');
         return { success: true, message: 'Cliente actualizado correctamente.' };
     } catch (error) {
         console.error("Error updating client in Firestore:", error);
@@ -31,7 +32,7 @@ export async function updateClient(id: string, data: { name: string; contactPers
 export async function deleteClient(id: string) {
     try {
         await deleteDoc(doc(db, 'clients', id));
-        revalidatePath('/clients');
+        revalidatePath('/main/clients');
         return { success: true, message: 'Cliente eliminado correctamente.' };
     } catch (error) {
         console.error("Error deleting client from Firestore:", error);
@@ -43,10 +44,12 @@ export async function deleteMultipleClients(ids: string[]) {
     try {
         const deletePromises = ids.map(id => deleteDoc(doc(db, 'clients', id)));
         await Promise.all(deletePromises);
-        revalidatePath('/clients');
+        revalidatePath('/main/clients');
         return { success: true, message: 'Clientes eliminados correctamente.' };
     } catch (error) {
         console.error("Error deleting multiple clients from Firestore:", error);
         return { success: false, message: 'No se pudieron eliminar los clientes.' };
     }
 }
+
+    

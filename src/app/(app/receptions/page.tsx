@@ -1,7 +1,8 @@
 
+
 "use client";
 
-import React, { useState, useMemo, useEffect } from "react";
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import {
   Table,
   TableBody,
@@ -20,11 +21,12 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { QrCode, Anchor, Link2 } from "lucide-react";
+import { QrCode, Anchor, Link2, UploadCloud, FileText } from "lucide-react";
 import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
@@ -33,9 +35,99 @@ import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { createPurchaseOrder } from "@/app/(app)/purchasing/actions";
+import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "@/app/main/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+
+function AttachDeliveryNoteDialog({
+    orderId,
+    isOpen,
+    onClose,
+}: {
+    orderId: string | null;
+    isOpen: boolean;
+    onClose: () => void;
+}) {
+    const { toast } = useToast();
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [isUploading, setIsUploading] = useState(false);
+
+    const handleAttachClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const files = event.target.files;
+        if (!files || files.length === 0 || !orderId) return;
+
+        setIsUploading(true);
+        try {
+            // En una app real, aquí iría la lógica de subida a un storage (ej. Firebase Storage)
+            // y obtendríamos las URLs. Para este prototipo, simularemos las URLs.
+            const simulatedUrls = Array.from(files).map(file => `https://example.com/uploads/${orderId}/${file.name}`);
+
+            const result = await linkDeliveryNoteToPurchaseOrder(orderId, simulatedUrls);
+            
+            if (result.success) {
+                toast({
+                    title: "Albarán Adjuntado",
+                    description: "El albarán del proveedor se ha vinculado a la orden de compra.",
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Error al Adjuntar",
+                    description: result.message,
+                });
+            }
+        } catch (error) {
+            console.error("Error attaching file: ", error);
+             toast({
+                variant: "destructive",
+                title: "Error",
+                description: "No se pudo adjuntar el albarán."
+            });
+        } finally {
+            setIsUploading(false);
+            onClose();
+        }
+    };
+
+    if (!isOpen) return null;
+
+    return (
+        <Dialog open={isOpen} onOpenChange={onClose}>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>¿Desea adjuntar el albarán del proveedor?</DialogTitle>
+                    <DialogDescription>
+                        Puedes subir un archivo escaneado en formato PDF, JPG o PNG para dejar constancia y facilitar su posterior consulta y control administrativo.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="py-4 text-center">
+                    <FileText className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+                </div>
+                <DialogFooter className="sm:justify-center">
+                     <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        multiple
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        style={{ display: 'none' }}
+                    />
+                    <Button type="button" variant="outline" onClick={onClose} disabled={isUploading}>
+                        Omitir
+                    </Button>
+                    <Button type="button" onClick={handleAttachClick} disabled={isUploading}>
+                        <UploadCloud className="mr-2 h-4 w-4" />
+                        {isUploading ? "Subiendo..." : "Adjuntar albarán"}
+                    </Button>
+                </DialogFooter>
+            </DialogContent>
+        </Dialog>
+    )
+}
 
 export default function ReceptionsPage() {
   const { toast } = useToast();
@@ -45,6 +137,8 @@ export default function ReceptionsPage() {
 
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [orderForAttachment, setOrderForAttachment] = useState<string | null>(null);
+
 
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, 'purchaseOrders'), (snapshot) => {
@@ -87,7 +181,6 @@ export default function ReceptionsPage() {
         return;
     }
     
-    // Convertir Timestamps a ISOString inmediatamente después de leer
     const originalOrder = convertPurchaseOrderTimestamps(orderSnap.data());
 
     const batch = writeBatch(db);
@@ -139,8 +232,8 @@ export default function ReceptionsPage() {
                 status: 'Enviada al Proveedor', 
                 originalOrderId: orderId,
                 items: pendingItems,
-                date: new Date(originalOrder.date as string).toISOString(),
-                estimatedDeliveryDate: new Date(originalOrder.estimatedDeliveryDate as string).toISOString(),
+                date: typeof originalOrder.date === 'string' ? originalOrder.date : new Date(originalOrder.date as any).toISOString(),
+                estimatedDeliveryDate: typeof originalOrder.estimatedDeliveryDate === 'string' ? originalOrder.estimatedDeliveryDate : new Date(originalOrder.estimatedDeliveryDate as any).toISOString(),
                 total: pendingItems.reduce((acc, item) => acc + (item.quantity * item.price), 0),
                 statusHistory: [{ 
                     status: 'Enviada al Proveedor', 
@@ -175,11 +268,15 @@ export default function ReceptionsPage() {
 
     try {
         await batch.commit();
-        toast({
-            title: "Recepción Procesada",
-            description: `La orden ${originalOrder?.orderNumber} ha sido actualizada y el stock ajustado.`
-        });
         setIsChecklistOpen(false);
+        setOrderForAttachment(orderId); // Trigger attachment dialog
+        
+        // This toast is optional now, as the attachment dialog gives feedback
+        // toast({
+        //     title: "Recepción Procesada",
+        //     description: `La orden ${originalOrder?.orderNumber} ha sido actualizada y el stock ajustado.`
+        // });
+        
     } catch (error) {
         console.error("Error receiving order: ", error);
         toast({
@@ -292,6 +389,14 @@ export default function ReceptionsPage() {
           )}
         </DialogContent>
       </Dialog>
+
+       <AttachDeliveryNoteDialog
+            orderId={orderForAttachment}
+            isOpen={!!orderForAttachment}
+            onClose={() => setOrderForAttachment(null)}
+        />
     </div>
   )
 }
+
+    
