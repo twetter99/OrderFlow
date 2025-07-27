@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import Link from "next/link";
@@ -159,127 +157,131 @@ export function SidebarNav() {
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
 
-  if (!hasMounted) {
-    return null; 
+  if (hasMounted && isMobile) {
+    return null;
   }
-
-  if (isMobile) return null;
-
+  
   return (
     <TooltipProvider>
-    <aside
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      className={cn(
-        "flex flex-col w-64 border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-        !isExpanded && "w-16",
-      )}
-    >
-      <div className={cn(
-        "flex items-center h-16 border-b border-white/10 px-4",
-        isExpanded ? "justify-between" : "justify-center"
-      )}>
-        <Link href="/dashboard">
-            <div className={cn(
-            "flex items-center justify-center transition-all duration-300 h-10",
-            isExpanded ? "w-[150px]" : "w-[32px]"
-            )}>
-            {isExpanded ? (
-                <Image 
-                src="/images/logo_blanco.png" 
-                alt="OrderFlow Logo" 
-                width={150} 
-                height={40}
-                priority
-                className="object-contain w-full h-full"
-                />
-            ) : (
-                <Image 
-                src="/images/logo_icon_blanco.png" 
-                alt="OrderFlow Icon" 
-                width={32} 
-                height={32}
-                priority
-                className="object-contain w-full h-full"
-                />
-            )}
-            </div>
-        </Link>
-        {isExpanded && (
-             <Tooltip>
-                <TooltipTrigger asChild>
-                     <Button variant="ghost" size="icon" onClick={handlePinToggle} className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8">
-                        {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
-                     </Button>
-                </TooltipTrigger>
-                <TooltipContent side="right">
-                    <p>{isPinned ? 'Desanclar barra lateral' : 'Anclar barra lateral'}</p>
-                </TooltipContent>
-            </Tooltip>
+      <aside
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        className={cn(
+          "flex flex-col w-64 border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
+          hasMounted && !isExpanded && "w-16",
         )}
-      </div>
-      <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-        {navGroups.map((group) => (
-          <div key={group.title} className="space-y-1">
-            {group.title && (
-                 <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
-            )}
-            {group.items.map((item) => {
-              const uniqueKey = `${item.label}`;
-              const isActive = isSubItemActive(item.subItems);
-              
-              return (
-                <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
-                  <Tooltip>
-                     <TooltipTrigger asChild>
-                         <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
-                            <div
-                            className={cn(
-                                "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
-                                isActive && "bg-white/10 text-white"
-                            )}
-                            >
-                            <div className="flex items-center gap-3">
-                                <item.icon className="h-5 w-5 shrink-0" />
-                                <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
-                            </div>
-                            {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
-                            </div>
-                        </CollapsibleTrigger>
-                     </TooltipTrigger>
-                     {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
-                  </Tooltip>
-                  {isExpanded && (
-                  <CollapsibleContent>
-                     <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
-                      {item.subItems.map(subItem => {
-                         const isSubActive = pathname.startsWith(subItem.href);
-                         const subUniqueKey = `${subItem.label}-${subItem.href}`;
-
-                         return (
-                              <Link
-                                  key={subUniqueKey}
-                                  href={subItem.href}
-                                  className={cn(
-                                  "flex items-center gap-3 rounded-md px-3 py-2 text-white/60 transition-all hover:text-white text-sm",
-                                  isSubActive && "text-white font-semibold"
-                                  )}
-                              >
-                              <subItem.icon className="h-4 w-4" />
-                              <span>{subItem.label}</span>
-                              </Link>
-                         )
-                      })}
-                     </div>
-                  </CollapsibleContent>
+      >
+        {hasMounted ? (
+          <>
+            <div className={cn(
+              "flex items-center h-16 border-b border-white/10 px-4",
+              isExpanded ? "justify-between" : "justify-center"
+            )}>
+              <Link href="/dashboard">
+                  <div className={cn(
+                  "flex items-center justify-center transition-all duration-300 h-10",
+                  isExpanded ? "w-[150px]" : "w-[32px]"
+                  )}>
+                  {isExpanded ? (
+                      <Image 
+                      src="/images/logo_blanco.png" 
+                      alt="OrderFlow Logo" 
+                      width={150} 
+                      height={40}
+                      priority
+                      className="object-contain w-full h-full"
+                      />
+                  ) : (
+                      <Image 
+                      src="/images/logo_icon_blanco.png" 
+                      alt="OrderFlow Icon" 
+                      width={32} 
+                      height={32}
+                      priority
+                      className="object-contain w-full h-full"
+                      />
                   )}
-                </Collapsible>
-              );
-            })}
-          </div>
-        ))}
-      </nav>
-    </aside>
+                  </div>
+              </Link>
+              {isExpanded && (
+                   <Tooltip>
+                      <TooltipTrigger asChild>
+                           <Button variant="ghost" size="icon" onClick={handlePinToggle} className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8">
+                              {isPinned ? <PinOff className="h-4 w-4" /> : <Pin className="h-4 w-4" />}
+                           </Button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">
+                          <p>{isPinned ? 'Desanclar barra lateral' : 'Anclar barra lateral'}</p>
+                      </TooltipContent>
+                  </Tooltip>
+              )}
+            </div>
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+              {navGroups.map((group) => (
+                <div key={group.title} className="space-y-1">
+                  {group.title && (
+                       <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
+                  )}
+                  {group.items.map((item) => {
+                    const uniqueKey = `${item.label}`;
+                    const isActive = isSubItemActive(item.subItems);
+                    
+                    return (
+                      <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
+                        <Tooltip>
+                           <TooltipTrigger asChild>
+                               <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
+                                  <div
+                                  className={cn(
+                                      "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
+                                      isActive && "bg-white/10 text-white"
+                                  )}
+                                  >
+                                  <div className="flex items-center gap-3">
+                                      <item.icon className="h-5 w-5 shrink-0" />
+                                      <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
+                                  </div>
+                                  {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
+                                  </div>
+                              </CollapsibleTrigger>
+                           </TooltipTrigger>
+                           {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
+                        </Tooltip>
+                        {isExpanded && (
+                        <CollapsibleContent>
+                           <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
+                            {item.subItems.map(subItem => {
+                               const isSubActive = pathname.startsWith(subItem.href);
+                               const subUniqueKey = `${subItem.label}-${subItem.href}`;
+
+                               return (
+                                    <Link
+                                        key={subUniqueKey}
+                                        href={subItem.href}
+                                        className={cn(
+                                        "flex items-center gap-3 rounded-md px-3 py-2 text-white/60 transition-all hover:text-white text-sm",
+                                        isSubActive && "text-white font-semibold"
+                                        )}
+                                    >
+                                    <subItem.icon className="h-4 w-4" />
+                                    <span>{subItem.label}</span>
+                                    </Link>
+                               )
+                            })}
+                           </div>
+                        </CollapsibleContent>
+                        )}
+                      </Collapsible>
+                    );
+                  })}
+                </div>
+              ))}
+            </nav>
+          </>
+        ) : (
+           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
+        )}
+      </aside>
     </TooltipProvider>
   );
 }
