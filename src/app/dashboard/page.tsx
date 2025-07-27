@@ -26,9 +26,12 @@ export default function DashboardPage() {
 
     useEffect(() => {
         // Simulating data fetching and calculation
-        const totalInventoryValue = inventory.reduce((acc, item) => acc + (item.quantity * item.unitCost), 0);
+        const totalInventoryValue = inventory
+            .filter(item => item.quantity !== undefined && item.unitCost !== undefined)
+            .reduce((acc, item) => acc + ((item.quantity || 0) * (item.unitCost || 0)), 0);
+
         const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
-        const lowStockCount = inventory.filter(item => item.isLowStock).length;
+        const lowStockCount = inventory.filter(item => item.minThreshold && item.quantity && item.quantity < item.minThreshold).length;
         const pendingValue = purchaseOrders
             .filter(p => p.status === 'Pendiente de Aprobación')
             .reduce((acc, p) => acc + p.total, 0);
