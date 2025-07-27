@@ -1,9 +1,8 @@
-
 "use client";
 
 import { useEffect, useState, useTransition } from "react";
 import { useDebounce } from "use-debounce";
-import { getPriceInsight } from "@/app/(app)/ai-assistant/actions";
+import { getPriceInsight } from "@/app/ai-assistant/actions";
 import type { CheckItemPriceOutput } from "@/ai/flows/check-item-price";
 import { AlertCircle, Bot, Loader2 } from "lucide-react";
 

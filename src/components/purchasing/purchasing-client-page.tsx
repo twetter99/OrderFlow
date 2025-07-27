@@ -1,5 +1,3 @@
-
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -21,8 +19,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +50,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
-import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User } from "@/lib/types";
+import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User, Location } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
@@ -61,7 +59,7 @@ import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
 import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "./actions";
+import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "@/app/purchasing/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 import {
@@ -72,34 +70,21 @@ import {
 } from "@/components/ui/input-otp"
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useRouter } from "next/navigation";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
 
-const convertTimestamps = (order: any): PurchaseOrder => {
-    return {
-      ...order,
-      date: order.date instanceof Timestamp ? order.date.toDate().toISOString() : order.date,
-      estimatedDeliveryDate: order.estimatedDeliveryDate instanceof Timestamp ? order.estimatedDeliveryDate.toDate().toISOString() : order.estimatedDeliveryDate,
-      statusHistory: order.statusHistory?.map((h: any) => ({
-        ...h,
-        date: h.date instanceof Timestamp ? h.date.toDate().toISOString() : h.date
-      })) || [],
-      // Ensure the id is always the firestore doc id
-      id: order.id
-    };
-};
-
-
-const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"];
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
     'Pendiente de Aprobación': ['Aprobada', 'Rechazado'],
     'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Permitir revertir a pendiente
     'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
-    'Enviada al Proveedor': ['Recibida'],
+    'Enviada al Proveedor': ['Recibida', 'Recibida Parcialmente'],
     'Recibida': ['Almacenada'],
+    'Recibida Parcialmente': ['Almacenada', 'Recibida'], // Puede pasar a recibida si llegan los items restantes
     'Almacenada': [],
 };
 
@@ -109,6 +94,7 @@ type SortDescriptor = {
 };
 
 export function PurchasingClientPage() {
+  const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
@@ -116,6 +102,7 @@ export function PurchasingClientPage() {
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
   const [users, setUsers] = useState<User[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -129,6 +116,7 @@ export function PurchasingClientPage() {
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isReceptionAlertOpen, setIsReceptionAlertOpen] = useState(false);
   const [pinValue, setPinValue] = useState('');
   
   const [orderToProcess, setOrderToProcess] = useState<{ id: string; status: PurchaseOrder['status'] } | null>(null);
@@ -138,6 +126,10 @@ export function PurchasingClientPage() {
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
+  
+  const [isStateTransitionAlertOpen, setIsStateTransitionAlertOpen] = useState(false);
+  const [stateTransitionAlertMessage, setStateTransitionAlertMessage] = useState({ title: "", description: ""});
+
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
       column: 'date',
@@ -146,10 +138,7 @@ export function PurchasingClientPage() {
   
   useEffect(() => {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => {
-            const data = doc.data();
-            return convertTimestamps({ ...data, id: doc.id });
-        });
+        const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
         setPurchaseOrders(ordersData);
         setLoading(false);
     });
@@ -157,6 +146,7 @@ export function PurchasingClientPage() {
     const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))));
+    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location))));
 
     return () => {
         unsubPO();
@@ -164,6 +154,7 @@ export function PurchasingClientPage() {
         unsubInventory();
         unsubProjects();
         unsubUsers();
+        unsubLocations();
     };
   }, []);
   
@@ -259,8 +250,29 @@ export function PurchasingClientPage() {
     setIsDeleteDialogOpen(true);
   };
 
-  const handlePrintClick = (orderId: string) => {
-    window.open(`/purchasing/${orderId}/print`, '_blank');
+  const handlePrintClick = (order: PurchaseOrder) => {
+    const projectDetails = projects.find(p => p.id === order.project);
+    const supplierDetails = suppliers.find(s => s.name === order.supplier);
+    const deliveryLocationDetails = locations.find(l => l.id === order.deliveryLocationId);
+    
+    const enrichedOrder = {
+        ...order,
+        projectDetails,
+        supplierDetails,
+        deliveryLocationDetails,
+    };
+
+    try {
+        localStorage.setItem(`print_order_${order.id}`, JSON.stringify(enrichedOrder));
+        window.open(`/purchasing/${order.id}/print`, '_blank');
+    } catch (e) {
+        console.error("Could not save to localStorage", e);
+        toast({
+            variant: "destructive",
+            title: "Error de Impresión",
+            description: "No se pudo preparar la orden para imprimir. Inténtalo de nuevo."
+        })
+    }
   };
 
   const handleEmailClick = (order: PurchaseOrder) => {
@@ -278,11 +290,16 @@ export function PurchasingClientPage() {
   
   const handleStatusChange = async (id: string, currentStatus: PurchaseOrder['status'], newStatus: PurchaseOrder['status']) => {
     if (validTransitions[currentStatus] && !validTransitions[currentStatus].includes(newStatus)) {
-        toast({
-            variant: "destructive",
-            title: "Transición de Estado No Válida",
-            description: `No se puede cambiar el estado de "${currentStatus}" a "${newStatus}".`,
-        });
+        setStateTransitionAlertMessage({
+            title: "⚠️ Flujo de Proceso",
+            description: `No puedes cambiar el estado de "${currentStatus}" a "${newStatus}". Para continuar, debes seguir el orden lógico de los estados.`,
+        })
+        setIsStateTransitionAlertOpen(true);
+        return;
+    }
+
+    if (newStatus === 'Recibida' || newStatus === 'Recibida Parcialmente') {
+        setIsReceptionAlertOpen(true);
         return;
     }
     
@@ -377,10 +394,10 @@ export function PurchasingClientPage() {
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
-    if (order.status === 'Almacenada' || order.status === 'Recibida') {
+    if (order.status === 'Almacenada' || order.status === 'Recibida' || order.status === 'Recibida Parcialmente') {
         return { text: 'Entregado', color: 'bg-green-100 text-green-800 border-green-200' };
     }
-    const deliveryDate = new Date(order.estimatedDeliveryDate);
+    const deliveryDate = new Date(order.estimatedDeliveryDate as string);
     if (isPast(deliveryDate) && !isToday(deliveryDate)) {
         return { text: 'Retrasado', color: 'bg-destructive/20 text-destructive border-destructive/20' };
     }
@@ -426,6 +443,20 @@ export function PurchasingClientPage() {
     }
     return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
   };
+  
+  const getModalTitle = () => {
+    if (!selectedOrder) return "Crear Nuevo Pedido de Compra";
+    const orderNumber = 'orderNumber' in selectedOrder ? selectedOrder.orderNumber : '';
+    const isEditable = !('id' in selectedOrder) || selectedOrder.status === 'Pendiente de Aprobación' || selectedOrder.status === 'Aprobada';
+
+    if ('id' in selectedOrder && isEditable) {
+        return `Editar Pedido ${orderNumber}`;
+    }
+    if ('id' in selectedOrder) {
+        return `Detalles del Pedido ${orderNumber}`;
+    }
+    return "Crear Nuevo Pedido de Compra";
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -567,6 +598,7 @@ export function PurchasingClientPage() {
             <TableBody>
               {activePurchaseOrders.map((order) => {
                 const deliveryStatus = getDeliveryStatus(order);
+                const isEditable = order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
                 return (
                 <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) ? "selected" : ""} className={cn(order.status === "Pendiente de Aprobación" && "bg-orange-50 dark:bg-orange-900/20")}>
                   <TableCell padding="checkbox">
@@ -576,8 +608,22 @@ export function PurchasingClientPage() {
                       aria-label={`Seleccionar orden ${order.orderNumber}`}
                     />
                   </TableCell>
-                  <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex items-center gap-2">
+                        <span>{order.orderNumber || order.id}</span>
+                        {order.originalOrderId && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Link2 className="h-4 w-4 text-muted-foreground"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Pendiente de la orden {order.originalOrderId}</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
+                    </div>
+                  </TableCell>
+                  <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.projectName}</TableCell>
                   <TableCell>
@@ -589,6 +635,7 @@ export function PurchasingClientPage() {
                           order.status === "Aprobada" && "bg-green-100 text-green-800 border-green-200",
                           order.status === "Pendiente de Aprobación" && "bg-orange-100 text-orange-800 border-orange-200 animate-pulse",
                           order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
+                          order.status === "Recibida Parcialmente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
                           order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
                           order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
                           order.status === "Rechazado" && "bg-destructive/20 text-destructive border-destructive/20"
@@ -610,7 +657,7 @@ export function PurchasingClientPage() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                        <span>{new Date(order.estimatedDeliveryDate).toLocaleDateString()}</span>
+                        <span>{new Date(order.estimatedDeliveryDate as string).toLocaleDateString()}</span>
                         <Badge variant="outline" className={cn("capitalize w-fit", deliveryStatus.color)}>
                             {deliveryStatus.text}
                         </Badge>
@@ -632,8 +679,14 @@ export function PurchasingClientPage() {
                           <DropdownMenuSeparator />
                           <DropdownMenuItem onClick={() => handleEditClick(order)}>
                             <Eye className="mr-2 h-4 w-4"/>
-                            {canApprove ? "Revisar y Aprobar" : "Ver Detalles"}
+                            Ver Detalles
                           </DropdownMenuItem>
+                          {isEditable && (
+                            <DropdownMenuItem onClick={() => handleEditClick(order)}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Editar
+                            </DropdownMenuItem>
+                          )}
                           <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
                             <History className="mr-2 h-4 w-4"/>
                             Trazabilidad
@@ -656,7 +709,7 @@ export function PurchasingClientPage() {
                             </DropdownMenuSubContent>
                           </DropdownMenuSub>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handlePrintClick(order.id)}>
+                          <DropdownMenuItem onClick={() => handlePrintClick(order)}>
                             <Printer className="mr-2 h-4 w-4"/>
                             Imprimir Orden
                           </DropdownMenuItem>
@@ -699,11 +752,11 @@ export function PurchasingClientPage() {
         <DialogContent className="sm:max-w-5xl">
           <DialogHeader>
             <DialogTitle>
-              {selectedOrder && ('id' in selectedOrder || 'items' in selectedOrder) ? (canApprove ? `Revisar Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}` : `Detalles del Pedido ${('orderNumber' in selectedOrder ? selectedOrder.orderNumber : '')}`) : "Crear Nuevo Pedido de Compra"}
+                {getModalTitle()}
             </DialogTitle>
             <DialogDescription>
-              {selectedOrder
-                ? "Edita la información del pedido de compra."
+              {selectedOrder && 'id' in selectedOrder
+                ? "Revisa o modifica la información del pedido de compra."
                 : "Rellena los detalles para crear un nuevo pedido."}
             </DialogDescription>
           </DialogHeader>
@@ -718,6 +771,7 @@ export function PurchasingClientPage() {
             suppliers={suppliers}
             inventoryItems={inventory}
             projects={projects}
+            locations={locations}
           />
         </DialogContent>
       </Dialog>
@@ -756,6 +810,40 @@ export function PurchasingClientPage() {
         </DialogContent>
       </Dialog>
       
+      <AlertDialog open={isReceptionAlertOpen} onOpenChange={setIsReceptionAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2"><Anchor className="h-5 w-5 text-primary"/>Proceso de Recepción</AlertDialogTitle>
+            <AlertDialogDescription>
+              Para garantizar un control de stock preciso, las recepciones de material deben realizarse desde el módulo específico de "Recepciones". ¿Deseas ir ahora?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => router.push('/receptions')}>
+              Ir a Recepciones
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+      
+      <AlertDialog open={isStateTransitionAlertOpen} onOpenChange={setIsStateTransitionAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <AlertCircle className="h-6 w-6 text-orange-500" />
+                {stateTransitionAlertMessage.title}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {stateTransitionAlertMessage.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => setIsStateTransitionAlertOpen(false)}>Entendido</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       <AlertDialog
         open={isDeleteDialogOpen}
         onOpenChange={setIsDeleteDialogOpen}
@@ -779,10 +867,3 @@ export function PurchasingClientPage() {
     </div>
   )
 }
-
-
-    
-
-    
-
-
