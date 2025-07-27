@@ -127,7 +127,7 @@ const navGroups = [
   }
 ];
 
-export function SidebarNav() {
+export const SidebarNav = () => {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
   const [isHovered, setIsHovered] = React.useState(false);
@@ -292,7 +292,7 @@ export function SidebarNav() {
                 </nav>
             </>
         ) : (
-           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
+           <div className="h-full w-16" />
         )}
       </aside>
     </TooltipProvider>
