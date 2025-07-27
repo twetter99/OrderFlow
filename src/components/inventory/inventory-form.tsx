@@ -125,6 +125,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     }, 0);
   }, [itemType, watchedComponents, inventoryItems]);
   
+  const sortedFamilies = useMemo(() => {
+    return [...productFamilies].sort((a, b) => 
+        a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
+    );
+  }, []);
+
   useEffect(() => {
     if (itemType === 'service') {
         form.setValue('unit', 'ud');
@@ -261,7 +267,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                                 </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {productFamilies.map(family => (
+                                {sortedFamilies.map(family => (
                                     <SelectItem key={family.name} value={family.name}>
                                         <div className="flex flex-col">
                                             <span className="font-medium">{family.name}</span>
@@ -520,4 +526,5 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     </Form>
   );
 }
+
 
