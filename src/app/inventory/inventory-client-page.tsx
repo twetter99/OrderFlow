@@ -97,11 +97,27 @@ export function InventoryClientPage() {
   }, []);
 
   const filteredInventory = useMemo(() => {
-    return inventory.filter(item =>
-      item.name.toLowerCase().includes(filter.toLowerCase()) ||
-      item.sku.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [inventory, filter]);
+    const lowercasedFilter = filter.toLowerCase();
+    if (!lowercasedFilter) {
+      return inventory;
+    }
+
+    const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
+
+    return inventory.filter(item => {
+      const hasMatchingSupplier = item.suppliers?.some(supplierId => {
+        const supplierName = supplierMap.get(supplierId);
+        return supplierName?.toLowerCase().includes(lowercasedFilter);
+      });
+
+      return (
+        item.name.toLowerCase().includes(lowercasedFilter) ||
+        item.sku.toLowerCase().includes(lowercasedFilter) ||
+        hasMatchingSupplier
+      );
+    });
+  }, [inventory, filter, suppliers]);
+
 
   const handleAddClick = () => {
     setSelectedItem(null);
@@ -276,7 +292,7 @@ export function InventoryClientPage() {
         <CardContent>
           <div className="mb-4">
             <Input 
-                placeholder="Filtrar por nombre o SKU..."
+                placeholder="Filtrar por nombre, SKU o proveedor..."
                 value={filter}
                 onChange={(e) => setFilter(e.target.value)}
             />
@@ -352,7 +368,7 @@ export function InventoryClientPage() {
                {!loading && filteredInventory.length === 0 && (
                  <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
-                        No se encontraron artículos.
+                        {filter ? "No se han encontrado artículos que coincidan con tu búsqueda." : "No se encontraron artículos."}
                     </TableCell>
                 </TableRow>
                )}
