@@ -34,6 +34,7 @@ const formSchema = z.object({
   family: z.string().optional(),
   unit: z.string().min(1, "La unidad es obligatoria."),
   observations: z.string().optional(),
+  minThreshold: z.coerce.number().min(0, "El umbral debe ser positivo o cero.").optional(),
   // Campos opcionales según el tipo
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
   suppliers: z.array(z.string()).optional(),
@@ -84,7 +85,7 @@ const productFamilies = [
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
   const defaultValues = item
-    ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [] }
+    ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [], minThreshold: item.minThreshold || 0 }
     : {
         type: 'simple' as const,
         sku: "",
@@ -96,6 +97,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         unit: 'ud',
         suppliers: [],
         components: [],
+        minThreshold: 0,
       };
 
   const form = useForm<InventoryFormValues>({
@@ -311,7 +313,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
              <FormField
                 control={form.control}
                 name="unit"
@@ -341,6 +343,19 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <FormLabel>Costo Unitario (€)</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" placeholder="350,00" {...field} onFocus={(e) => e.target.select()} />
+                    </FormControl>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
+             <FormField
+                control={form.control}
+                name="minThreshold"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Umbral Mínimo Stock</FormLabel>
+                    <FormControl>
+                        <Input type="number" step="1" placeholder="10" {...field} onFocus={(e) => e.target.select()} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
