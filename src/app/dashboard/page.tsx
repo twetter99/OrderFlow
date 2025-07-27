@@ -2,7 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { inventory, projects, purchaseOrders } from "@/lib/data";
+import { inventory, projects, purchaseOrders, inventoryLocations } from "@/lib/data";
 import type { Project, PurchaseOrder } from "@/lib/types";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
@@ -25,13 +25,24 @@ export default function DashboardPage() {
     const [livePurchaseOrders, setLivePurchaseOrders] = useState<PurchaseOrder[]>(purchaseOrders);
 
     useEffect(() => {
-        // Simulating data fetching and calculation
-        const totalInventoryValue = inventory
-            .filter(item => item.quantity !== undefined && item.unitCost !== undefined)
-            .reduce((acc, item) => acc + ((item.quantity || 0) * (item.unitCost || 0)), 0);
+        // Correct calculation for inventory value
+        const totalInventoryValue = inventory.reduce((acc, item) => {
+            if (item.type === 'service') return acc; // Exclude services from value calculation
+            const totalStock = inventoryLocations
+                .filter(loc => loc.itemId === item.id)
+                .reduce((sum, loc) => sum + loc.quantity, 0);
+            return acc + (totalStock * (item.unitCost || 0));
+        }, 0);
 
         const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
-        const lowStockCount = inventory.filter(item => item.minThreshold && item.quantity && item.quantity < item.minThreshold).length;
+        const lowStockCount = inventory.filter(item => {
+             if (item.type !== 'simple') return false;
+             const totalStock = inventoryLocations
+                .filter(loc => loc.itemId === item.id)
+                .reduce((sum, loc) => sum + loc.quantity, 0);
+            return item.minThreshold && totalStock < item.minThreshold;
+        }).length;
+
         const pendingValue = purchaseOrders
             .filter(p => p.status === 'Pendiente de Aprobación')
             .reduce((acc, p) => acc + p.total, 0);
