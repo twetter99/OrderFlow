@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useSidebar } from "../ui/sidebar";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
@@ -132,6 +132,11 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { open, setOpen, isMobile } = useSidebar();
   const [isHovered, setIsHovered] = React.useState(false);
+  const [hasMounted, setHasMounted] = useState(false);
+
+  useEffect(() => {
+    setHasMounted(true);
+  }, []);
 
   const isPinned = open;
   const isExpanded = isPinned || isHovered;
@@ -152,6 +157,10 @@ export function SidebarNav() {
 
   const isSubItemActive = (subItems: any[]) => {
     return subItems.some(sub => pathname.startsWith(sub.href));
+  }
+
+  if (!hasMounted) {
+    return null; 
   }
 
   if (isMobile) return null;
