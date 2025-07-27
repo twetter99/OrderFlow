@@ -157,7 +157,7 @@ export function SidebarNav() {
     if (!hasMounted) return false;
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
-
+  
   return (
     <TooltipProvider>
       <aside
@@ -165,7 +165,6 @@ export function SidebarNav() {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          // Apply width classes consistently based on the final state, determined after mounting
           hasMounted && !isExpanded ? "w-16" : "w-64"
         )}
       >
@@ -191,7 +190,7 @@ export function SidebarNav() {
                       />
                   ) : (
                       <Image 
-                      src="/images/logo_icon_blanco.png" 
+                      src="/images/logo_icono_blanco.png" 
                       alt="OrderFlow Icon" 
                       width={32} 
                       height={32}
@@ -215,51 +214,49 @@ export function SidebarNav() {
               )}
             </>
           ) : (
-            // Placeholder for the server and initial client render
-            <div className="h-10 w-[32px]"></div>
+            <div className="h-full w-16" />
           )}
         </div>
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {hasMounted ? (
-            <>
-              {navGroups.map((group) => (
+        {hasMounted && (
+            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+            {navGroups.map((group) => (
                 <div key={group.title} className="space-y-1">
-                  {group.title && (
-                       <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
-                  )}
-                  {group.items.map((item) => {
+                {group.title && (
+                    <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
+                )}
+                {group.items.map((item) => {
                     const uniqueKey = `${item.label}`;
                     const isActive = isSubItemActive(item.subItems);
                     
                     return (
-                      <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
+                    <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
                         <Tooltip>
-                           <TooltipTrigger asChild>
-                               <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
-                                  <div
-                                  className={cn(
-                                      "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
-                                      isActive && "bg-white/10 text-white"
-                                  )}
-                                  >
-                                  <div className="flex items-center gap-3">
-                                      <item.icon className="h-5 w-5 shrink-0" />
-                                      <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
-                                  </div>
-                                  {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
-                                  </div>
-                              </CollapsibleTrigger>
-                           </TooltipTrigger>
-                           {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
+                        <TooltipTrigger asChild>
+                            <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
+                                <div
+                                className={cn(
+                                    "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
+                                    isActive && "bg-white/10 text-white"
+                                )}
+                                >
+                                <div className="flex items-center gap-3">
+                                    <item.icon className="h-5 w-5 shrink-0" />
+                                    <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
+                                </div>
+                                {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
+                                </div>
+                            </CollapsibleTrigger>
+                        </TooltipTrigger>
+                        {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
                         </Tooltip>
                         {isExpanded && (
                         <CollapsibleContent>
-                           <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
+                        <div className="pl-8 pt-1 border-l border-dashed border-white/20 ml-5 my-1 space-y-1">
                             {item.subItems.map(subItem => {
-                               const isSubActive = pathname.startsWith(subItem.href);
-                               const subUniqueKey = `${subItem.label}-${subItem.href}`;
+                            const isSubActive = pathname.startsWith(subItem.href);
+                            const subUniqueKey = `${subItem.label}-${subItem.href}`;
 
-                               return (
+                            return (
                                     <Link
                                         key={subUniqueKey}
                                         href={subItem.href}
@@ -271,24 +268,18 @@ export function SidebarNav() {
                                     <subItem.icon className="h-4 w-4" />
                                     <span>{subItem.label}</span>
                                     </Link>
-                               )
+                            )
                             })}
-                           </div>
+                        </div>
                         </CollapsibleContent>
                         )}
-                      </Collapsible>
+                    </Collapsible>
                     );
-                  })}
+                })}
                 </div>
-              ))}
-            </>
-          ) : (
-             // Placeholder for navigation items
-            <div className="p-2 space-y-2">
-              {[...Array(8)].map((_, i) => <div key={i} className="h-10 w-full rounded-md bg-white/5 animate-pulse"></div>)}
-            </div>
-          )}
-        </nav>
+            ))}
+            </nav>
+        )}
       </aside>
     </TooltipProvider>
   );
