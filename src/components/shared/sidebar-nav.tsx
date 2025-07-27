@@ -170,31 +170,32 @@ export function SidebarNav() {
         "flex items-center h-16 border-b border-white/10 px-4",
         isExpanded ? "justify-between" : "justify-center"
       )}>
-        <div className={cn(
-          "flex items-center justify-center transition-all duration-300 h-10",
-          isExpanded ? "w-[150px]" : "w-[32px]"
-        )}>
-          {isExpanded ? (
-            <Image 
-              src="/images/logo_blanco.png" 
-              alt="OrderFlow Logo" 
-              width={150} 
-              height={40}
-              priority
-              className="object-contain w-full h-full"
-            />
-          ) : (
-            <Image 
-              src="/images/logo_icon_blanco.png" 
-              alt="OrderFlow Icon" 
-              width={32} 
-              height={32}
-              priority
-              className="object-contain w-full h-full"
-            />
-          )}
-        </div>
-
+        <Link href="/dashboard">
+            <div className={cn(
+            "flex items-center justify-center transition-all duration-300 h-10",
+            isExpanded ? "w-[150px]" : "w-[32px]"
+            )}>
+            {isExpanded ? (
+                <Image 
+                src="/images/logo_blanco.png" 
+                alt="OrderFlow Logo" 
+                width={150} 
+                height={40}
+                priority
+                className="object-contain w-full h-full"
+                />
+            ) : (
+                <Image 
+                src="/images/logo_icon_blanco.png" 
+                alt="OrderFlow Icon" 
+                width={32} 
+                height={32}
+                priority
+                className="object-contain w-full h-full"
+                />
+            )}
+            </div>
+        </Link>
         {isExpanded && (
              <Tooltip>
                 <TooltipTrigger asChild>
