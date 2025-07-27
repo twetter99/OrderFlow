@@ -2,9 +2,9 @@ import type {Metadata} from 'next';
 import { Exo_2 } from 'next/font/google';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { SidebarProvider } from '@/components/ui/sidebar';
 import { SidebarNav } from '@/components/shared/sidebar-nav';
 import { Header } from '@/components/shared/header';
+import { SidebarProvider } from '@/components/ui/sidebar';
 
 const exo2 = Exo_2({
   subsets: ['latin'],
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-      <body className={`${exo2.variable} font-sans antialiased`}>
+      <body className={`${exo2.variable} font-sans antialiased flex bg-background`}>
         <SidebarProvider>
           <SidebarNav />
           <div className="flex flex-col flex-1 h-screen overflow-hidden">
@@ -33,8 +33,8 @@ export default function RootLayout({
               {children}
             </main>
           </div>
-          <Toaster />
         </SidebarProvider>
+        <Toaster />
       </body>
     </html>
   );
