@@ -54,6 +54,7 @@ import { db } from "@/lib/firebase";
 import { ItemDetailsModal } from "@/components/inventory/item-details-modal";
 import { Input } from "@/components/ui/input";
 import { AddStockForm } from "./add-stock-form";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function InventoryClientPage() {
   const { toast } = useToast();
@@ -303,6 +304,7 @@ export function InventoryClientPage() {
                 <TableHead>SKU</TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Tipo</TableHead>
+                <TableHead>Proveedor</TableHead>
                 <TableHead className="text-right">Stock Total</TableHead>
                 <TableHead className="text-right">Costo Unitario</TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
@@ -310,8 +312,13 @@ export function InventoryClientPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
-              ) : filteredInventory.map((item) => (
+                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
+              ) : filteredInventory.map((item) => {
+                const itemSuppliers = item.suppliers
+                    ?.map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
+                    .filter(Boolean) as string[] || [];
+                
+                return (
                 <TableRow key={item.id}>
                   <TableCell className="font-mono">{item.sku}</TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
@@ -322,6 +329,26 @@ export function InventoryClientPage() {
                     }>
                         {item.type === 'simple' ? 'Simple' : item.type === 'composite' ? 'Kit' : 'Servicio'}
                     </Badge>
+                  </TableCell>
+                  <TableCell>
+                    {item.type !== 'service' ? (
+                        itemSuppliers.length === 0 ? (
+                            <span className="text-muted-foreground">Sin proveedor</span>
+                        ) : itemSuppliers.length <= 2 ? (
+                            itemSuppliers.join(', ')
+                        ) : (
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <span className="cursor-help">{itemSuppliers.slice(0, 2).join(', ')}, +{itemSuppliers.length - 2}</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>{itemSuppliers.join(', ')}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        )
+                    ) : 'N/A'}
                   </TableCell>
                   <TableCell className="text-right font-bold">{item.type !== 'service' ? getItemTotalStock(item.id) : 'N/A'}</TableCell>
                   <TableCell className="text-right">{formatCurrency(item.unitCost)}</TableCell>
@@ -364,10 +391,10 @@ export function InventoryClientPage() {
                     </DropdownMenu>
                   </TableCell>
                 </TableRow>
-              ))}
+              )})}
                {!loading && filteredInventory.length === 0 && (
                  <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         {filter ? "No se han encontrado artículos que coincidan con tu búsqueda." : "No se encontraron artículos."}
                     </TableCell>
                 </TableRow>
