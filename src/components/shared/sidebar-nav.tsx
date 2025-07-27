@@ -127,7 +127,7 @@ const navGroups = [
   }
 ];
 
-export const SidebarNav = () => {
+export function SidebarNav() {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
   const [isHovered, setIsHovered] = React.useState(false);
@@ -166,7 +166,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          isExpanded ? "w-64" : "w-16"
+          hasMounted && isExpanded ? "w-64" : "w-16"
         )}
       >
         {hasMounted ? (
@@ -175,31 +175,30 @@ export const SidebarNav = () => {
                     "flex items-center h-16 border-b border-white/10 px-4",
                     isExpanded ? "justify-between" : "justify-center"
                 )}>
-                    <Link href="/dashboard" className="h-10">
+                    <Link href="/dashboard">
                         <div className={cn(
-                            "relative transition-all duration-300",
-                             isExpanded ? "w-[150px] h-full" : "w-8 h-full"
+                        "flex items-center justify-center transition-all duration-300 h-10",
+                        isExpanded ? "w-[150px]" : "w-[32px]"
                         )}>
+                        {isExpanded ? (
                             <Image
-                                src="/images/logo_blanco.png"
-                                alt="OrderFlow Logo"
-                                fill
-                                priority
-                                className={cn(
-                                    "object-contain transition-opacity duration-200",
-                                    isExpanded ? "opacity-100" : "opacity-0"
-                                )}
+                            src="/images/logo_blanco.png"
+                            alt="OrderFlow Logo"
+                            width={150}
+                            height={40}
+                            priority
+                            className="object-contain w-full h-full"
                             />
+                        ) : (
                             <Image
-                                src="/images/logo_icon_blanco.png"
-                                alt="OrderFlow Icon"
-                                fill
-                                priority
-                                className={cn(
-                                    "object-contain transition-opacity duration-200",
-                                    isExpanded ? "opacity-0" : "opacity-100"
-                                )}
+                            src="/images/logo_icon_blanco.png"
+                            alt="OrderFlow Icon"
+                            width={32}
+                            height={32}
+                            priority
+                            className="object-contain w-full h-full"
                             />
+                        )}
                         </div>
                     </Link>
                     {isExpanded && (
@@ -292,7 +291,7 @@ export const SidebarNav = () => {
                 </nav>
             </>
         ) : (
-           <div className="h-full w-16" />
+           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
         )}
       </aside>
     </TooltipProvider>
