@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -131,14 +130,9 @@ export function SidebarNav() {
   const pathname = usePathname();
   const { open, setOpen } = useSidebar();
   const [isHovered, setIsHovered] = React.useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
 
-  useEffect(() => {
-    setHasMounted(true);
-  }, []);
-
-  const isPinned = hasMounted ? open : false;
-  const isExpanded = hasMounted ? isPinned || isHovered : false;
+  const isPinned = open;
+  const isExpanded = isPinned || isHovered;
 
   const handleMouseEnter = () => {
     if (!isPinned) {
@@ -155,7 +149,6 @@ export function SidebarNav() {
   }
 
   const isSubItemActive = (subItems: any[]) => {
-    if (!hasMounted) return false;
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
 
@@ -166,11 +159,9 @@ export function SidebarNav() {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && isExpanded ? "w-64" : "w-16"
+          isExpanded ? "w-64" : "w-16"
         )}
       >
-        {hasMounted ? (
-            <>
                 <div className={cn(
                     "flex items-center h-16 border-b border-white/10 px-4",
                     isExpanded ? "justify-between" : "justify-center"
@@ -289,10 +280,6 @@ export function SidebarNav() {
                     </div>
                     ))}
                 </nav>
-            </>
-        ) : (
-           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
-        )}
       </aside>
     </TooltipProvider>
   );
