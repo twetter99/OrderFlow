@@ -137,7 +137,7 @@ export function SidebarNav() {
   }, []);
 
   const isPinned = open;
-  const isExpanded = isPinned || isHovered;
+  const isExpanded = hasMounted && (isPinned || isHovered);
 
   const handleMouseEnter = () => {
     if (!isPinned) {
@@ -154,10 +154,9 @@ export function SidebarNav() {
   }
 
   const isSubItemActive = (subItems: any[]) => {
+    if (!hasMounted) return false;
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
-  
-  if (isMobile) return null;
 
   return (
     <TooltipProvider>
@@ -165,16 +164,17 @@ export function SidebarNav() {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "flex flex-col w-64 border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded && "w-16"
+          "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
+          // Apply width classes consistently based on the final state, determined after mounting
+          hasMounted && !isExpanded ? "w-16" : "w-64"
         )}
       >
-        {hasMounted ? (
-          <>
-            <div className={cn(
-              "flex items-center h-16 border-b border-white/10 px-4",
-              isExpanded ? "justify-between" : "justify-center"
-            )}>
+        <div className={cn(
+          "flex items-center h-16 border-b border-white/10 px-4",
+          hasMounted && isExpanded ? "justify-between" : "justify-center"
+        )}>
+          {hasMounted ? (
+            <>
               <Link href="/dashboard">
                   <div className={cn(
                   "flex items-center justify-center transition-all duration-300 h-10",
@@ -213,8 +213,15 @@ export function SidebarNav() {
                       </TooltipContent>
                   </Tooltip>
               )}
-            </div>
-            <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+            </>
+          ) : (
+            // Placeholder for the server and initial client render
+            <div className="h-10 w-[32px]"></div>
+          )}
+        </div>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {hasMounted ? (
+            <>
               {navGroups.map((group) => (
                 <div key={group.title} className="space-y-1">
                   {group.title && (
@@ -274,11 +281,14 @@ export function SidebarNav() {
                   })}
                 </div>
               ))}
-            </nav>
-          </>
-        ) : (
-           <div className="h-full w-16" />
-        )}
+            </>
+          ) : (
+             // Placeholder for navigation items
+            <div className="p-2 space-y-2">
+              {[...Array(8)].map((_, i) => <div key={i} className="h-10 w-full rounded-md bg-white/5 animate-pulse"></div>)}
+            </div>
+          )}
+        </nav>
       </aside>
     </TooltipProvider>
   );
