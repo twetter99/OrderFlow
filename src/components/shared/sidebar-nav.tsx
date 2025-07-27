@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -128,7 +129,7 @@ const navGroups = [
 
 export function SidebarNav() {
   const pathname = usePathname();
-  const { open, setOpen, isMobile } = useSidebar();
+  const { open, setOpen } = useSidebar();
   const [isHovered, setIsHovered] = React.useState(false);
   const [hasMounted, setHasMounted] = useState(false);
 
@@ -165,7 +166,7 @@ export function SidebarNav() {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded ? "w-16" : "w-64"
+          isExpanded ? "w-64" : "w-16"
         )}
       >
         {hasMounted ? (
@@ -177,7 +178,7 @@ export function SidebarNav() {
                     <Link href="/dashboard" className="h-10">
                         <div className={cn(
                             "relative transition-all duration-300",
-                            isExpanded ? "w-[150px] h-full" : "w-8 h-full"
+                             isExpanded ? "w-[150px] h-full" : "w-8 h-full"
                         )}>
                             <Image
                                 src="/images/logo_blanco.png"
@@ -218,7 +219,14 @@ export function SidebarNav() {
                     {navGroups.map((group) => (
                     <div key={group.title} className="space-y-1">
                         {group.title && (
-                            <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
+                             <h2
+                                className={cn(
+                                    "px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-300 ease-in-out",
+                                    !isExpanded && "opacity-0"
+                                )}
+                                >
+                                {isExpanded ? group.title : ''}
+                            </h2>
                         )}
                         {group.items.map((item) => {
                         const uniqueKey = `${item.label}`;
@@ -237,7 +245,14 @@ export function SidebarNav() {
                                         >
                                         <div className="flex items-center gap-3">
                                             <item.icon className="h-5 w-5 shrink-0" />
-                                            <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
+                                            <span
+                                                className={cn(
+                                                    "truncate transition-all duration-300 ease-in-out",
+                                                    isExpanded ? "opacity-100 w-auto" : "opacity-0 w-0"
+                                                )}
+                                                >
+                                                {item.label}
+                                            </span>
                                         </div>
                                         {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
                                         </div>
