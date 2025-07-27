@@ -52,5 +52,3 @@ export async function deleteMultipleOperadores(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los operadores.' };
     }
 }
-
-    

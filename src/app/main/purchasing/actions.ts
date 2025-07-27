@@ -155,5 +155,3 @@ export async function linkDeliveryNoteToPurchaseOrder(orderId: string, urls: str
         return { success: false, message: 'No se pudo vincular el albarán.' };
     }
 }
-
-    

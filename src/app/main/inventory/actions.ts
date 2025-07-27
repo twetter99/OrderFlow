@@ -51,5 +51,3 @@ export async function deleteMultipleInventoryItems(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los artículos.' };
     }
 }
-
-    

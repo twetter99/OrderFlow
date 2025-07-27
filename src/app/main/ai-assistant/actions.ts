@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { suggestStockNeeds } from '@/ai/flows/suggest-stock-needs';
@@ -131,5 +132,3 @@ export async function getPriceInsight(
     return { insight: null, error: 'No se pudo obtener el análisis de precios.' };
   }
 }
-
-    

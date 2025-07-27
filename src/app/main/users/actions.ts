@@ -1,4 +1,5 @@
 
+
 'use server';
 
 import { db } from '@/lib/firebase';
@@ -50,5 +51,3 @@ export async function deleteMultipleUsers(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los usuarios.' };
     }
 }
-
-    

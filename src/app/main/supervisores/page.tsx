@@ -33,7 +33,7 @@ import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { collection, onSnapshot, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addUser, updateUser } from "@/app/(app)/users/actions";
+import { addUser, updateUser } from "@/app/main/users/actions";
 
 export default function SupervisorsPage() {
   const { toast } = useToast();

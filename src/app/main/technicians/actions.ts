@@ -52,5 +52,3 @@ export async function deleteMultipleTechnicians(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los técnicos.' };
     }
 }
-
-    

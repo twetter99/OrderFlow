@@ -52,5 +52,3 @@ export async function deleteMultipleLocations(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los almacenes.' };
     }
 }
-
-    

@@ -51,5 +51,3 @@ export async function deleteMultipleSuppliers(ids: string[]) {
         return { success: false, message: 'No se pudieron eliminar los proveedores.' };
     }
 }
-
-    

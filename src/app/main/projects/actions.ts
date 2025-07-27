@@ -119,5 +119,3 @@ export async function getProjectUsers(projectId: string): Promise<{ projectManag
     return { projectManager: null, team: [] };
   }
 }
-
-    
