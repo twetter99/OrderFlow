@@ -156,11 +156,9 @@ export function SidebarNav() {
   const isSubItemActive = (subItems: any[]) => {
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
-
-  if (hasMounted && isMobile) {
-    return null;
-  }
   
+  if (isMobile) return null;
+
   return (
     <TooltipProvider>
       <aside
@@ -168,7 +166,7 @@ export function SidebarNav() {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col w-64 border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded && "w-16",
+          hasMounted && !isExpanded && "w-16"
         )}
       >
         {hasMounted ? (
@@ -279,7 +277,7 @@ export function SidebarNav() {
             </nav>
           </>
         ) : (
-           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
+           <div className="h-full w-16" />
         )}
       </aside>
     </TooltipProvider>
