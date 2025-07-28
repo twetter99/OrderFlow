@@ -21,9 +21,7 @@ const SendApprovalEmailInputSchema = z.object({
   orderDate: z.string().describe("The date the order was created in ISO format."),
 });
 
-// Infer the type from the local schema.
 type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
-
 
 const sendEmailTool = ai.defineTool(
     {
@@ -78,27 +76,6 @@ const sendEmailTool = ai.defineTool(
       }
     }
 );
-  
-const emailPrompt = ai.definePrompt({
-    name: 'sendApprovalEmailPrompt',
-    input: { schema: SendApprovalEmailInputSchema },
-    tools: [sendEmailTool],
-    prompt: `You are an assistant responsible for sending purchase order approval emails.
-  
-      Generate a clear and professional HTML email to the recipient ({{to}}) to inform them about a new purchase order that requires their approval.
-      
-      The email subject must be: "Solicitud de Aprobación: Orden de Compra {{orderNumber}}".
-      
-      The email body must be professional, in Spanish, and include:
-      - A brief introductory sentence.
-      - The purchase order number: {{orderNumber}}.
-      - The total amount of the order: {{orderAmount}} EUR.
-      - A clear call to action with a styled button linking to the approval URL: {{approvalUrl}}. 
-      
-      The button must be an HTML anchor tag styled to look like a button. It must have the text "Aprobar Orden de Compra".
-
-      Use the sendEmail tool to send the generated email.`,
-});
 
 const sendApprovalEmailFlow = ai.defineFlow(
   {
@@ -111,21 +88,39 @@ const sendApprovalEmailFlow = ai.defineFlow(
   },
   async (input) => {
     try {
-      console.log("Executing email prompt with input:", input);
-      const result = await emailPrompt(input);
+      console.log("Executing direct email flow with input:", input);
+      
+      const subject = `Solicitud de Aprobación: Orden de Compra ${input.orderNumber}`;
+      
+      const body = `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2>Solicitud de Aprobación de Orden de Compra</h2>
+          <p>Hola,</p>
+          <p>Se ha generado una nueva orden de compra que requiere tu aprobación:</p>
+          <ul>
+            <li><strong>Número de Orden:</strong> ${input.orderNumber}</li>
+            <li><strong>Importe Total:</strong> ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(input.orderAmount)}</li>
+            <li><strong>Fecha del Pedido:</strong> ${new Date(input.orderDate).toLocaleDateString('es-ES')}</li>
+          </ul>
+          <p>Por favor, revisa los detalles y aprueba la orden haciendo clic en el siguiente botón:</p>
+          <a href="${input.approvalUrl}" style="background-color: #1a73e8; color: white; padding: 12px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">
+            Aprobar Orden de Compra
+          </a>
+          <p style="font-size: 12px; color: #888; margin-top: 20px;">
+            Si no puedes ver el botón, copia y pega esta URL en tu navegador: ${input.approvalUrl}
+          </p>
+        </div>
+      `;
 
-      console.log("Prompt result structure:", JSON.stringify(result, null, 2));
+      // Call the tool directly instead of going through a prompt
+      const result = await sendEmailTool({
+        to: input.to,
+        subject,
+        body
+      });
+      
+      return result;
 
-      // Correctly extract the tool output from the response history
-      const toolResponse = result.history[result.history.length - 1];
-      if (toolResponse.role === 'tool' && toolResponse.content[0].toolResponse) {
-          const output = toolResponse.content[0].toolResponse.output;
-          if (output) {
-              return output;
-          }
-      }
-
-      return { success: false, error: "Could not extract tool result from prompt response" };
     } catch (error) {
        console.error("Error in sendApprovalEmailFlow:", error);
        return { 
@@ -135,7 +130,6 @@ const sendApprovalEmailFlow = ai.defineFlow(
     }
   }
 );
-
 
 export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean; error?: string }> {
     return sendApprovalEmailFlow(input);
