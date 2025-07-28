@@ -40,7 +40,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     if (orderData.status === 'Pendiente de Aprobación') {
         try {
             const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
-            await sendApprovalEmail({
+            const emailResult = await sendApprovalEmail({
                 to: 'juan@winfin.es',
                 orderId: docRef.id,
                 orderNumber: newOrderNumber,
@@ -48,12 +48,21 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
                 approvalUrl: approvalUrl,
                 orderDate: orderDate.toISOString(), 
             });
-            revalidatePath("/purchasing");
+
+            if (!emailResult.success) {
+                 console.error(`Error sending approval email for order ${docRef.id}:`, emailResult.error);
+                 return { 
+                    success: true, // La operación principal (crear orden) fue exitosa
+                    message: `Pedido ${newOrderNumber} creado, pero no se pudo enviar el email de aprobación. Por favor, notifique manualmente.`,
+                    warning: "Error de email",
+                    id: docRef.id 
+                };
+            }
+
             return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id };
         
         } catch (emailError) {
             console.error(`Error sending approval email for order ${docRef.id}:`, emailError);
-            revalidatePath("/purchasing");
             // La orden se creó, pero el email falló. Notificar al usuario.
             return { 
                 success: true, // La operación principal (crear orden) fue exitosa

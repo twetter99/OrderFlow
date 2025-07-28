@@ -97,10 +97,18 @@ const sendApprovalEmailFlow = ai.defineFlow(
     {
       name: 'sendApprovalEmailFlow',
       inputSchema: SendApprovalEmailInputSchema,
-      outputSchema: z.void(),
+      outputSchema: z.object({
+        success: z.boolean(),
+        error: z.string().optional(),
+      }),
     },
     async (input) => {
-      await emailPrompt(input);
+      const result = await emailPrompt(input);
+      const toolResponse = result.toolRequest?.toolResponse;
+      if (toolResponse?.output) {
+          return toolResponse.output;
+      }
+      return { success: false, error: "No se pudo obtener respuesta de la herramienta de envío." };
     }
 );
 
