@@ -3,9 +3,11 @@
 # https://firebase.google.com/docs/app-hosting/configure
 #
 # INSTRUCCIONES:
-# 1. Copia y pega este contenido en tu archivo `apphosting.yaml`.
-# 2. Revisa la sección `secretEnv` y adáptala a tu proyecto. Si no usas
-#    secretos, puedes eliminar esa sección.
+# 1. Este archivo está configurado para usar secretos de Google Secret Manager.
+# 2. Asegúrate de que los siguientes secretos existen en tu proyecto:
+#    - NEXT_PUBLIC_BASE_URL_PROD: Contiene la URL de producción (ej. https://tu-app.web.app)
+#    - ORDERFLOW_GMAIL_USER: Tu email de Gmail.
+#    - ORDERFLOW_GMAIL_PASSWORD: Tu contraseña de aplicación de Gmail.
 # ============================================================================
 
 # --- Configuración de Rendimiento y Escalado ---
@@ -17,13 +19,10 @@ runConfig:
   concurrency: 80
 
 # --- Secretos y Claves de API (MUY IMPORTANTE) ---
-# La forma SEGURA y RECOMENDADA de gestionar claves de API, contraseñas, etc.
-# ANTES DE USAR ESTO: Debes haber creado los secretos en "Google Secret Manager".
-# Firebase App Hosting buscará estos secretos y los inyectará como variables de entorno.
-
+# Estas variables se inyectan en tu aplicación durante el despliegue.
 secretEnv:
   # URL base para producción. Esta es la URL de tu aplicación desplegada.
-  # El nombre del secreto debe coincidir con el que creaste en Secret Manager.
+  # Apunta al secreto que contiene tu URL de producción.
   - key: 'NEXT_PUBLIC_BASE_URL'
     secret: 'NEXT_PUBLIC_BASE_URL_PROD'
 
