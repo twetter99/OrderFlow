@@ -110,17 +110,29 @@ const sendApprovalEmailFlow = ai.defineFlow(
     }),
   },
   async (input) => {
-    const result = await emailPrompt(input);
-    // The result from a prompt with a tool call is in the toolRequest's response.
-    // We need to extract the output from there.
-    const toolResponse = result.toolRequest?.toolResponse;
+    try {
+      console.log("Executing email prompt with input:", input);
+      const result = await emailPrompt(input);
 
-    if (toolResponse?.output) {
-        return toolResponse.output;
+      console.log("Prompt result structure:", JSON.stringify(result, null, 2));
+
+      // Correctly extract the tool output from the response history
+      const toolResponse = result.history[result.history.length - 1];
+      if (toolResponse.role === 'tool' && toolResponse.content[0].toolResponse) {
+          const output = toolResponse.content[0].toolResponse.output;
+          if (output) {
+              return output;
+          }
+      }
+
+      return { success: false, error: "Could not extract tool result from prompt response" };
+    } catch (error) {
+       console.error("Error in sendApprovalEmailFlow:", error);
+       return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Unknown error occurred" 
+      };
     }
-    
-    // Handle cases where the tool might not be called or fails unexpectedly
-    return { success: false, error: "No se pudo obtener respuesta de la herramienta de envío." };
   }
 );
 
