@@ -350,7 +350,11 @@ export function PurchasingClientPage() {
       : await addPurchaseOrder(values);
       
     if (result.success) {
-      toast({ title: selectedOrder && 'id' in selectedOrder ? "Pedido actualizado" : "Pedido creado", description: result.message });
+      toast({ 
+          title: result.warning ? "Operación con Advertencia" : (selectedOrder && 'id' in selectedOrder ? "Pedido actualizado" : "Pedido creado"),
+          description: result.message,
+          variant: result.warning ? "default" : "default", // Shadcn doesn't have a 'warning' variant by default
+      });
       setIsModalOpen(false);
     } else {
       toast({ variant: "destructive", title: "Error", description: result.message });
