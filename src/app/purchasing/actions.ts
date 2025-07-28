@@ -1,11 +1,22 @@
+
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc } from "firebase/firestore";
+import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
 import { z } from 'zod';
+
+export const SendApprovalEmailInputSchema = z.object({
+  to: z.string().email().describe('The recipient email address.'),
+  orderId: z.string().describe('The ID of the purchase order to approve.'),
+  orderNumber: z.string().describe('The number of the purchase order.'),
+  orderAmount: z.number().describe('The total amount of the purchase order.'),
+  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
+  orderDate: z.string().describe("The date the order was created in ISO format."),
+});
+export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
 
 
 // Helper para generar el siguiente número de pedido
@@ -21,28 +32,32 @@ const getNextOrderNumber = async (): Promise<string> => {
 export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   try {
     const newOrderNumber = await getNextOrderNumber();
+    const orderDate = new Date();
     const historyEntry: StatusHistoryEntry = {
         status: orderData.status || 'Pendiente de Aprobación',
-        date: new Date(),
+        date: orderDate,
         comment: 'Pedido creado'
     };
 
     const docRef = await addDoc(collection(db, "purchaseOrders"), {
       ...orderData,
       orderNumber: newOrderNumber,
-      date: new Date(),
+      date: orderDate, // Guardar como objeto Date
+      estimatedDeliveryDate: orderData.estimatedDeliveryDate, // Guardar como objeto Date
       statusHistory: [historyEntry],
     });
     
     // Si la orden está pendiente, enviar email de aprobación
     if (orderData.status === 'Pendiente de Aprobación') {
         const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
+        
         await sendApprovalEmail({
             to: 'juan@winfin.es',
             orderId: docRef.id,
             orderNumber: newOrderNumber,
             orderAmount: orderData.total || 0,
             approvalUrl: approvalUrl,
+            orderDate: orderDate.toISOString(), // Convertir a string ISO aquí
         });
     }
 
@@ -80,13 +95,13 @@ export async function updatePurchaseOrder(id: string, orderData: Partial<Purchas
   }
 }
 
-export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status']) {
+export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status'], comment?: string) {
   try {
     const orderRef = doc(db, "purchaseOrders", id);
     const newHistoryEntry: StatusHistoryEntry = {
       status,
       date: new Date(),
-      comment: `Estado cambiado a ${status}`
+      comment: comment || `Estado cambiado a ${status}`
     };
     await updateDoc(orderRef, { 
       status: status,
@@ -94,6 +109,7 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
     });
 
     revalidatePath("/purchasing");
+    revalidatePath(`/public/approve/${id}`);
     return { success: true, message: "Estado del pedido actualizado." };
   } catch (error) {
     console.error("Error updating order status: ", error);
