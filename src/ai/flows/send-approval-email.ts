@@ -10,8 +10,18 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
-import type { SendApprovalEmailInput } from '@/app/purchasing/actions';
 import * as nodemailer from 'nodemailer';
+
+const SendApprovalEmailInputSchema = z.object({
+  to: z.string().email().describe('The recipient email address.'),
+  orderId: z.string().describe('The ID of the purchase order to approve.'),
+  orderNumber: z.string().describe('The number of the purchase order.'),
+  orderAmount: z.number().describe('The total amount of the purchase order.'),
+  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
+  orderDate: z.string().describe("The date the order was created in ISO format."),
+});
+export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
+
 
 const sendEmailTool = ai.defineTool(
     {
@@ -64,13 +74,7 @@ const sendEmailTool = ai.defineTool(
   
 const emailPrompt = ai.definePrompt({
     name: 'sendApprovalEmailPrompt',
-    input: { schema: z.object({
-      to: z.string().email().describe('The recipient email address.'),
-      orderId: z.string().describe('The ID of the purchase order to approve.'),
-      orderNumber: z.string().describe('The number of the purchase order.'),
-      orderAmount: z.number().describe('The total amount of the purchase order.'),
-      approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
-    })},
+    input: { schema: SendApprovalEmailInputSchema },
     tools: [sendEmailTool],
     prompt: `You are an assistant responsible for sending purchase order approval emails.
   
@@ -92,13 +96,7 @@ const emailPrompt = ai.definePrompt({
 const sendApprovalEmailFlow = ai.defineFlow(
     {
       name: 'sendApprovalEmailFlow',
-      inputSchema: z.object({
-        to: z.string().email(),
-        orderId: z.string(),
-        orderNumber: z.string(),
-        orderAmount: z.number(),
-        approvalUrl: z.string().url(),
-      }),
+      inputSchema: SendApprovalEmailInputSchema,
       outputSchema: z.void(),
     },
     async (input) => {

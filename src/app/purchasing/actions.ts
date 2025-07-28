@@ -5,19 +5,7 @@ import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
-import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
-import { z } from 'zod';
-
-export const SendApprovalEmailInputSchema = z.object({
-  to: z.string().email().describe('The recipient email address.'),
-  orderId: z.string().describe('The ID of the purchase order to approve.'),
-  orderNumber: z.string().describe('The number of the purchase order.'),
-  orderAmount: z.number().describe('The total amount of the purchase order.'),
-  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
-  orderDate: z.string().describe("The date the order was created in ISO format."),
-});
-export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
-
+import { sendApprovalEmail, type SendApprovalEmailInput } from "@/ai/flows/send-approval-email";
 
 // Helper para generar el siguiente número de pedido
 const getNextOrderNumber = async (): Promise<string> => {
@@ -42,8 +30,8 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     const docRef = await addDoc(collection(db, "purchaseOrders"), {
       ...orderData,
       orderNumber: newOrderNumber,
-      date: orderDate, // Guardar como objeto Date
-      estimatedDeliveryDate: orderData.estimatedDeliveryDate, // Guardar como objeto Date
+      date: orderDate,
+      estimatedDeliveryDate: orderData.estimatedDeliveryDate, 
       statusHistory: [historyEntry],
     });
     
@@ -57,7 +45,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
             orderNumber: newOrderNumber,
             orderAmount: orderData.total || 0,
             approvalUrl: approvalUrl,
-            orderDate: orderDate.toISOString(), // Convertir a string ISO aquí
+            orderDate: orderDate.toISOString(), 
         });
     }
 
