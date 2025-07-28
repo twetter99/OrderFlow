@@ -9,9 +9,9 @@
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import * as nodemailer from 'nodemailer';
-import type { SendApprovalEmailInput } from '@/app/purchasing/actions';
 
-// Local schema definition to avoid circular dependencies and issues with "use server" exports.
+// Define the schema and type locally within this file.
+// This avoids exporting non-function objects from a "use server" file.
 const SendApprovalEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   orderId: z.string().describe('The ID of the purchase order to approve.'),
@@ -20,6 +20,10 @@ const SendApprovalEmailInputSchema = z.object({
   approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
   orderDate: z.string().describe("The date the order was created in ISO format."),
 });
+
+// Infer the type from the local schema.
+type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
+
 
 const sendEmailTool = ai.defineTool(
     {
@@ -56,7 +60,7 @@ const sendEmailTool = ai.defineTool(
         from: `"OrderFlow" <${GMAIL_USER}>`,
         to: to,
         subject: subject,
-        html: body, // Use HTML to allow for links and buttons
+        html: body,
       };
 
       try {
@@ -103,14 +107,17 @@ const sendApprovalEmailFlow = ai.defineFlow(
   async (input) => {
     const result = await emailPrompt(input);
     const toolResponse = result.toolRequest?.toolResponse;
+
     if (toolResponse?.output) {
         return toolResponse.output;
     }
+    
+    // Handle cases where the tool might not be called or fails unexpectedly
     return { success: false, error: "No se pudo obtener respuesta de la herramienta de envío." };
   }
 );
 
 
-export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean, error?: string }> {
+export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean; error?: string }> {
     return sendApprovalEmailFlow(input);
 }

@@ -6,29 +6,9 @@ import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, del
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
-import { z } from "zod";
 
-// Define the schema and type here, where it's used, not in the "use server" file.
-export const SendApprovalEmailInputSchema = z.object({
-  to: z.string().email().describe('The recipient email address.'),
-  orderId: z.string().describe('The ID of the purchase order to approve.'),
-  orderNumber: z.string().describe('The number of the purchase order.'),
-  orderAmount: z.number().describe('The total amount of the purchase order.'),
-  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
-  orderDate: z.string().describe("The date the order was created in ISO format."),
-});
-export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
-
-
-// Helper para generar el siguiente número de pedido
-const getNextOrderNumber = async (): Promise<string> => {
-    const today = new Date();
-    const year = today.getFullYear();
-    // En una app real, leeríamos un contador desde Firestore y lo incrementaríamos atómicamente.
-    // Para este prototipo, usaremos un número aleatorio para simularlo.
-    const sequentialNumber = Math.floor(Math.random() * 900) + 100; // Simula un contador
-    return `WF-PO-${year}-${String(sequentialNumber).padStart(4, '0')}`;
-};
+// The Input type is now defined and used locally within the `send-approval-email.ts` flow.
+// We only need to match the object structure when calling the function.
 
 export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   let docRef;
@@ -55,10 +35,10 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     return { success: false, message: "No se pudo crear el pedido en la base de datos." };
   }
 
-  // Si la orden está pendiente, el email de aprobación es OBLIGATORIO.
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
           const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
+          
           const emailResult = await sendApprovalEmail({
               to: 'juan@winfin.es',
               orderId: docRef.id,
@@ -70,21 +50,18 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
           if (!emailResult.success) {
                console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back...`, emailResult.error);
-               // ROLLBACK: Eliminar la orden creada si el email falla
                await deleteDoc(doc(db, "purchaseOrders", docRef.id));
                return { 
                   success: false,
                   message: `No se pudo enviar el email de aprobación. La orden de compra no ha sido creada. Error: ${emailResult.error}`,
               };
           }
-
-          // Éxito: orden creada y email enviado.
+          
           revalidatePath("/purchasing");
           return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id };
       
       } catch (emailError) {
           console.error(`CRITICAL: Email process failed for order ${docRef.id}. Rolling back...`, emailError);
-          // ROLLBACK: Asegurarse de eliminar la orden si cualquier parte del proceso de email falla
           await deleteDoc(doc(db, "purchaseOrders", docRef.id));
           return { 
               success: false, 
@@ -93,10 +70,21 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
       }
   }
 
-  // Para cualquier otro estado que no requiera aprobación por email
   revalidatePath("/purchasing");
   return { success: true, message: `Pedido ${newOrderNumber} creado exitosamente.`, id: docRef.id };
 }
+
+
+// Helper para generar el siguiente número de pedido
+const getNextOrderNumber = async (): Promise<string> => {
+    const today = new Date();
+    const year = today.getFullYear();
+    // En una app real, leeríamos un contador desde Firestore y lo incrementaríamos atómicamente.
+    // Para este prototipo, usaremos un número aleatorio para simularlo.
+    const sequentialNumber = Math.floor(Math.random() * 900) + 100; // Simula un contador
+    return `WF-PO-${year}-${String(sequentialNumber).padStart(4, '0')}`;
+};
+
 
 export async function createPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   try {
