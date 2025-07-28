@@ -49,7 +49,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           });
 
           if (!emailResult.success) {
-               console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back...`, emailResult.error);
+               console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back... Error details:`, emailResult.error);
                await deleteDoc(doc(db, "purchaseOrders", docRef.id));
                return { 
                   success: false,
@@ -60,12 +60,12 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           revalidatePath("/purchasing");
           return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id };
       
-      } catch (emailError) {
-          console.error(`CRITICAL: Email process failed for order ${docRef.id}. Rolling back...`, emailError);
+      } catch (emailError: any) {
+          console.error(`CRITICAL: Email process failed for order ${docRef.id}. Rolling back... Full error:`, emailError);
           await deleteDoc(doc(db, "purchaseOrders", docRef.id));
           return { 
               success: false, 
-              message: `Falló el proceso de envío de email. La orden no ha sido creada.`,
+              message: `Falló el proceso de envío de email. La orden no ha sido creada. Error: ${emailError.message}`,
           };
       }
   }

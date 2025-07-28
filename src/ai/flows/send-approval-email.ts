@@ -40,8 +40,7 @@ const sendEmailTool = ai.defineTool(
        const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
        console.log("Attempting to send email with credentials:", {
             user: GMAIL_USER,
-            hasPassword: !!GMAIL_APP_PASSWORD,
-            passwordLength: GMAIL_APP_PASSWORD?.length
+            hasPassword: !!GMAIL_APP_PASSWORD
        });
        
        if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
@@ -70,8 +69,9 @@ const sendEmailTool = ai.defineTool(
         console.log(`✅ Email sent successfully to ${to}`, info.messageId);
         return { success: true };
       } catch (error: any) {
-        console.error(`❌ Failed to send email:`, error);
-        return { success: false, error: error.message };
+        // Log the full error object for detailed diagnostics
+        console.error('❌ Nodemailer failed to send email:', error);
+        return { success: false, error: `Nodemailer error: ${error.message} (Code: ${error.code})` };
       }
     }
 );
@@ -113,68 +113,39 @@ const sendApprovalEmailFlow = ai.defineFlow(
     try {
       console.log("Starting sendApprovalEmailFlow with input:", input);
       
-      // Execute the prompt with the input data
       const result = await emailPrompt(input);
       
       console.log("Prompt execution result:", JSON.stringify(result, null, 2));
       
-      // The AI should have called the sendEmail tool
-      // We need to check if the tool was called and get its result
+      // The most reliable way to get tool output is from the history
+      const toolResponse = result.history?.find(
+        (m) => m.role === 'tool' && m.content[0].toolResponse?.name === 'sendEmail'
+      );
       
-      // For Genkit, the tool results are typically in the response
-      // The exact structure depends on the Genkit version
-      // Try different possible structures:
-      
-      // Option 1: Direct tool response
-      if (result && typeof result === 'object' && 'success' in result) {
-        return result as { success: boolean; error?: string };
+      if (toolResponse && toolResponse.content[0].toolResponse) {
+        console.log("Extracted tool response:", toolResponse.content[0].toolResponse.output);
+        return toolResponse.content[0].toolResponse.output as { success: boolean; error?: string };
       }
       
-      // Option 2: Tool calls array
-      if (result && result.toolCalls && Array.isArray(result.toolCalls) && result.toolCalls.length > 0) {
-        const toolCall = result.toolCalls[0];
-        if (toolCall.result) {
-          return toolCall.result;
-        }
-      }
-      
-      // Option 3: Messages with tool responses
-      if (result && result.messages && Array.isArray(result.messages)) {
-        for (const message of result.messages) {
-          if (message.toolResponses && Array.isArray(message.toolResponses) && message.toolResponses.length > 0) {
-            return message.toolResponses[0];
-          }
-        }
-      }
-      
-      // Option 4: Check if the result has a text response indicating success
-      if (result && result.text && result.text.includes('✅')) {
-        return { success: true };
-      }
-      
-      // If we couldn't find the tool response, log everything for debugging
-      console.error("Could not extract tool response from result. Full result:", result);
-      
+      console.error("Could not extract 'sendEmail' tool response from prompt result history.");
       return { 
         success: false, 
         error: "Could not extract email sending result from AI response" 
       };
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in sendApprovalEmailFlow:", error);
       return { 
         success: false, 
-        error: error instanceof Error ? error.message : "Unknown error occurred" 
+        error: error.message || "Unknown error occurred in flow"
       };
     }
   }
 );
 
-// Export the function that external code will call
 export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean; error?: string }> {
   console.log("sendApprovalEmail called with:", input);
   
-  // Validate the input has all required fields
   if (!input.to || !input.orderId || !input.orderNumber || !input.approvalUrl) {
     return { 
       success: false, 
