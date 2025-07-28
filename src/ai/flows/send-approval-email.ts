@@ -6,13 +6,20 @@
  *
  * - sendApprovalEmail - A function that handles the email sending process.
  */
-
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import * as nodemailer from 'nodemailer';
 import type { SendApprovalEmailInput } from '@/app/purchasing/actions';
-import { SendApprovalEmailInputSchema } from '@/app/purchasing/actions';
 
+// Local schema definition to avoid circular dependencies and issues with "use server" exports.
+const SendApprovalEmailInputSchema = z.object({
+  to: z.string().email().describe('The recipient email address.'),
+  orderId: z.string().describe('The ID of the purchase order to approve.'),
+  orderNumber: z.string().describe('The number of the purchase order.'),
+  orderAmount: z.number().describe('The total amount of the purchase order.'),
+  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
+  orderDate: z.string().describe("The date the order was created in ISO format."),
+});
 
 const sendEmailTool = ai.defineTool(
     {
