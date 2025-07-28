@@ -6,6 +6,8 @@ import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, del
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
+import { z } from 'zod';
+
 
 // Helper para generar el siguiente número de pedido
 const getNextOrderNumber = async (): Promise<string> => {

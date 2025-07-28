@@ -10,8 +10,10 @@
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
+import type { PurchaseOrder } from '@/lib/types';
 
-export const SendApprovalEmailInputSchema = z.object({
+
+const SendApprovalEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   orderId: z.string().describe('The ID of the purchase order to approve.'),
   orderNumber: z.string().describe('The number of the purchase order.'),
@@ -66,7 +68,7 @@ const emailPrompt = ai.definePrompt({
       Use the sendEmail tool to send the generated email.`,
 });
 
-export const sendApprovalEmailFlow = ai.defineFlow(
+const sendApprovalEmailFlow = ai.defineFlow(
     {
       name: 'sendApprovalEmailFlow',
       inputSchema: SendApprovalEmailInputSchema,
