@@ -39,6 +39,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
       try {
           const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
           
+          console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
           const emailResult = await sendApprovalEmail({
               to: 'juan@winfin.es',
               orderId: docRef.id,
@@ -48,20 +49,25 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               orderDate: orderDate.toISOString(), 
           });
 
+          console.log("Received result from sendApprovalEmail flow:", emailResult);
+
           if (!emailResult.success) {
-               console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back... Error details:`, emailResult.error);
+               // The error from the flow is now more reliable.
+               const errorMessage = emailResult.error || "El flujo de email falló sin un mensaje específico.";
+               console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back... Error details:`, errorMessage);
                await deleteDoc(doc(db, "purchaseOrders", docRef.id));
                return { 
                   success: false,
-                  message: `No se pudo enviar el email de aprobación. La orden de compra no ha sido creada. Error: ${emailResult.error}`,
+                  message: `No se pudo enviar el email de aprobación. La orden de compra no ha sido creada. Error: ${errorMessage}`,
               };
           }
           
+          console.log(`Successfully sent approval email for order ${docRef.id}.`);
           revalidatePath("/purchasing");
           return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id };
       
       } catch (emailError: any) {
-          console.error(`CRITICAL: Email process failed for order ${docRef.id}. Rolling back... Full error:`, emailError);
+          console.error(`CRITICAL: The entire email process failed for order ${docRef.id}. Rolling back... Full error:`, emailError);
           await deleteDoc(doc(db, "purchaseOrders", docRef.id));
           return { 
               success: false, 

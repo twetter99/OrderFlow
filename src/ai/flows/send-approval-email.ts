@@ -22,6 +22,7 @@ const SendApprovalEmailInputSchema = z.object({
 // Infer the type from the local schema.
 type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
 
+// This tool remains the same, as it correctly handles the email sending logic.
 const sendEmailTool = ai.defineTool(
     {
       name: 'sendEmail',
@@ -75,31 +76,8 @@ const sendEmailTool = ai.defineTool(
       }
     }
 );
- 
-const emailPrompt = ai.definePrompt({
-    name: 'sendApprovalEmailPrompt',
-    input: { schema: SendApprovalEmailInputSchema },
-    tools: [sendEmailTool],
-    prompt: `You are an assistant responsible for sending purchase order approval emails.
- 
-      Generate a clear and professional HTML email to the recipient ({{to}}) to inform them about a new purchase order that requires their approval.
-     
-      The email subject must be: "Solicitud de Aprobación: Orden de Compra {{orderNumber}}".
-     
-      The email body must be professional, in Spanish, and include:
-      - A brief introductory sentence.
-      - The purchase order number: {{orderNumber}}.
-      - The total amount of the order: {{orderAmount}} EUR.
-      - A clear call to action with a styled button linking to the approval URL: {{approvalUrl}}.
-     
-      The button must be an HTML anchor tag styled to look like a button. It must have the text "Aprobar Orden de Compra".
-      
-      Example button HTML:
-      <a href="{{approvalUrl}}" style="display: inline-block; padding: 12px 24px; background-color: #4CAF50; color: white; text-decoration: none; border-radius: 4px; font-weight: bold;">Aprobar Orden de Compra</a>
-      
-      You MUST use the sendEmail tool to send the email. Call it with the appropriate subject and body.`,
-});
 
+// REFACTORED FLOW: Direct, no AI prompt involved for this business logic.
 const sendApprovalEmailFlow = ai.defineFlow(
   {
     name: 'sendApprovalEmailFlow',
@@ -110,58 +88,70 @@ const sendApprovalEmailFlow = ai.defineFlow(
     }),
   },
   async (input) => {
+    console.log("Starting DIRECT sendApprovalEmailFlow with input:", input);
+    
+    // 1. Construct the email content directly. No AI needed.
+    const subject = `Solicitud de Aprobación: Orden de Compra ${input.orderNumber}`;
+    const body = `
+      <div style="font-family: sans-serif; padding: 20px;">
+        <h2>Solicitud de Aprobación de Orden de Compra</h2>
+        <p>Hola,</p>
+        <p>Se ha generado una nueva orden de compra que requiere tu aprobación:</p>
+        <ul>
+          <li><strong>Número de Orden:</strong> ${input.orderNumber}</li>
+          <li><strong>Importe Total:</strong> ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(input.orderAmount)}</li>
+          <li><strong>Fecha de Orden:</strong> ${new Date(input.orderDate).toLocaleDateString('es-ES')}</li>
+        </ul>
+        <p>Por favor, revisa los detalles y aprueba la orden haciendo clic en el siguiente botón:</p>
+        <p style="text-align: center; margin: 30px 0;">
+          <a href="${input.approvalUrl}" style="display: inline-block; padding: 12px 24px; background-color: #28a745; color: white; text-decoration: none; border-radius: 5px; font-weight: bold;">Aprobar Orden de Compra</a>
+        </p>
+        <p>Si no puedes ver el botón, copia y pega la siguiente URL en tu navegador:</p>
+        <p><a href="${input.approvalUrl}">${input.approvalUrl}</a></p>
+        <br/>
+        <p>Gracias,</p>
+        <p><strong>El equipo de OrderFlow</strong></p>
+      </div>
+    `;
+
+    // 2. Call the email tool directly.
     try {
-      console.log("Starting sendApprovalEmailFlow with input:", input);
-      
-      const result = await emailPrompt(input);
-      
-      console.log("Prompt execution result:", JSON.stringify(result, null, 2));
-      
-      // The most reliable way to get tool output is from the history
-      const toolResponse = result.history?.find(
-        (m) => m.role === 'tool' && m.content[0].toolResponse?.name === 'sendEmail'
-      );
-      
-      if (toolResponse && toolResponse.content[0].toolResponse) {
-        console.log("Extracted tool response:", toolResponse.content[0].toolResponse.output);
-        return toolResponse.content[0].toolResponse.output as { success: boolean; error?: string };
-      }
-      
-      console.error("Could not extract 'sendEmail' tool response from prompt result history.");
-      return { 
-        success: false, 
-        error: "Could not extract email sending result from AI response" 
-      };
-      
+      const result = await sendEmailTool({
+        to: input.to,
+        subject: subject,
+        body: body,
+      });
+      console.log("Direct tool call result:", result);
+      return result;
     } catch (error: any) {
-      console.error("Error in sendApprovalEmailFlow:", error);
-      return { 
-        success: false, 
-        error: error.message || "Unknown error occurred in flow" 
-      };
+      console.error("Error directly calling sendEmailTool:", error);
+      return { success: false, error: error.message || "Unknown error calling tool" };
     }
   }
 );
+
 
 export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean; error?: string }> {
   console.log("sendApprovalEmail called with:", input);
   
   if (!input.to || !input.orderId || !input.orderNumber || !input.approvalUrl) {
+    const errorMsg = "Missing required fields for approval email";
+    console.error(errorMsg, input);
     return { 
       success: false, 
-      error: "Missing required fields for approval email" 
+      error: errorMsg,
     };
   }
   
   try {
     const result = await sendApprovalEmailFlow(input);
-    console.log("sendApprovalEmailFlow result:", result);
+    console.log("sendApprovalEmailFlow final result:", result);
     return result;
   } catch (error) {
-    console.error("Error calling sendApprovalEmailFlow:", error);
+    console.error("Critical error calling sendApprovalEmailFlow:", error);
     return { 
       success: false, 
-      error: error instanceof Error ? error.message : "Failed to send approval email" 
+      error: error instanceof Error ? error.message : "Failed to execute send approval email flow" 
     };
   }
 }
