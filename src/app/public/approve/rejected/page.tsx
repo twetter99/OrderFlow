@@ -1,4 +1,7 @@
 
+'use client';
+
+import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { XCircle } from 'lucide-react';
 
@@ -16,3 +19,9 @@ export default function RejectedPage() {
           <p className="text-muted-foreground">
             La orden de compra ha sido marcada como rechazada. El solicitante será notificado.
             Ya puedes cerrar esta ventana.
+          </p>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
