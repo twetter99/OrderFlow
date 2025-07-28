@@ -8,63 +8,29 @@
 #    secretos, puedes eliminar esa sección.
 # ============================================================================
 
-# Firebase detectará automáticamente que es una app de Next.js y usará los
-# scripts de tu `package.json`. Por lo tanto, las secciones `build` y `run`
-# no son estrictamente necesarias, pero es una buena práctica dejarlas
-# comentadas como referencia por si necesitas personalizarlas en el futuro.
-#
-# build:
-#   run: npm run build
-#
-# run:
-#   run: npm start
-
 # --- Configuración de Rendimiento y Escalado ---
-# Aquí defines los recursos que tendrá tu servidor.
 runConfig:
-  # CPU para cada instancia del servidor (1 = 1 vCPU).
-  # Para una app estándar de Next.js, 1 es un buen punto de partida.
   cpu: 1
-
-  # Memoria RAM en Mebibytes (MiB) para cada instancia.
-  # 512 es el valor por defecto y suele ser suficiente. Auméntalo a 1024 si
-  # tu app consume mucha memoria durante la compilación o ejecución.
   memoryMiB: 512
-
-  # Número máximo de instancias que se crearán para manejar picos de tráfico.
   maxInstances: 10
-
-  # Número mínimo de instancias a mantener siempre activas.
-  # Ponerlo en 1 ayuda a reducir la latencia de "arranque en frío" (cold starts).
-  # Nota: Esto puede generar costos en el plan de pago. Déjalo en 0 si usas el plan gratuito.
   minInstances: 0
-
-  # Número de peticiones simultáneas que puede manejar una sola instancia
-  # antes de que Firebase cree una nueva (hasta llegar a maxInstances).
   concurrency: 80
-
-# --- Variables de Entorno ---
-# Variables que no son secretas y se pueden guardar directamente aquí.
-# Descomenta y adapta las que necesites.
-# env:
-#   - variable: 'NODE_ENV'
-#     value: 'production'
-#   - variable: 'NEXT_PUBLIC_ANALYTICS_ID'
-#     value: 'UA-XXXXX-Y' # Ejemplo: Reemplaza con tu ID de Google Analytics
 
 # --- Secretos y Claves de API (MUY IMPORTANTE) ---
 # La forma SEGURA y RECOMENDADA de gestionar claves de API, contraseñas, etc.
 # ANTES DE USAR ESTO: Debes haber creado los secretos en "Google Secret Manager".
 # Firebase App Hosting buscará estos secretos y los inyectará como variables de entorno.
-# Si no usas secretos, puedes borrar toda la sección `secretEnv`.
-#
-# secretEnv:
-  # EJEMPLO 1: Clave de API para una base de datos.
-  # - key: 'DATABASE_URL' # Nombre de la variable de entorno en tu código.
-  #   secret: 'MI_URL_SECRETA_DE_LA_DB' # Nombre del secreto que creaste en Secret Manager.
 
-  # EJEMPLO 2: Clave de API de Stripe.
-  # - key: 'STRIPE_SECRET_KEY'
-  #   secret: 'MI_CLAVE_SECRETA_DE_STRIPE'
+secretEnv:
+  # EJEMPLO 1: URL base para producción.
+  # El nombre del secreto debe coincidir con el que creaste en Secret Manager.
+  - key: 'NEXT_PUBLIC_BASE_URL' # Nombre de la variable de entorno en tu código.
+    secret: 'NEXT_PUBLIC_BASE_URL_PROD' # Nombre del secreto que creaste en Secret Manager.
+
+  # EJEMPLO 2: Credenciales de Gmail para el envío de correos.
+  - key: 'GMAIL_USER'
+    secret: 'GMAIL_USER_SECRET' # Debes crear este secreto con tu email de Gmail.
+  - key: 'GMAIL_APP_PASSWORD'
+    secret: 'GMAIL_APP_PASSWORD_SECRET' # Debes crear este secreto con tu contraseña de aplicación de Gmail.
 
 # --- Fin del archivo ---
