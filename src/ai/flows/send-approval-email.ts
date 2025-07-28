@@ -137,7 +137,7 @@ const sendApprovalEmailFlow = ai.defineFlow(
       console.error("Error in sendApprovalEmailFlow:", error);
       return { 
         success: false, 
-        error: error.message || "Unknown error occurred in flow"
+        error: error.message || "Unknown error occurred in flow" 
       };
     }
   }
