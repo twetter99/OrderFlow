@@ -1,9 +1,6 @@
 
 'use server';
 
-import { config } from 'dotenv';
-config();
-
 /**
  * @fileOverview Implements a Genkit flow to send a purchase order approval email.
  *
@@ -114,6 +111,8 @@ const sendApprovalEmailFlow = ai.defineFlow(
   },
   async (input) => {
     const result = await emailPrompt(input);
+    // The result from a prompt with a tool call is in the toolRequest's response.
+    // We need to extract the output from there.
     const toolResponse = result.toolRequest?.toolResponse;
 
     if (toolResponse?.output) {
