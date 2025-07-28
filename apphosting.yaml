@@ -22,15 +22,15 @@ runConfig:
 # Firebase App Hosting buscará estos secretos y los inyectará como variables de entorno.
 
 secretEnv:
-  # EJEMPLO 1: URL base para producción.
+  # EJEMPLO 1: URL base para producción (Descomenta y adapta si es necesario)
   # El nombre del secreto debe coincidir con el que creaste en Secret Manager.
-  - key: 'NEXT_PUBLIC_BASE_URL' # Nombre de la variable de entorno en tu código.
-    secret: 'NEXT_PUBLIC_BASE_URL_PROD' # Nombre del secreto que creaste en Secret Manager.
+  # - key: 'NEXT_PUBLIC_BASE_URL' # Nombre de la variable de entorno en tu código.
+  #   secret: 'NEXT_PUBLIC_BASE_URL_PROD' # Nombre del secreto que creaste en Secret Manager.
 
-  # EJEMPLO 2: Credenciales de Gmail para el envío de correos.
+  # Credenciales de Gmail para el envío de correos en producción.
   - key: 'GMAIL_USER'
-    secret: 'GMAIL_USER_SECRET' # Debes crear este secreto con tu email de Gmail.
+    secret: 'ORDERFLOW_GMAIL_USER'
   - key: 'GMAIL_APP_PASSWORD'
-    secret: 'GMAIL_APP_PASSWORD_SECRET' # Debes crear este secreto con tu contraseña de aplicación de Gmail.
+    secret: 'ORDERFLOW_GMAIL_PASSWORD'
 
 # --- Fin del archivo ---
