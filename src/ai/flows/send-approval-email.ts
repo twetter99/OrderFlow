@@ -1,9 +1,8 @@
-
 'use server';
 /**
  * @fileOverview Implements a Genkit flow to send a purchase order approval email.
  *
- * - sendApprovalEmail - a function that handles the email sending process.
+ * - sendApprovalEmail - A function that handles the email sending process.
  */
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
