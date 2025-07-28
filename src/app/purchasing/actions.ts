@@ -37,7 +37,9 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
-          const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
+          // Usa la variable de entorno del servidor (BASE_URL)
+          const baseUrl = process.env.BASE_URL || 'http://localhost:9002';
+          const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
           const emailResult = await sendApprovalEmail({

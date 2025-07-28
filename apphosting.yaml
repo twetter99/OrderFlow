@@ -23,7 +23,7 @@ runConfig:
 secretEnv:
   # URL base para producción. Esta es la URL de tu aplicación desplegada.
   # Apunta al secreto que contiene tu URL de producción.
-  - key: 'NEXT_PUBLIC_BASE_URL'
+  - key: 'BASE_URL' # Cambiado para uso en el servidor
     secret: 'NEXT_PUBLIC_BASE_URL_PROD'
 
   # Credenciales de Gmail para el envío de correos en producción.
