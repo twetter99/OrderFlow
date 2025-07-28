@@ -1,6 +1,9 @@
 
 'use server';
 
+import { config } from 'dotenv';
+config();
+
 /**
  * @fileOverview Implements a Genkit flow to send a purchase order approval email.
  *
