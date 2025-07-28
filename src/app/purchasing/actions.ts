@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
+import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
 
 // Helper para generar el siguiente número de pedido
 const getNextOrderNumber = async (): Promise<string> => {
@@ -31,6 +32,18 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
       date: new Date(),
       statusHistory: [historyEntry],
     });
+    
+    // Si la orden está pendiente, enviar email de aprobación
+    if (orderData.status === 'Pendiente de Aprobación') {
+        const approvalUrl = `https://orderflow-pxtw9.web.app/api/approve-order?orderId=${docRef.id}`; // URL del webhook/función
+        await sendApprovalEmail({
+            to: 'juan@winfin.es',
+            orderId: docRef.id,
+            orderNumber: newOrderNumber,
+            orderAmount: orderData.total || 0,
+            approvalUrl: approvalUrl,
+        });
+    }
 
     revalidatePath("/purchasing");
     return { success: true, message: `Pedido ${newOrderNumber} creado exitosamente.`, id: docRef.id };

@@ -39,7 +39,7 @@ Este pilar gestiona todos los activos físicos y su ubicación.
 Centraliza el proceso de compras y la relación con los proveedores.
 - **Compras (`/purchasing`):**
     - **Creación de Pedidos:** Permite crear órdenes de compra manualmente o con la ayuda de la IA (escribiendo una solicitud en lenguaje natural).
-    - **Flujo de Aprobación:** Implementa un sistema de estados (Pendiente, Aprobado, Rechazado) para que los administradores revisen y aprueben los pedidos.
+    - **Flujo de Aprobación Automatizado:** Implementa un sistema de estados (Pendiente, Aprobado, Rechazado). Al crear una orden, se envía automáticamente un email al responsable (`juan@winfin.es`) con un enlace seguro para aprobarla con un solo clic. Si no se aprueba en 24 horas, se envía un recordatorio.
     - **Seguimiento de Entregas:** Muestra el estado de la entrega (En Plazo, Próximo a Vencer, Retrasado).
     - **Impresión y Envío:** Genera un formato imprimible de la orden de compra y facilita su envío por email.
 - **Proveedores (`/suppliers`):** Módulo para gestionar la información de contacto de los proveedores y sus calificaciones de rendimiento (calidad y entrega).
