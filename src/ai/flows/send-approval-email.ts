@@ -12,7 +12,7 @@ import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import * as nodemailer from 'nodemailer';
 
-const SendApprovalEmailInputSchema = z.object({
+export const SendApprovalEmailInputSchema = z.object({
   to: z.string().email().describe('The recipient email address.'),
   orderId: z.string().describe('The ID of the purchase order to approve.'),
   orderNumber: z.string().describe('The number of the purchase order.'),
@@ -94,23 +94,24 @@ const emailPrompt = ai.definePrompt({
 });
 
 const sendApprovalEmailFlow = ai.defineFlow(
-    {
-      name: 'sendApprovalEmailFlow',
-      inputSchema: SendApprovalEmailInputSchema,
-      outputSchema: z.object({
+  {
+    name: 'sendApprovalEmailFlow',
+    inputSchema: SendApprovalEmailInputSchema,
+    outputSchema: z.object({
         success: z.boolean(),
         error: z.string().optional(),
-      }),
-    },
-    async (input) => {
-      const result = await emailPrompt(input);
-      const toolResponse = result.toolRequest?.toolResponse;
-      if (toolResponse?.output) {
-          return toolResponse.output;
-      }
-      return { success: false, error: "No se pudo obtener respuesta de la herramienta de envío." };
+    }),
+  },
+  async (input) => {
+    const result = await emailPrompt(input);
+    const toolResponse = result.toolRequest?.toolResponse;
+    if (toolResponse?.output) {
+        return toolResponse.output;
     }
+    return { success: false, error: "No se pudo obtener respuesta de la herramienta de envío." };
+  }
 );
+
 
 export async function sendApprovalEmail(input: SendApprovalEmailInput) {
     return sendApprovalEmailFlow(input);
