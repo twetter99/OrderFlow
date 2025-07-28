@@ -42,6 +42,11 @@ const sendEmailTool = ai.defineTool(
     async ({to, subject, body}) => {
        const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
 
+       console.log("Attempting to send email with credentials:", {
+            user: GMAIL_USER,
+            hasPassword: !!GMAIL_APP_PASSWORD
+       });
+
        if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
             const errorMsg = "Gmail credentials are not configured in environment variables.";
             console.error(errorMsg);
