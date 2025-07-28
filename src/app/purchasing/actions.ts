@@ -1,4 +1,3 @@
-
 "use server";
 
 import { revalidatePath } from "next/cache";
@@ -37,7 +36,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     
     // Si la orden está pendiente, enviar email de aprobación
     if (orderData.status === 'Pendiente de Aprobación') {
-        const approvalUrl = `https://orderflow-pxtw9.web.app/api/approve-order?orderId=${docRef.id}`; // URL del webhook/función
+        const approvalUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/public/approve/${docRef.id}`;
         await sendApprovalEmail({
             to: 'juan@winfin.es',
             orderId: docRef.id,
