@@ -5,22 +5,13 @@
  * @fileOverview Implements a Genkit flow to send a purchase order approval email.
  *
  * - sendApprovalEmail - A function that handles the email sending process.
- * - SendApprovalEmailInput - The input type for the sendApprovalEmail function.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 import * as nodemailer from 'nodemailer';
-
-export const SendApprovalEmailInputSchema = z.object({
-  to: z.string().email().describe('The recipient email address.'),
-  orderId: z.string().describe('The ID of the purchase order to approve.'),
-  orderNumber: z.string().describe('The number of the purchase order.'),
-  orderAmount: z.number().describe('The total amount of the purchase order.'),
-  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
-  orderDate: z.string().describe("The date the order was created in ISO format."),
-});
-export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
+import type { SendApprovalEmailInput } from '@/app/purchasing/actions';
+import { SendApprovalEmailInputSchema } from '@/app/purchasing/actions';
 
 
 const sendEmailTool = ai.defineTool(
@@ -113,6 +104,6 @@ const sendApprovalEmailFlow = ai.defineFlow(
 );
 
 
-export async function sendApprovalEmail(input: SendApprovalEmailInput) {
+export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<{ success: boolean, error?: string }> {
     return sendApprovalEmailFlow(input);
 }

@@ -5,7 +5,20 @@ import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
-import { sendApprovalEmail, type SendApprovalEmailInput } from "@/ai/flows/send-approval-email";
+import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
+import { z } from "zod";
+
+// Define the schema and type here, where it's used, not in the "use server" file.
+export const SendApprovalEmailInputSchema = z.object({
+  to: z.string().email().describe('The recipient email address.'),
+  orderId: z.string().describe('The ID of the purchase order to approve.'),
+  orderNumber: z.string().describe('The number of the purchase order.'),
+  orderAmount: z.number().describe('The total amount of the purchase order.'),
+  approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
+  orderDate: z.string().describe("The date the order was created in ISO format."),
+});
+export type SendApprovalEmailInput = z.infer<typeof SendApprovalEmailInputSchema>;
+
 
 // Helper para generar el siguiente número de pedido
 const getNextOrderNumber = async (): Promise<string> => {
