@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -36,7 +37,6 @@ import { Calendar } from "../ui/calendar";
 import { ItemCombobox } from "./item-combobox";
 import React from "react";
 import { productFamilies } from "@/lib/data";
-import { useRecentSuppliers } from "@/hooks/use-recent-suppliers";
 
 const formSchema = z.object({
   orderNumber: z.string().optional(),
@@ -68,16 +68,16 @@ interface PurchasingFormProps {
   onCancel: () => void;
   canApprove?: boolean;
   suppliers: Supplier[];
+  recentSupplierIds: string[];
   inventoryItems: InventoryItem[];
   projects: Project[];
   locations: Location[];
 }
 
-export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, inventoryItems, projects, locations }: PurchasingFormProps) {
+export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, recentSupplierIds, inventoryItems, projects, locations }: PurchasingFormProps) {
   const isEditable = !order || !('id' in order) || order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
   const isReadOnly = order && 'id' in order ? !isEditable : false;
   const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
-  const { orderedSuppliers, recentSupplierIds, addRecentSupplier } = useRecentSuppliers(suppliers);
   
   const defaultValues = order
     ? { 
@@ -155,12 +155,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 <FormLabel>Proveedor</FormLabel>
                 <FormControl>
                     <SupplierCombobox
-                      suppliers={orderedSuppliers}
+                      suppliers={suppliers}
                       recentSupplierIds={recentSupplierIds}
                       value={field.value}
                       onChange={(supplierName, supplierId) => {
                           field.onChange(supplierName);
-                          if(supplierId) addRecentSupplier(supplierId);
                       }}
                       onAddNew={() => { /* Implementar si es necesario */ }}
                       disabled={isReadOnly}

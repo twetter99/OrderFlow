@@ -1,4 +1,5 @@
 
+
 "use client"
 
 import * as React from "react"
@@ -10,7 +11,6 @@ import {
   Command,
   CommandEmpty,
   CommandGroup,
-  CommandInput,
   CommandItem,
   CommandList,
   CommandSeparator,
@@ -40,7 +40,8 @@ export function SupplierCombobox({ suppliers, recentSupplierIds, value, onChange
   }
 
   const recentSuppliers = React.useMemo(() => {
-    return recentSupplierIds.map(id => suppliers.find(s => s.id === id)).filter(Boolean) as Supplier[];
+    // We get the full ordered list, so we just need to find the ones marked as recent
+    return suppliers.filter(s => recentSupplierIds.includes(s.id));
   }, [recentSupplierIds, suppliers]);
 
   const otherSuppliers = React.useMemo(() => {
@@ -70,7 +71,7 @@ export function SupplierCombobox({ suppliers, recentSupplierIds, value, onChange
             <CommandEmpty>No se encontró ningún proveedor.</CommandEmpty>
             
             {recentSuppliers.length > 0 && (
-              <CommandGroup heading="Recientes">
+              <CommandGroup heading="Proveedores Frecuentes">
                 {recentSuppliers.map((supplier) => (
                   <CommandItem
                     key={supplier.id}

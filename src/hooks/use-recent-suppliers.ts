@@ -1,11 +1,12 @@
 
+
 "use client";
 
 import { useState, useEffect, useCallback } from 'react';
 import type { Supplier } from '@/lib/types';
 
 const RECENT_SUPPLIERS_KEY = 'recentSuppliers';
-const MAX_RECENT_SUPPLIERS = 4;
+const MAX_RECENT_SUPPLIERS = 5;
 
 export function useRecentSuppliers(allSuppliers: Supplier[]) {
   const [recentSupplierIds, setRecentSupplierIds] = useState<string[]>(() => {

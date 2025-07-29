@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -160,6 +161,34 @@ export function PurchasingClientPage() {
         unsubLocations();
     };
   }, []);
+
+  const { orderedSuppliers, recentSupplierIds } = useMemo(() => {
+    if (suppliers.length === 0 || purchaseOrders.length === 0) {
+      return { orderedSuppliers: suppliers.sort((a,b) => a.name.localeCompare(b.name)), recentSupplierIds: [] };
+    }
+
+    const supplierFrequency = purchaseOrders.reduce((acc, order) => {
+      acc[order.supplier] = (acc[order.supplier] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const sortedByFrequency = Object.entries(supplierFrequency)
+      .sort(([, aCount], [, bCount]) => bCount - aCount)
+      .map(([supplierName]) => supplierName);
+
+    const recentSuppliersList = suppliers.filter(s => sortedByFrequency.slice(0, 5).includes(s.name));
+    const recentIds = recentSuppliersList.map(s => s.id);
+
+    const otherSuppliers = suppliers
+      .filter(s => !recentIds.includes(s.id))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    return {
+      orderedSuppliers: [...recentSuppliersList, ...otherSuppliers],
+      recentSupplierIds: recentIds,
+    };
+  }, [suppliers, purchaseOrders]);
+
   
   const activePurchaseOrders = useMemo(() => {
     
@@ -778,7 +807,8 @@ export function PurchasingClientPage() {
               setSelectedOrder(null);
             }}
             canApprove={canApprove}
-            suppliers={suppliers}
+            suppliers={orderedSuppliers}
+            recentSupplierIds={recentSupplierIds}
             inventoryItems={inventory}
             projects={projects}
             locations={locations}
