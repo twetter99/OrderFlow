@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -50,14 +49,17 @@ const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemI
 }, {
     message: "Un kit debe tener al menos un componente.",
     path: ["components"],
-}).refine((data) => {
+}).superRefine((data, ctx) => {
     const skuExists = inventoryItems.some(
         (item) => item.sku.toLowerCase() === data.sku.toLowerCase() && item.id !== currentItemId
     );
-    return !skuExists;
-}, {
-    message: "El código SKU ya existe en el inventario. Introduce un código único.",
-    path: ["sku"],
+    if(skuExists) {
+        ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: "Este SKU ya está registrado. Por favor, introduce uno diferente.",
+            path: ["sku"],
+        });
+    }
 });
 
 
@@ -115,6 +117,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   const form = useForm<InventoryFormValues>({
     resolver: zodResolver(formSchema),
     defaultValues,
+    mode: 'onChange', // Trigger validation on change
   });
 
   const { fields, append, remove } = useFieldArray({
@@ -532,7 +535,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
           <Button type="button" variant="ghost" onClick={onCancel}>
             Cancelar
           </Button>
-          <Button type="submit">Guardar</Button>
+          <Button type="submit" disabled={!form.formState.isValid}>Guardar</Button>
         </div>
       </form>
     </Form>
@@ -541,3 +544,4 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
 
 
 
+    
