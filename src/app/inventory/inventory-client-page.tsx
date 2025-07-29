@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, Boxes, PackagePlus } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Boxes, PackagePlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -56,6 +56,13 @@ import { Input } from "@/components/ui/input";
 import { AddStockForm } from "./add-stock-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
+type SortableColumn = keyof InventoryItem | 'totalStock' | 'supplierName';
+type SortDescriptor = {
+    column: SortableColumn;
+    direction: 'ascending' | 'descending';
+};
+
+
 export function InventoryClientPage() {
   const { toast } = useToast();
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
@@ -73,6 +80,11 @@ export function InventoryClientPage() {
   
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+
+  const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
+      column: 'name',
+      direction: 'ascending',
+  });
 
   useEffect(() => {
     const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
@@ -97,28 +109,73 @@ export function InventoryClientPage() {
     };
   }, []);
 
-  const filteredInventory = useMemo(() => {
-    const lowercasedFilter = filter.toLowerCase();
-    if (!lowercasedFilter) {
-      return inventory;
-    }
+  const getItemTotalStock = (itemId: string) => {
+    return inventoryLocations
+      .filter(l => l.itemId === itemId)
+      .reduce((sum, current) => sum + current.quantity, 0);
+  }
 
+  const sortedInventory = useMemo(() => {
+    const lowercasedFilter = filter.toLowerCase();
     const supplierMap = new Map(suppliers.map(s => [s.id, s.name]));
 
-    return inventory.filter(item => {
+    const filtered = inventory.filter(item => {
       const hasMatchingSupplier = item.suppliers?.some(supplierId => {
         const supplierName = supplierMap.get(supplierId);
         return supplierName?.toLowerCase().includes(lowercasedFilter);
       });
-
       return (
         item.name.toLowerCase().includes(lowercasedFilter) ||
         item.sku.toLowerCase().includes(lowercasedFilter) ||
         hasMatchingSupplier
       );
     });
-  }, [inventory, filter, suppliers]);
 
+    return [...filtered].sort((a, b) => {
+        let first: any, second: any;
+
+        if (sortDescriptor.column === 'totalStock') {
+            first = getItemTotalStock(a.id);
+            second = getItemTotalStock(b.id);
+        } else if (sortDescriptor.column === 'supplierName') {
+            first = a.suppliers?.map(sId => supplierMap.get(sId)).join(', ') || '';
+            second = b.suppliers?.map(sId => supplierMap.get(sId)).join(', ') || '';
+        } else {
+            first = a[sortDescriptor.column as keyof InventoryItem];
+            second = b[sortDescriptor.column as keyof InventoryItem];
+        }
+
+        let cmp = 0;
+        if (first === undefined || first === null) cmp = -1;
+        else if (second === undefined || second === null) cmp = 1;
+        else if (typeof first === 'number' && typeof second === 'number') {
+             cmp = first - second;
+        } else {
+             cmp = String(first).localeCompare(String(second), 'es', { numeric: true });
+        }
+        
+        return sortDescriptor.direction === 'descending' ? -cmp : cmp;
+    });
+
+  }, [inventory, filter, suppliers, inventoryLocations, sortDescriptor]);
+
+  const onSortChange = (column: SortableColumn) => {
+    if (sortDescriptor.column === column) {
+        setSortDescriptor({
+            ...sortDescriptor,
+            direction: sortDescriptor.direction === 'ascending' ? 'descending' : 'ascending',
+        });
+    } else {
+        setSortDescriptor({ column, direction: 'ascending' });
+    }
+  };
+
+  const getSortIcon = (column: SortableColumn) => {
+    if (sortDescriptor.column === column) {
+      return sortDescriptor.direction === 'ascending' ? <ArrowUp className="ml-2 h-4 w-4" /> : <ArrowDown className="ml-2 h-4 w-4" />;
+    }
+    return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
+  };
 
   const handleAddClick = () => {
     setSelectedItem(null);
@@ -262,12 +319,6 @@ export function InventoryClientPage() {
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
-  const getItemTotalStock = (itemId: string) => {
-    return inventoryLocations
-      .filter(l => l.itemId === itemId)
-      .reduce((sum, current) => sum + current.quantity, 0);
-  }
-
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -301,19 +352,39 @@ export function InventoryClientPage() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>SKU</TableHead>
-                <TableHead>Nombre</TableHead>
+                <TableHead>
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('sku')}>
+                        SKU {getSortIcon('sku')}
+                    </Button>
+                </TableHead>
+                <TableHead>
+                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('name')}>
+                        Nombre {getSortIcon('name')}
+                    </Button>
+                </TableHead>
                 <TableHead>Tipo</TableHead>
-                <TableHead>Proveedor</TableHead>
-                <TableHead className="text-right">Stock Total</TableHead>
-                <TableHead className="text-right">Costo Unitario</TableHead>
+                <TableHead>
+                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('supplierName')}>
+                        Proveedor {getSortIcon('supplierName')}
+                    </Button>
+                </TableHead>
+                <TableHead className="text-right">
+                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('totalStock')}>
+                        Stock Total {getSortIcon('totalStock')}
+                    </Button>
+                </TableHead>
+                <TableHead className="text-right">
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('unitCost')}>
+                        Costo Unitario {getSortIcon('unitCost')}
+                    </Button>
+                </TableHead>
                 <TableHead className="text-right">Acciones</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {loading ? (
                 <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
-              ) : filteredInventory.map((item) => {
+              ) : sortedInventory.map((item) => {
                 const itemSuppliers = item.suppliers
                     ?.map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
                     .filter(Boolean) as string[] || [];
@@ -392,7 +463,7 @@ export function InventoryClientPage() {
                   </TableCell>
                 </TableRow>
               )})}
-               {!loading && filteredInventory.length === 0 && (
+               {!loading && sortedInventory.length === 0 && (
                  <TableRow>
                     <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         {filter ? "No se han encontrado artículos que coincidan con tu búsqueda." : "No se encontraron artículos."}
