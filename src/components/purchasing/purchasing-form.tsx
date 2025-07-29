@@ -44,7 +44,7 @@ const formSchema = z.object({
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   deliveryLocationId: z.string().min(1, "Debes seleccionar un almacén de entrega."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
-  status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Almacenada", "Rechazado"]),
+  status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"]),
   rejectionReason: z.string().optional(),
   items: z.array(z.object({
     itemId: z.string().optional(), // Puede ser opcional si el nombre es la clave
@@ -129,6 +129,10 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     const associatedSupplierIds = inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id)).map(item => item.id);
     return inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id));
   }, [watchedSupplier, inventoryItems, suppliers]);
+
+  const sortedProductFamilies = React.useMemo(() => {
+    return [...productFamilies].sort((a, b) => a.name.localeCompare(b.name));
+  }, []);
 
 
   function onSubmit(values: PurchasingFormValues) {
@@ -313,7 +317,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                   <FormControl><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger></FormControl>
                                                   <SelectContent>
                                                     <SelectItem value="all">Todas las familias</SelectItem>
-                                                    {productFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
+                                                    {sortedProductFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
                                                   </SelectContent>
                                                 </Select>
                                             </FormItem>
