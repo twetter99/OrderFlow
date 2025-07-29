@@ -1,9 +1,8 @@
 
-
 "use client"
 
 import * as React from "react"
-import { Check, ChevronsUpDown, PlusCircle } from "lucide-react"
+import { Check, ChevronsUpDown, PlusCircle, History } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -25,14 +24,28 @@ import { Supplier } from "@/lib/types"
 
 interface SupplierComboboxProps {
   suppliers: Supplier[];
+  recentSupplierIds: string[];
   value: string;
-  onChange: (value: string) => void;
+  onChange: (supplierName: string, supplierId: string | null) => void;
   onAddNew: () => void;
   disabled?: boolean;
 }
 
-export function SupplierCombobox({ suppliers, value, onChange, onAddNew, disabled }: SupplierComboboxProps) {
+export function SupplierCombobox({ suppliers, recentSupplierIds, value, onChange, onAddNew, disabled }: SupplierComboboxProps) {
   const [open, setOpen] = React.useState(false)
+
+  const handleSelect = (supplier: Supplier) => {
+    onChange(supplier.name, supplier.id);
+    setOpen(false);
+  }
+
+  const recentSuppliers = React.useMemo(() => {
+    return recentSupplierIds.map(id => suppliers.find(s => s.id === id)).filter(Boolean) as Supplier[];
+  }, [recentSupplierIds, suppliers]);
+
+  const otherSuppliers = React.useMemo(() => {
+    return suppliers.filter(s => !recentSupplierIds.includes(s.id));
+  }, [recentSupplierIds, suppliers]);
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -55,27 +68,38 @@ export function SupplierCombobox({ suppliers, value, onChange, onAddNew, disable
           <CommandInput placeholder="Buscar proveedor..." />
           <CommandList>
             <CommandEmpty>No se encontró ningún proveedor.</CommandEmpty>
-            <CommandGroup>
-              {suppliers.map((supplier) => (
+            
+            {recentSuppliers.length > 0 && (
+              <CommandGroup heading="Recientes">
+                {recentSuppliers.map((supplier) => (
+                  <CommandItem
+                    key={supplier.id}
+                    value={supplier.name}
+                    onSelect={() => handleSelect(supplier)}
+                    className="flex items-center gap-2"
+                  >
+                    <Check className={cn("h-4 w-4", value.toLowerCase() === supplier.name.toLowerCase() ? "opacity-100" : "opacity-0")}/>
+                    <History className="h-4 w-4 text-muted-foreground" />
+                    <span>{supplier.name}</span>
+                  </CommandItem>
+                ))}
+              </CommandGroup>
+            )}
+
+            <CommandGroup heading={recentSuppliers.length > 0 ? "Todos los proveedores" : ""}>
+              {otherSuppliers.map((supplier) => (
                 <CommandItem
                   key={supplier.id}
                   value={supplier.name}
-                  onSelect={(currentValue) => {
-                    const supplierName = suppliers.find(s => s.name.toLowerCase() === currentValue.toLowerCase())?.name ?? ""
-                    onChange(supplierName)
-                    setOpen(false)
-                  }}
+                  onSelect={() => handleSelect(supplier)}
+                  className="flex items-center gap-2"
                 >
-                  <Check
-                    className={cn(
-                      "mr-2 h-4 w-4",
-                      value.toLowerCase() === supplier.name.toLowerCase() ? "opacity-100" : "opacity-0"
-                    )}
-                  />
-                  {supplier.name}
+                  <Check className={cn("h-4 w-4", value.toLowerCase() === supplier.name.toLowerCase() ? "opacity-100" : "opacity-0")}/>
+                  <span>{supplier.name}</span>
                 </CommandItem>
               ))}
             </CommandGroup>
+
             <CommandSeparator />
             <CommandGroup>
                  <CommandItem

@@ -36,6 +36,7 @@ import { Calendar } from "../ui/calendar";
 import { ItemCombobox } from "./item-combobox";
 import React from "react";
 import { productFamilies } from "@/lib/data";
+import { useRecentSuppliers } from "@/hooks/use-recent-suppliers";
 
 const formSchema = z.object({
   orderNumber: z.string().optional(),
@@ -76,6 +77,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const isEditable = !order || !('id' in order) || order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
   const isReadOnly = order && 'id' in order ? !isEditable : false;
   const [isDeliveryDatePickerOpen, setIsDeliveryDatePickerOpen] = React.useState(false);
+  const { orderedSuppliers, recentSupplierIds, addRecentSupplier } = useRecentSuppliers(suppliers);
   
   const defaultValues = order
     ? { 
@@ -153,9 +155,13 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                 <FormLabel>Proveedor</FormLabel>
                 <FormControl>
                     <SupplierCombobox
-                      suppliers={suppliers}
+                      suppliers={orderedSuppliers}
+                      recentSupplierIds={recentSupplierIds}
                       value={field.value}
-                      onChange={field.onChange}
+                      onChange={(supplierName, supplierId) => {
+                          field.onChange(supplierName);
+                          if(supplierId) addRecentSupplier(supplierId);
+                      }}
                       onAddNew={() => { /* Implementar si es necesario */ }}
                       disabled={isReadOnly}
                     />
