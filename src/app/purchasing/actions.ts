@@ -37,8 +37,8 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
-          // Usa la variable de entorno del servidor (BASE_URL)
-          const baseUrl = process.env.BASE_URL || 'http://localhost:9002';
+          // Forza el uso de la URL de producción para los enlaces de aprobación.
+          const baseUrl = 'https://orderflow-pxtw9.web.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
