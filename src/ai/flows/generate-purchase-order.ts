@@ -72,12 +72,14 @@ const prompt = ai.definePrompt({
 Prompt del usuario: {{{prompt}}}
 
 Sigue estos pasos:
-1.  Identifica el nombre del proveedor en el prompt. Usa la herramienta 'findSupplier' para confirmar que el proveedor existe. Si no se encuentra, detente y pide al usuario que aclare el nombre del proveedor.
+1.  Identifica el nombre del proveedor en el prompt. Usa la herramienta 'findSupplier' para confirmar que el proveedor existe.
 2.  Para cada artículo mencionado en el prompt:
     a. Identifica el nombre del artículo y la cantidad.
     b. Usa la herramienta 'findItem' para obtener los detalles del artículo, especialmente su precio ('unitCost').
     c. Si no encuentras un artículo, omítelo de la orden final.
-3.  Construye el resultado final en el formato JSON especificado. El campo 'supplier' debe ser el nombre del proveedor encontrado. La lista 'items' debe contener todos los artículos encontrados con sus cantidades y precios.`,
+3.  Construye el resultado final en el formato JSON especificado. El campo 'supplier' debe ser el nombre del proveedor encontrado. La lista 'items' debe contener todos los artículos encontrados con sus cantidades y precios.
+
+IMPORTANTE: Siempre debes devolver un objeto JSON válido que cumpla con el schema. Si no puedes identificar el proveedor o si no encuentras ningún artículo, devuelve un objeto con valores por defecto, así: { "supplier": "", "items": [] }. NUNCA devuelvas null.`,
 });
 
 const generatePurchaseOrderFlow = ai.defineFlow(
@@ -87,17 +89,26 @@ const generatePurchaseOrderFlow = ai.defineFlow(
     outputSchema: GeneratePurchaseOrderOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
-    
-    // Validate output to prevent schema errors downstream.
-    if (!output || !output.supplier || !output.items) {
-      console.warn("AI did not return a valid purchase order structure. Returning default empty object.");
-      return {
-        supplier: "",
-        items: [],
-      };
+    try {
+        const {output} = await prompt(input);
+        
+        // Final validation just in case, although the prompt and try/catch should handle most cases.
+        if (!output || !output.supplier || !Array.isArray(output.items)) {
+          console.warn("AI returned a malformed structure despite safeguards. Returning default empty object.");
+          return {
+            supplier: "",
+            items: [],
+          };
+        }
+        
+        return output;
+
+    } catch (error) {
+        console.error("Error during generatePurchaseOrderFlow, likely due to AI output validation. Returning default empty object.", error);
+        return {
+            supplier: "",
+            items: [],
+        };
     }
-    
-    return output;
   }
 );
