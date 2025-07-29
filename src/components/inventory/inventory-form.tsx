@@ -26,7 +26,7 @@ import { Textarea } from "../ui/textarea";
 import { MultiSelect } from "../ui/multi-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 
-const formSchema = z.object({
+const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemId?: string | null) => z.object({
   type: z.enum(['simple', 'composite', 'service']),
   sku: z.string().min(1, "El SKU es obligatorio."),
   name: z.string().min(1, "El nombre es obligatorio."),
@@ -50,10 +50,18 @@ const formSchema = z.object({
 }, {
     message: "Un kit debe tener al menos un componente.",
     path: ["components"],
+}).refine((data) => {
+    const skuExists = inventoryItems.some(
+        (item) => item.sku.toLowerCase() === data.sku.toLowerCase() && item.id !== currentItemId
+    );
+    return !skuExists;
+}, {
+    message: "El código SKU ya existe en el inventario. Introduce un código único.",
+    path: ["sku"],
 });
 
 
-type InventoryFormValues = z.infer<typeof formSchema>;
+type InventoryFormValues = z.infer<ReturnType<typeof createInventoryFormSchema>>;
 
 interface InventoryFormProps {
   item?: InventoryItem | null;
@@ -84,6 +92,10 @@ const productFamilies = [
 
 export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCancel, onAddNewSupplier }: InventoryFormProps) {
   
+  const formSchema = useMemo(() => {
+    return createInventoryFormSchema(inventoryItems, item?.id);
+  }, [inventoryItems, item]);
+
   const defaultValues = item
     ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [], minThreshold: item.minThreshold || 0 }
     : {
@@ -526,5 +538,6 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     </Form>
   );
 }
+
 
 
