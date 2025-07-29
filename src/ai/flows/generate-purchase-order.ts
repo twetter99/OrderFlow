@@ -88,6 +88,16 @@ const generatePurchaseOrderFlow = ai.defineFlow(
   },
   async input => {
     const {output} = await prompt(input);
-    return output!;
+    
+    // Validate output to prevent schema errors downstream.
+    if (!output || !output.supplier || !output.items) {
+      console.warn("AI did not return a valid purchase order structure. Returning default empty object.");
+      return {
+        supplier: "",
+        items: [],
+      };
+    }
+    
+    return output;
   }
 );
