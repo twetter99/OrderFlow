@@ -315,7 +315,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                   disabled={isReadOnly || !watchedSupplier || watchedItems[index]?.type === 'Servicio'}
                                                 >
                                                   <FormControl><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger></FormControl>
-                                                  <SelectContent>
+                                                  <SelectContent position="popper" className="w-[--radix-select-trigger-width]">
                                                     <SelectItem value="all">Todas las familias</SelectItem>
                                                     {sortedProductFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
                                                   </SelectContent>
