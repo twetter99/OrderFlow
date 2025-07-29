@@ -24,7 +24,8 @@ const GeneratePurchaseOrderOutputSchema = z.object({
     itemName: z.string().describe("The name of the item being ordered."),
     quantity: z.number().describe("The quantity to order."),
     price: z.number().describe("The unit price of the item."),
-  })).describe("The list of items to include in the purchase order.")
+  })).describe("The list of items to include in the purchase order."),
+  clarificationNeeded: z.string().optional().describe("A question to ask the user if the prompt is ambiguous or information is missing.")
 });
 export type GeneratePurchaseOrderOutput = z.infer<typeof GeneratePurchaseOrderOutputSchema>;
 
@@ -67,19 +68,25 @@ const prompt = ai.definePrompt({
   input: {schema: GeneratePurchaseOrderInputSchema},
   output: {schema: GeneratePurchaseOrderOutputSchema},
   tools: [findSupplierTool, findItemTool],
-  prompt: `Eres un asistente de IA para la creación de órdenes de compra. Tu tarea es analizar el prompt del usuario y generar una orden de compra estructurada.
+  prompt: `Eres un asistente de IA experto en crear órdenes de compra. Analiza el prompt del usuario para generar una orden de compra estructurada.
 
 Prompt del usuario: {{{prompt}}}
 
-Sigue estos pasos:
-1.  Identifica el nombre del proveedor en el prompt. Usa la herramienta 'findSupplier' para confirmar que el proveedor existe.
-2.  Para cada artículo mencionado en el prompt:
-    a. Identifica el nombre del artículo y la cantidad.
-    b. Usa la herramienta 'findItem' para obtener los detalles del artículo, especialmente su precio ('unitCost').
-    c. Si no encuentras un artículo, omítelo de la orden final.
-3.  Construye el resultado final en el formato JSON especificado. El campo 'supplier' debe ser el nombre del proveedor encontrado. La lista 'items' debe contener todos los artículos encontrados con sus cantidades y precios.
+Tu proceso:
+1.  **Identifica al proveedor**: Usa la herramienta 'findSupplier' para buscar al proveedor mencionado.
+    - Si no encuentras al proveedor, **no intentes adivinar**. Formula una pregunta al usuario en el campo 'clarificationNeeded' para que elija uno de la lista de proveedores existentes. Por ejemplo: "No he encontrado al proveedor 'X'. ¿Te refieres a uno de estos: [lista de proveedores]?".
+2.  **Identifica los artículos y cantidades**: Para cada artículo en el prompt:
+    - Usa 'findItem' para obtener sus detalles y precio.
+    - Si no encuentras un artículo, o la descripción es ambigua (ej. "cables"), pide una aclaración en 'clarificationNeeded'.
+    - Si falta la cantidad, pide que la especifiquen en 'clarificationNeeded'.
+3.  **Construye el resultado**:
+    - Si tienes toda la información (proveedor válido, artículos específicos y cantidades), rellena los campos 'supplier' e 'items'.
+    - Si falta información, deja 'supplier' e 'items' vacíos y rellena 'clarificationNeeded' con tu pregunta.
 
-IMPORTANTE: Siempre debes devolver un objeto JSON válido que cumpla con el schema. Si no puedes identificar el proveedor o si no encuentras ningún artículo, devuelve un objeto con valores por defecto, así: { "supplier": "", "items": [] }. NUNCA devuelvas null.`,
+IMPORTANTE: Siempre debes devolver un objeto JSON válido que cumpla con el schema.
+- **Si todo está claro**, devuelve el objeto con la orden de compra y sin 'clarificationNeeded'.
+- **Si necesitas aclarar algo**, devuelve un objeto con 'supplier' vacío, 'items' como un array vacío, y el campo 'clarificationNeeded' con tu pregunta.
+- **NUNCA** devuelvas null ni un objeto sin la estructura base.`,
 });
 
 const generatePurchaseOrderFlow = ai.defineFlow(
@@ -92,12 +99,30 @@ const generatePurchaseOrderFlow = ai.defineFlow(
     try {
         const {output} = await prompt(input);
         
+        if (!output) {
+          console.warn("AI returned a null structure. Returning default empty object with clarification.");
+          return {
+            supplier: "",
+            items: [],
+            clarificationNeeded: "Ha ocurrido un error inesperado. ¿Podrías reformular tu petición de forma más específica?",
+          };
+        }
+        
         // Final validation just in case, although the prompt and try/catch should handle most cases.
-        if (!output || !output.supplier || !Array.isArray(output.items)) {
+        if (output.clarificationNeeded) {
+            return {
+                supplier: "",
+                items: [],
+                clarificationNeeded: output.clarificationNeeded,
+            };
+        }
+
+        if (!output.supplier || !Array.isArray(output.items)) {
           console.warn("AI returned a malformed structure despite safeguards. Returning default empty object.");
           return {
             supplier: "",
             items: [],
+            clarificationNeeded: "La IA no ha podido estructurar el pedido. Por favor, sé más específico con el proveedor, los artículos y las cantidades.",
           };
         }
         
@@ -108,6 +133,7 @@ const generatePurchaseOrderFlow = ai.defineFlow(
         return {
             supplier: "",
             items: [],
+            clarificationNeeded: "Ha ocurrido un error procesando tu solicitud. Por favor, intenta ser más detallado.",
         };
     }
   }

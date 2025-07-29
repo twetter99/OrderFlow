@@ -118,6 +118,8 @@ export function PurchasingClientPage() {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isReceptionAlertOpen, setIsReceptionAlertOpen] = useState(false);
+  const [isAiClarificationOpen, setIsAiClarificationOpen] = useState(false);
+  const [aiClarification, setAiClarification] = useState("");
   const [pinValue, setPinValue] = useState('');
   
   const [orderToProcess, setOrderToProcess] = useState<{ id: string; status: PurchaseOrder['status'] } | null>(null);
@@ -327,7 +329,10 @@ export function PurchasingClientPage() {
     setIsGenerating(true);
     try {
       const result = await generatePurchaseOrder({ prompt: aiPrompt });
-      if (result && result.items.length > 0) {
+      if (result.clarificationNeeded) {
+        setAiClarification(result.clarificationNeeded);
+        setIsAiClarificationOpen(true);
+      } else if (result && result.items.length > 0) {
         const newOrder: Partial<PurchaseOrder> = {
           supplier: result.supplier,
           items: result.items,
@@ -848,6 +853,29 @@ export function PurchasingClientPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <AlertDialog open={isAiClarificationOpen} onOpenChange={setIsAiClarificationOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+                <Bot className="h-6 w-6 text-primary" />
+                La IA necesita más información
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {aiClarification}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => {
+              setAiPrompt(aiClarification);
+              setIsAiClarificationOpen(false);
+            }}>
+              Entendido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
 
       <AlertDialog
         open={isDeleteDialogOpen}
