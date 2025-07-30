@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -162,14 +163,14 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
     ? { 
         ...technician, 
         notes: technician.notes || '',
-        rates: technician.rates || {
-            rateWorkHour: 0,
-            rateTravelHour: 0,
-            rateOvertimeWeekdayDay: 0,
-            rateOvertimeWeekdayNight: 0,
-            rateOvertimeWeekendDay: 0,
-            rateOvertimeWeekendNight: 0,
-            rateNotes: "",
+        rates: {
+            rateWorkHour: technician.rates?.rateWorkHour || 0,
+            rateTravelHour: technician.rates?.rateTravelHour || 0,
+            rateOvertimeWeekdayDay: technician.rates?.rateOvertimeWeekdayDay || 0,
+            rateOvertimeWeekdayNight: technician.rates?.rateOvertimeWeekdayNight || 0,
+            rateOvertimeWeekendDay: technician.rates?.rateOvertimeWeekendDay || 0,
+            rateOvertimeWeekendNight: technician.rates?.rateOvertimeWeekendNight || 0,
+            rateNotes: technician.rates?.rateNotes || "",
         }
       }
     : {
