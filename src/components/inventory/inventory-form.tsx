@@ -25,6 +25,7 @@ import { Textarea } from "../ui/textarea";
 import { MultiSelect } from "../ui/multi-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Switch } from "../ui/switch";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemId?: string | null) => z.object({
