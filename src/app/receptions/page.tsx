@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { QrCode, Anchor, Link2, UploadCloud, FileText } from "lucide-react";
+import { QrCode, Anchor, Link2, UploadCloud, FileText, Loader2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -33,7 +33,8 @@ import type { InventoryItem, PurchaseOrder, InventoryLocation, Location, Purchas
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { db, storage } from "@/lib/firebase";
+import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
 import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
@@ -60,12 +61,28 @@ function AttachDeliveryNoteDialog({
         if (!files || files.length === 0 || !orderId) return;
 
         setIsUploading(true);
+        
         try {
-            // En una app real, aquí iría la lógica de subida a un storage (ej. Firebase Storage)
-            // y obtendríamos las URLs. Para este prototipo, simularemos las URLs.
-            const simulatedUrls = Array.from(files).map(file => `https://example.com/uploads/${orderId}/${file.name}`);
+            const uploadPromises = Array.from(files).map(async (file) => {
+                const storageRef = ref(storage, `delivery-notes/${orderId}/${Date.now()}-${file.name}`);
+                const uploadTask = uploadBytesResumable(storageRef, file);
+                
+                return new Promise<string>((resolve, reject) => {
+                    uploadTask.on(
+                        'state_changed',
+                        (snapshot) => { /* Puede usarse para mostrar el progreso */ },
+                        (error) => reject(error),
+                        async () => {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(downloadURL);
+                        }
+                    );
+                });
+            });
 
-            const result = await linkDeliveryNoteToPurchaseOrder(orderId, simulatedUrls);
+            const uploadedUrls = await Promise.all(uploadPromises);
+
+            const result = await linkDeliveryNoteToPurchaseOrder(orderId, uploadedUrls);
             
             if (result.success) {
                 toast({
@@ -84,7 +101,7 @@ function AttachDeliveryNoteDialog({
              toast({
                 variant: "destructive",
                 title: "Error",
-                description: "No se pudo adjuntar el albarán."
+                description: "No se pudo subir o adjuntar el albarán."
             });
         } finally {
             setIsUploading(false);
@@ -119,7 +136,11 @@ function AttachDeliveryNoteDialog({
                         Omitir
                     </Button>
                     <Button type="button" onClick={handleAttachClick} disabled={isUploading}>
-                        <UploadCloud className="mr-2 h-4 w-4" />
+                        {isUploading ? (
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                          <UploadCloud className="mr-2 h-4 w-4" />
+                        )}
                         {isUploading ? "Subiendo..." : "Adjuntar albarán"}
                     </Button>
                 </DialogFooter>
