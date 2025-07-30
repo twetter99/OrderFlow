@@ -1,5 +1,4 @@
 
-
 'use client';
 
 import { useParams } from 'next/navigation';
@@ -41,12 +40,12 @@ export default function PurchaseOrderPrintPage() {
   }, [id]);
 
   useEffect(() => {
-    if (order) {
+    if (order && !loading && !error) {
         // Delay print slightly to ensure all content is rendered
         const timer = setTimeout(() => window.print(), 500);
         return () => clearTimeout(timer);
     }
-  }, [order]);
+  }, [order, loading, error]);
   
   const handlePrint = () => {
     window.print();
@@ -77,9 +76,18 @@ export default function PurchaseOrderPrintPage() {
   return (
     <div className="bg-white text-black p-8 font-sans">
       <style jsx global>{`
+        @page {
+          size: A4 portrait;
+          margin: 1cm;
+        }
         @media print {
-          body { -webkit-print-color-adjust: exact; }
-          .no-print { display: none; }
+          body { 
+            -webkit-print-color-adjust: exact; 
+             print-color-adjust: exact;
+          }
+          .no-print { 
+            display: none; 
+          }
         }
       `}</style>
       
@@ -94,7 +102,7 @@ export default function PurchaseOrderPrintPage() {
         <div className="text-right">
           <h2 className="text-2xl font-bold uppercase">Orden de Compra</h2>
           <p className="text-lg font-mono">{order.orderNumber || order.id}</p>
-          <p className="text-sm">Fecha: {new Date(order.date).toLocaleDateString('es-ES')}</p>
+          <p className="text-sm">Fecha: {new Date(order.date as string).toLocaleDateString('es-ES')}</p>
         </div>
       </header>
       
@@ -107,7 +115,7 @@ export default function PurchaseOrderPrintPage() {
             <p>{order.supplierDetails?.phone}</p>
         </div>
          <div className="bg-yellow-50 border-2 border-dashed border-yellow-300 p-4 rounded-lg space-y-2">
-            <h3 className="text-sm uppercase font-bold text-gray-600">⚠️ ENTREGA EXCLUSIVAMENTE EN:</h3>
+            <h3 className="text-sm uppercase font-bold text-gray-600">⚠️ ENTREGAR EXCLUSIVAMENTE EN:</h3>
             <p className="font-bold text-lg uppercase">📍 {deliveryLocation?.name}</p>
             {deliveryLocation?.type === 'physical' && (
               <div className="text-sm text-gray-700">
@@ -164,7 +172,7 @@ export default function PurchaseOrderPrintPage() {
 
       <footer className="mt-16 text-sm text-gray-600">
         <p><span className="font-bold">Proyecto asociado:</span> {order.projectDetails?.name || order.project}</p>
-        <p className="mt-4">Por favor, incluir el número de orden de compra en todas las facturas y comunicaciones. La entrega debe realizarse antes del <span className="font-bold">{new Date(order.estimatedDeliveryDate).toLocaleDateString('es-ES')}</span>.</p>
+        <p className="mt-4">Por favor, incluir el número de orden de compra en todas las facturas y comunicaciones. La entrega debe realizarse antes del <span className="font-bold">{new Date(order.estimatedDeliveryDate as string).toLocaleDateString('es-ES')}</span>.</p>
         <p className="text-center text-xs text-gray-500 mt-8">Gracias por su colaboración.</p>
       </footer>
       
