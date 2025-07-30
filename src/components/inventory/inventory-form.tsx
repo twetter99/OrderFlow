@@ -398,7 +398,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <FormItem>
                     <FormLabel>{isImport ? "Costo FOB (€)" : "Costo Unitario (€)"}</FormLabel>
                     <FormControl>
-                        <Input type="number" step="0.01" placeholder="350,00" {...field} onFocus={(e) => e.target.select()} />
+                        <Input type="number" step="0.01" placeholder="350,00" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -411,7 +411,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     <FormItem>
                     <FormLabel>Umbral Mínimo Stock</FormLabel>
                     <FormControl>
-                        <Input type="number" step="1" placeholder="10" {...field} onFocus={(e) => e.target.select()} />
+                        <Input type="number" step="1" placeholder="10" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -453,7 +453,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                         <FormItem>
                         <FormLabel>Costo/Tarifa (€)</FormLabel>
                         <FormControl>
-                            <Input type="number" step="0.01" placeholder="75,00" {...field} onFocus={(e) => e.target.select()} />
+                            <Input type="number" step="0.01" placeholder="75,00" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>
