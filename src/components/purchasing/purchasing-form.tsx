@@ -25,7 +25,7 @@ import { Input } from "@/components/ui/input";
 import type { PurchaseOrder, Supplier, InventoryItem, Project, Location } from "@/lib/types";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { CalendarIcon, PlusCircle, Trash2 } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2, Eye, Download } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
 import { ItemPriceInsight } from "./item-price-insight";
@@ -57,7 +57,8 @@ const formSchema = z.object({
     type: z.enum(['Material', 'Servicio']),
     family: z.string().optional(), // Used for filtering, not saved
   })).min(1, "Debes añadir al menos un artículo."),
-  total: z.coerce.number() // Se calculará automáticamente
+  total: z.coerce.number(), // Se calculará automáticamente
+  deliveryNoteUrls: z.array(z.string()).optional(),
 });
 
 type PurchasingFormValues = z.infer<typeof formSchema>;
@@ -91,6 +92,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         rejectionReason: order.rejectionReason || "",
         items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: order.total || 0,
+        deliveryNoteUrls: order.deliveryNoteUrls || [],
        }
     : {
         project: "",
@@ -103,6 +105,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         rejectionReason: "",
         items: [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: 0,
+        deliveryNoteUrls: [],
       };
 
   const form = useForm<PurchasingFormValues>({
@@ -465,6 +468,38 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             </CardContent>
         </Card>
         
+        {order && 'id' in order && order.deliveryNoteUrls && order.deliveryNoteUrls.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Albaranes Adjuntos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ul className="space-y-2">
+                {order.deliveryNoteUrls.map((url, index) => {
+                  const fileName = url.substring(url.lastIndexOf('/') + 1);
+                  return (
+                    <li key={index} className="flex items-center justify-between p-2 border rounded-md">
+                      <span className="font-mono text-sm truncate">{decodeURIComponent(fileName)}</span>
+                      <div className="flex gap-2">
+                        <Button variant="outline" size="sm" asChild>
+                          <a href={url} target="_blank" rel="noopener noreferrer">
+                            <Eye className="mr-2 h-4 w-4" /> Ver
+                          </a>
+                        </Button>
+                        <Button variant="outline" size="sm" asChild>
+                           <a href={url} download>
+                            <Download className="mr-2 h-4 w-4" /> Descargar
+                           </a>
+                        </Button>
+                      </div>
+                    </li>
+                  )
+                })}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
+
         <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
                  <FormField
