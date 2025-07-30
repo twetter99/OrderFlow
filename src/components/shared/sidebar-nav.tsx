@@ -66,7 +66,7 @@ const navGroups = [
     ],
   },
   {
-    title: "GESTIÓN DE MATERIALES",
+    title: "GESTIÓN DE STOCK",
     items: [
       { 
         label: "Gestión de Stock", 
@@ -166,7 +166,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded ? "w-16" : "w-[270px]"
+          hasMounted && !isExpanded ? "w-16" : "w-[280px]"
         )}
       >
         {hasMounted ? (
@@ -225,7 +225,7 @@ export const SidebarNav = () => {
                 const isActive = isSubItemActive(item.subItems);
                 
                 return (
-                            <Collapsible key={uniqueKey} defaultOpen={isActive} className="space-y-1">
+                            <Collapsible key={uniqueKey} className="space-y-1">
                       <Tooltip>
                         <TooltipTrigger asChild>
                                     <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
