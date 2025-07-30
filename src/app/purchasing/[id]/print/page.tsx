@@ -27,7 +27,6 @@ export default function PurchaseOrderPrintPage() {
         const item = localStorage.getItem(`print_order_${id}`);
         if (item) {
             setOrder(JSON.parse(item));
-            localStorage.removeItem(`print_order_${id}`); // Clean up after reading
         } else {
             setError('No se pudo encontrar la información de la orden. Por favor, cierra esta pestaña y vuelve a intentarlo desde el listado.');
         }
@@ -41,11 +40,19 @@ export default function PurchaseOrderPrintPage() {
 
   useEffect(() => {
     if (order && !loading && !error) {
-        // Delay print slightly to ensure all content is rendered
-        const timer = setTimeout(() => window.print(), 500);
+        // Set the document title for a clean PDF filename
+        document.title = `WINFIN-OrdenCompra-${order.orderNumber || order.id}`;
+        
+        // Delay print slightly to ensure title is set and content is rendered
+        const timer = setTimeout(() => {
+            window.print();
+            // Clean up local storage after printing has been initiated
+            localStorage.removeItem(`print_order_${id}`); 
+        }, 500);
+
         return () => clearTimeout(timer);
     }
-  }, [order, loading, error]);
+  }, [order, loading, error, id]);
   
   const handlePrint = () => {
     window.print();
