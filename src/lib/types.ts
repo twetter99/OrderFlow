@@ -1,5 +1,4 @@
 
-
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -45,6 +44,7 @@ export type InventoryItem = {
   }[];
   quantity?: number; // Should be calculated, not stored
   minThreshold?: number; // Umbral mínimo para alertas de stock bajo
+  isImport?: boolean; // Indica si el producto es de importación
 };
 
 export type PurchaseOrderItem = {

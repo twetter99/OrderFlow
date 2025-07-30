@@ -17,13 +17,15 @@ import { Input } from "@/components/ui/input";
 import type { InventoryItem, Supplier } from "@/lib/types";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { PlusCircle, Trash2 } from "lucide-react";
+import { PlusCircle, Trash2, Import } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { useMemo, useEffect } from "react";
 import { Textarea } from "../ui/textarea";
 import { MultiSelect } from "../ui/multi-select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+import { Switch } from "../ui/switch";
+import { cn } from "@/lib/utils";
 
 const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemId?: string | null) => z.object({
   type: z.enum(['simple', 'composite', 'service']),
@@ -34,6 +36,7 @@ const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemI
   unit: z.string().min(1, "La unidad es obligatoria."),
   observations: z.string().optional(),
   minThreshold: z.coerce.number().min(0, "El umbral debe ser positivo o cero.").optional(),
+  isImport: z.boolean().optional(),
   // Campos opcionales según el tipo
   unitCost: z.coerce.number().positive("El costo unitario debe ser positivo.").optional().or(z.literal(0)),
   suppliers: z.array(z.string()).optional(),
@@ -99,7 +102,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
   }, [inventoryItems, item]);
 
   const defaultValues = item
-    ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [], minThreshold: item.minThreshold || 0 }
+    ? { ...item, unitCost: item.unitCost || 0, suppliers: item.suppliers || [], minThreshold: item.minThreshold || 0, isImport: item.isImport || false }
     : {
         type: 'simple' as const,
         sku: "",
@@ -112,6 +115,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         suppliers: [],
         components: [],
         minThreshold: 0,
+        isImport: false,
       };
 
   const form = useForm<InventoryFormValues>({
@@ -127,16 +131,25 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
 
   const itemType = useWatch({ control: form.control, name: "type" });
   const watchedComponents = useWatch({ control: form.control, name: "components" });
+  const isImport = useWatch({ control: form.control, name: "isImport" });
+  const baseUnitCost = useWatch({ control: form.control, name: "unitCost" });
   
   const simpleInventoryItems = useMemo(() => {
     return inventoryItems.filter(i => i.type === 'simple');
   }, [inventoryItems]);
 
+  const finalUnitCost = useMemo(() => {
+    const cost = baseUnitCost || 0;
+    return isImport ? cost * 1.5 : cost;
+  }, [isImport, baseUnitCost]);
+
   const kitCost = useMemo(() => {
     if (itemType !== 'composite' || !watchedComponents) return 0;
     return watchedComponents.reduce((acc, comp) => {
         const componentItem = inventoryItems.find(i => i.id === comp.itemId);
-        return acc + (componentItem ? componentItem.unitCost * comp.quantity : 0);
+        if (!componentItem) return acc;
+        const componentCost = componentItem.isImport ? (componentItem.unitCost / 1.5) * 1.5 : componentItem.unitCost;
+        return acc + (componentCost * comp.quantity);
     }, 0);
   }, [itemType, watchedComponents, inventoryItems]);
   
@@ -163,6 +176,8 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         finalValues.unitCost = kitCost; // Ensure calculated cost is saved
         delete finalValues.suppliers; // Kits don't have external suppliers
         finalValues.unit = 'ud';
+    } else if (values.type === 'simple') {
+        finalValues.unitCost = finalUnitCost; // Save the calculated final cost
     }
     
     if (values.type === 'service') {
@@ -334,7 +349,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
         
         {itemType === 'simple' && (
             <>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-3 gap-4 items-start">
              <FormField
                 control={form.control}
                 name="unit"
@@ -361,7 +376,7 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 name="unitCost"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Costo Unitario (€)</FormLabel>
+                    <FormLabel>{isImport ? "Costo FOB (€)" : "Costo Unitario (€)"}</FormLabel>
                     <FormControl>
                         <Input type="number" step="0.01" placeholder="350,00" {...field} onFocus={(e) => e.target.select()} />
                     </FormControl>
@@ -382,6 +397,29 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                     </FormItem>
                 )}
             />
+            </div>
+             <div className="grid grid-cols-3 gap-4 items-center">
+                 <FormField
+                    control={form.control}
+                    name="isImport"
+                    render={({ field }) => (
+                        <FormItem className="flex items-center gap-2 pt-6">
+                            <FormControl><Switch id="isImport" checked={field.value} onCheckedChange={field.onChange} /></FormControl>
+                            <Label htmlFor="isImport" className="font-medium cursor-pointer">¿Producto de importación?</Label>
+                        </FormItem>
+                    )}
+                />
+                 {isImport && (
+                    <div className={cn(
+                        "col-span-2 text-right p-2 rounded-md",
+                        "bg-amber-50 border border-amber-200 dark:bg-amber-900/30 dark:border-amber-800"
+                    )}>
+                        <p className="text-xs text-amber-600 dark:text-amber-400">Costo Base: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(baseUnitCost || 0)} + 50% importación</p>
+                        <p className="font-bold text-amber-800 dark:text-amber-200">
+                            Costo Total: {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(finalUnitCost)}
+                        </p>
+                    </div>
+                )}
             </div>
             </>
         )}
