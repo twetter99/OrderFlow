@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from "next/link";
@@ -68,7 +69,7 @@ const navGroups = [
     title: "GESTIÓN DE MATERIALES",
     items: [
       { 
-        label: "Logística",
+        label: "Gestión de Stock", 
         icon: Package,
         subItems: [
           { href: "/inventory", label: "Inventario", icon: Warehouse },
@@ -78,7 +79,7 @@ const navGroups = [
         ]
       },
       {
-        label: "Adquisiciones",
+        label: "Gestión de Proveedores",
         icon: ShoppingCart,
         subItems: [
           { href: "/purchasing", label: "Compras", icon: ShoppingCart },
@@ -165,7 +166,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded ? "w-16" : "w-64"
+          hasMounted && !isExpanded ? "w-16" : "w-[270px]"
         )}
       >
         {hasMounted ? (
