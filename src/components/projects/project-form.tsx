@@ -90,12 +90,12 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
         ...project,
         startDate: new Date(project.startDate),
         endDate: new Date(project.endDate),
-        margen_previsto: project.margen_previsto ? project.margen_previsto * 100 : undefined, // Convert to percentage for display
-        equipo_tecnico_ids: project.equipo_tecnico_ids || [],
-        operador_ids: project.operador_ids || [],
-        budget: project.budget || undefined,
-        spent: project.spent || undefined,
-        responsable_proyecto_id: project.responsable_proyecto_id || undefined,
+        margen_previsto: project.margen_previsto ? project.margen_previsto * 100 : 0, // Convert to percentage for display
+        equipo_tecnico_ids: project.equipo_tecnico_ids ?? [],
+        operador_ids: project.operador_ids ?? [],
+        budget: project.budget ?? 0,
+        spent: project.spent ?? 0,
+        responsable_proyecto_id: project.responsable_proyecto_id ?? undefined,
       }
     : {
         name: "",
@@ -107,9 +107,9 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
         centro_coste: "",
         startDate: new Date(),
         endDate: new Date(),
-        budget: undefined,
-        spent: undefined,
-        margen_previsto: undefined,
+        budget: 0,
+        spent: 0,
+        margen_previsto: 0,
       };
 
   const form = useForm<ProjectFormValues>({
@@ -130,7 +130,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
   function onSubmit(values: ProjectFormValues) {
     onSave({
       ...values,
-      margen_previsto: values.margen_previsto ? values.margen_previsto / 100 : undefined // Convert back to decimal before saving
+      margen_previsto: values.margen_previsto ? values.margen_previsto / 100 : 0 // Convert back to decimal before saving
     });
   }
 
@@ -377,7 +377,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Presupuesto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="50000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
+                        <Input type="number" placeholder="50000" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -390,7 +390,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Gasto (€)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="23000" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
+                        <Input type="number" placeholder="23000" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -403,7 +403,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     <FormItem>
                         <FormLabel>Margen Previsto (%)</FormLabel>
                         <FormControl>
-                        <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? undefined : +e.target.value)} onFocus={(e) => e.target.select()} />
+                        <Input type="number" placeholder="15" {...field} onChange={e => field.onChange(e.target.value === '' ? 0 : +e.target.value)} onFocus={(e) => e.target.select()} />
                         </FormControl>
                         <FormMessage />
                     </FormItem>
@@ -436,3 +436,5 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
     </Form>
   );
 }
+
+    
