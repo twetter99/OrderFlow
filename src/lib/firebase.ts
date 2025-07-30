@@ -14,10 +14,6 @@ const firebaseConfig = {
   appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
 };
 
-// OPCIONAL - Para debug adicional:
-console.log('Using Storage bucket:', firebaseConfig.storageBucket);
-
-
 // Initialize Firebase
 const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
 const db = getFirestore(app);
