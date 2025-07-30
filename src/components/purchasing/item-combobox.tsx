@@ -48,14 +48,11 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
   }
 
   React.useEffect(() => {
+    // When the popover is closed, we want to clear the search value.
     if (!open) {
       setSearchValue("");
-    } else {
-      // Pre-fill search with current value if it exists, allowing for editing
-      const currentItem = inventoryItems.find(item => item.name === value);
-      setSearchValue(currentItem ? `${currentItem.sku} - ${currentItem.name}` : value || "");
     }
-  }, [open, value, inventoryItems]);
+  }, [open]);
   
   const filteredItems = React.useMemo(() => {
     if (!searchValue) return inventoryItems;
