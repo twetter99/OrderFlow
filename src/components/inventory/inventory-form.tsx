@@ -30,7 +30,10 @@ import { cn } from "@/lib/utils";
 
 const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemId?: string | null) => z.object({
   type: z.enum(['simple', 'composite', 'service']),
-  sku: z.string().min(1, "El SKU es obligatorio."),
+  sku: z.string()
+    .min(1, "El SKU es obligatorio.")
+    .max(8, "El SKU no puede tener más de 8 caracteres.")
+    .regex(/^[a-zA-Z0-9-]*$/, "El SKU solo puede contener letras, números y guiones."),
   name: z.string().min(1, "El nombre es obligatorio."),
   supplierProductCode: z.string().optional(),
   family: z.string().optional(),
@@ -54,15 +57,17 @@ const createInventoryFormSchema = (inventoryItems: InventoryItem[], currentItemI
     message: "Un kit debe tener al menos un componente.",
     path: ["components"],
 }).superRefine((data, ctx) => {
-    const skuExists = inventoryItems.some(
-        (item) => item.sku.toLowerCase() === data.sku.toLowerCase() && item.id !== currentItemId
-    );
-    if(skuExists) {
-        ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            message: "Este SKU ya está registrado. Por favor, introduce uno diferente.",
-            path: ["sku"],
-        });
+    if (data.sku) {
+        const skuExists = inventoryItems.some(
+            (item) => item.sku.toLowerCase() === data.sku.toLowerCase() && item.id !== currentItemId
+        );
+        if(skuExists) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                message: "Este SKU ya está registrado. Por favor, introduce uno diferente.",
+                path: ["sku"],
+            });
+        }
     }
 });
 
@@ -196,6 +201,15 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     onSave(finalValues);
   }
 
+  const handleSkuChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    const sanitizedValue = value
+      .toUpperCase()
+      .replace(/[^A-Z0-9-]/g, '') // Remove invalid characters
+      .substring(0, 8); // Enforce max length
+    form.setValue('sku', sanitizedValue, { shouldValidate: true });
+  };
+
   const isEditing = !!item;
 
   return (
@@ -264,7 +278,12 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
                 <FormItem>
                     <FormLabel>SKU (Código Interno)</FormLabel>
                     <FormControl>
-                    <Input placeholder="p. ej., CPU-45" {...field} />
+                    <Input 
+                        placeholder="p. ej., CPU-45"
+                        {...field}
+                        onChange={handleSkuChange}
+                        maxLength={8}
+                    />
                     </FormControl>
                     <FormMessage />
                 </FormItem>
@@ -580,7 +599,5 @@ export function InventoryForm({ item, suppliers, inventoryItems, onSave, onCance
     </Form>
   );
 }
-
-
 
     
