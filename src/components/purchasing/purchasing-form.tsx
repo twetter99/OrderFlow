@@ -476,10 +476,18 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             <CardContent>
               <ul className="space-y-2">
                 {order.deliveryNoteUrls.map((url, index) => {
-                  const fileName = url.substring(url.lastIndexOf('/') + 1);
+                  let fileName = 'Nombre de archivo no disponible';
+                  try {
+                    const urlPath = new URL(url).pathname;
+                    const decodedPath = decodeURIComponent(urlPath);
+                    fileName = decodedPath.substring(decodedPath.lastIndexOf('/') + 1);
+                  } catch (e) {
+                     console.error("Invalid URL for delivery note", url);
+                  }
+                  
                   return (
                     <li key={index} className="flex items-center justify-between p-2 border rounded-md">
-                      <span className="font-mono text-sm truncate">{decodeURIComponent(fileName)}</span>
+                      <span className="font-mono text-sm truncate">{fileName}</span>
                       <div className="flex gap-2">
                         <Button variant="outline" size="sm" asChild>
                           <a href={url} target="_blank" rel="noopener noreferrer">

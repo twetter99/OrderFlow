@@ -60,48 +60,49 @@ function AttachDeliveryNoteDialog({
         const files = event.target.files;
         if (!files || files.length === 0 || !orderId) return;
 
+        if (!storage) {
+             toast({
+                variant: "destructive",
+                title: "Error de Configuración",
+                description: "Firebase Storage no está configurado. Contacta al administrador."
+            });
+            return;
+        }
+
         setIsUploading(true);
         
         try {
             const uploadPromises = Array.from(files).map(async (file) => {
                 const storageRef = ref(storage, `delivery-notes/${orderId}/${Date.now()}-${file.name}`);
-                const uploadTask = uploadBytesResumable(storageRef, file);
-                
-                return new Promise<string>((resolve, reject) => {
-                    uploadTask.on(
-                        'state_changed',
-                        (snapshot) => { /* Puede usarse para mostrar el progreso */ },
-                        (error) => reject(error),
-                        async () => {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(downloadURL);
-                        }
-                    );
-                });
+                const uploadTask = await uploadBytesResumable(storageRef, file);
+                const downloadURL = await getDownloadURL(uploadTask.ref);
+                return downloadURL;
             });
 
             const uploadedUrls = await Promise.all(uploadPromises);
 
-            const result = await linkDeliveryNoteToPurchaseOrder(orderId, uploadedUrls);
-            
-            if (result.success) {
-                toast({
-                    title: "Albarán Adjuntado",
-                    description: "El albarán del proveedor se ha vinculado a la orden de compra.",
-                });
-            } else {
-                 toast({
-                    variant: "destructive",
-                    title: "Error al Adjuntar",
-                    description: result.message,
-                });
+            if (uploadedUrls.length > 0) {
+                const result = await linkDeliveryNoteToPurchaseOrder(orderId, uploadedUrls);
+                
+                if (result.success) {
+                    toast({
+                        title: "Albarán Adjuntado",
+                        description: "El albarán del proveedor se ha vinculado a la orden de compra.",
+                    });
+                } else {
+                     toast({
+                        variant: "destructive",
+                        title: "Error al Vincular",
+                        description: result.message,
+                    });
+                }
             }
-        } catch (error) {
+        } catch (error: any) {
             console.error("Error attaching file: ", error);
              toast({
                 variant: "destructive",
-                title: "Error",
-                description: "No se pudo subir o adjuntar el albarán."
+                title: "Error de Subida",
+                description: `No se pudo subir o vincular el albarán. Error: ${error.message}`
             });
         } finally {
             setIsUploading(false);
@@ -363,7 +364,7 @@ export default function ReceptionsPage() {
                   <TableCell>
                     <Badge
                       variant="outline"
-                      className={cn("capitalize bg-blue-100 text-blue-200")}
+                      className={cn("capitalize bg-blue-100 text-blue-800 border-blue-200")}
                     >
                       {order.status}
                     </Badge>
