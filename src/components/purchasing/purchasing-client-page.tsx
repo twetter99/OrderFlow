@@ -286,9 +286,16 @@ export function PurchasingClientPage() {
     const projectDetails = projects.find(p => p.id === order.project);
     const supplierDetails = suppliers.find(s => s.name === order.supplier);
     const deliveryLocationDetails = locations.find(l => l.id === order.deliveryLocationId);
-    
+
     const enrichedOrder = {
         ...order,
+        items: order.items.map(item => {
+            const inventoryItem = inventory.find(i => i.id === item.itemId);
+            return {
+                ...item,
+                supplierProductCode: inventoryItem?.supplierProductCode,
+            };
+        }),
         projectDetails,
         supplierDetails,
         deliveryLocationDetails,

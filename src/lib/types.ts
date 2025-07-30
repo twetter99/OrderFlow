@@ -1,4 +1,5 @@
 
+
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -55,6 +56,7 @@ export type PurchaseOrderItem = {
   price: number;
   unit: string;
   type: 'Material' | 'Servicio';
+  supplierProductCode?: string; // Código del producto del proveedor
 };
 
 export type StatusHistoryEntry = {

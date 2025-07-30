@@ -4,12 +4,17 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import type { PurchaseOrder, Supplier, Project, Location } from '@/lib/types';
+import type { PurchaseOrder, Supplier, Project, Location, PurchaseOrderItem } from '@/lib/types';
 import { Loader2, Printer, AlertTriangle, Info } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
 
+interface EnrichedPurchaseOrderItem extends PurchaseOrderItem {
+  supplierProductCode?: string;
+}
+
 interface EnrichedPurchaseOrder extends PurchaseOrder {
+  items: EnrichedPurchaseOrderItem[];
   supplierDetails?: Supplier;
   projectDetails?: Project;
   deliveryLocationDetails?: Location;
@@ -161,6 +166,7 @@ export default function PurchaseOrderPrintPage() {
                     {order.items.map((item, index) => (
                         <TableRow key={index}>
                             <TableCell>
+                              {item.supplierProductCode && <p className="text-xs text-gray-500">Cód. Prov: {item.supplierProductCode}</p>}
                               <p className="font-medium">{item.itemName}</p>
                               {item.itemSku && <p className="text-xs text-gray-500">SKU: {item.itemSku}</p>}
                             </TableCell>
