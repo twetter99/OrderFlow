@@ -143,6 +143,31 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     onSave({ ...values, items: itemsToSave, total }); // Pass the calculated total on submit
   }
 
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement | HTMLButtonElement>, index: number, fieldName: string) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      
+      const form = e.currentTarget.closest('form');
+      if (!form) return;
+
+      const fields: (keyof typeof watchedItems[0] | 'itemNameTrigger')[] = [
+          'type', 'family', 'itemNameTrigger', 'quantity', 'unit', 'price'
+      ];
+
+      const currentFieldIndex = fields.indexOf(fieldName as any);
+      if (currentFieldIndex === -1 || currentFieldIndex === fields.length - 1) {
+        return; 
+      }
+      
+      const nextFieldName = fields[currentFieldIndex + 1];
+      const nextField = form.querySelector<HTMLElement>(`[name="items.${index}.${nextFieldName}"]`) || form.querySelector<HTMLElement>(`[data-field-name="items.${index}.${nextFieldName}"]`);
+
+      if (nextField) {
+        nextField.focus();
+      }
+    }
+  };
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -291,7 +316,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                             <FormItem>
                                                 <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
                                                     <FormControl>
-                                                        <SelectTrigger>
+                                                        <SelectTrigger onKeyDown={(e) => handleKeyDown(e, index, 'type')}>
                                                             <SelectValue />
                                                         </SelectTrigger>
                                                     </FormControl>
@@ -319,7 +344,11 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                                   value={field.value}
                                                   disabled={isReadOnly || !watchedSupplier || watchedItems[index]?.type === 'Servicio'}
                                                 >
-                                                  <FormControl><SelectTrigger><SelectValue placeholder="Todas" /></SelectTrigger></FormControl>
+                                                  <FormControl>
+                                                    <SelectTrigger onKeyDown={(e) => handleKeyDown(e, index, 'family')}>
+                                                        <SelectValue placeholder="Todas" />
+                                                    </SelectTrigger>
+                                                  </FormControl>
                                                   <SelectContent position="popper" className="w-[--radix-select-trigger-width]">
                                                     <SelectItem value="all">Todas las familias</SelectItem>
                                                     {sortedProductFamilies.map(f => <SelectItem key={f.name} value={f.name}>{f.name}</SelectItem>)}
@@ -364,7 +393,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" {...field} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
+                                                    <Input type="number" {...field} onKeyDown={(e) => handleKeyDown(e, index, 'quantity')} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -378,7 +407,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input placeholder="ud" {...field} disabled={isReadOnly}/>
+                                                    <Input placeholder="ud" {...field} onKeyDown={(e) => handleKeyDown(e, index, 'unit')} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                             </FormItem>
@@ -392,7 +421,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                                         render={({ field }) => (
                                             <FormItem>
                                                 <FormControl>
-                                                    <Input type="number" step="0.01" {...field} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
+                                                    <Input type="number" step="0.01" {...field} onKeyDown={(e) => handleKeyDown(e, index, 'price')} onFocus={(e) => e.target.select()} disabled={isReadOnly}/>
                                                 </FormControl>
                                                 <FormMessage />
                                                 {!isReadOnly && watchedItems[index]?.type === 'Material' && (

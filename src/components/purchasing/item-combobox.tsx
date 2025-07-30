@@ -76,6 +76,7 @@ export function ItemCombobox({ inventoryItems, value, onChange, disabled }: Item
           aria-expanded={open}
           className="w-full justify-between"
           disabled={disabled}
+          data-field-name="itemNameTrigger"
         >
           <span className="truncate">
             {value ? value : "Selecciona o escribe un artículo..."}
