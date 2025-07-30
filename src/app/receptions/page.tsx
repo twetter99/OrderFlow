@@ -72,11 +72,41 @@ function AttachDeliveryNoteDialog({
         setIsUploading(true);
         
         try {
-            const uploadPromises = Array.from(files).map(async (file) => {
-                const storageRef = ref(storage, `delivery-notes/${orderId}/${Date.now()}-${file.name}`);
-                const uploadTask = await uploadBytesResumable(storageRef, file);
-                const downloadURL = await getDownloadURL(uploadTask.ref);
-                return downloadURL;
+            const uploadPromises = Array.from(files).map((file) => {
+                return new Promise<string>((resolve, reject) => {
+                    const storageRef = ref(storage, `delivery-notes/${orderId}/${Date.now()}-${file.name}`);
+                    const uploadTask = uploadBytesResumable(storageRef, file);
+
+                    uploadTask.on(
+                        'state_changed',
+                        null, // No necesitamos seguir el progreso para esta lógica
+                        (error) => {
+                           // Manejo de errores de subida mejorado
+                           console.error("Firebase Storage upload error:", error.code, error.message);
+                           let userMessage = `Error al subir '${file.name}'.`;
+                           switch (error.code) {
+                               case 'storage/unauthorized':
+                                   userMessage = "No tienes permiso para subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
+                                   break;
+                               case 'storage/canceled':
+                                   userMessage = "La subida del archivo fue cancelada.";
+                                   break;
+                               case 'storage/unknown':
+                                   userMessage = "Ocurrió un error desconocido durante la subida.";
+                                   break;
+                           }
+                           reject(new Error(userMessage));
+                        },
+                        async () => {
+                            try {
+                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                                resolve(downloadURL);
+                            } catch (downloadError) {
+                                reject(downloadError);
+                            }
+                        }
+                    );
+                });
             });
 
             const uploadedUrls = await Promise.all(uploadPromises);
@@ -87,7 +117,7 @@ function AttachDeliveryNoteDialog({
                 if (result.success) {
                     toast({
                         title: "Albarán Adjuntado",
-                        description: "El albarán del proveedor se ha vinculado a la orden de compra.",
+                        description: `Se ha vinculado ${uploadedUrls.length} albarán(es) a la orden de compra.`,
                     });
                 } else {
                      toast({
@@ -97,16 +127,16 @@ function AttachDeliveryNoteDialog({
                     });
                 }
             }
+            onClose();
         } catch (error: any) {
             console.error("Error attaching file: ", error);
              toast({
                 variant: "destructive",
                 title: "Error de Subida",
-                description: `No se pudo subir o vincular el albarán. Error: ${error.message}`
+                description: error.message || "No se pudo subir o vincular el albarán."
             });
         } finally {
             setIsUploading(false);
-            onClose();
         }
     };
 
@@ -419,3 +449,4 @@ export default function ReceptionsPage() {
     </div>
   )
 }
+
