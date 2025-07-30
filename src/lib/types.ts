@@ -65,6 +65,15 @@ export type StatusHistoryEntry = {
   comment?: string;
 };
 
+// Estructura para albaranes almacenados en Base64
+export type DeliveryNoteAttachment = {
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  data: string; // Contenido en Base64
+  uploadedAt: string | Timestamp;
+};
+
 export type PurchaseOrder = {
   id: string;
   orderNumber?: string;
@@ -81,7 +90,9 @@ export type PurchaseOrder = {
   statusHistory?: StatusHistoryEntry[];
   originalOrderId?: string; // ID de la orden original si esta es un backorder
   backorderIds?: string[]; // IDs de los backorders generados desde esta orden
-  deliveryNoteUrls?: string[]; // URLs de los albaranes adjuntos
+  deliveryNotes?: DeliveryNoteAttachment[]; // Albaranes adjuntos en Base64
+  hasDeliveryNotes?: boolean;
+  lastDeliveryNoteUpload?: string | Timestamp;
 };
 
 export type Supplier = {

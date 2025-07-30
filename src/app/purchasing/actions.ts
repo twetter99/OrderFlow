@@ -1,10 +1,11 @@
 
+
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { PurchaseOrder, StatusHistoryEntry } from "@/lib/types";
+import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
 
 // The Input type is now defined and used locally within the `send-approval-email.ts` flow.
@@ -169,16 +170,18 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
     }
 }
 
-export async function linkDeliveryNoteToPurchaseOrder(orderId: string, urls: string[]) {
+export async function linkDeliveryNoteToPurchaseOrder(orderId: string, notes: DeliveryNoteAttachment[]) {
     try {
         const orderRef = doc(db, "purchaseOrders", orderId);
         await updateDoc(orderRef, {
-            deliveryNoteUrls: arrayUnion(...urls)
+            deliveryNotes: arrayUnion(...notes),
+            hasDeliveryNotes: true,
+            lastDeliveryNoteUpload: new Date(),
         });
         revalidatePath(`/purchasing`);
         return { success: true, message: 'Albarán adjuntado con éxito.' };
     } catch (error) {
         console.error("Error linking delivery note: ", error);
-        return { success: false, message: "No se pudo adjuntar el albarán." };
+        return { success: false, message: "No se pudo adjuntar el albarán en la base de datos." };
     }
 }

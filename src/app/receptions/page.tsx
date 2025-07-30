@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { QrCode, Anchor, Link2, UploadCloud, FileText, Loader2 } from "lucide-react";
+import { Anchor, Link2, UploadCloud, FileText, Loader2, CheckCircle, Info } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -29,15 +29,25 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import type { InventoryItem, PurchaseOrder, InventoryLocation, Location, PurchaseOrderItem } from "@/lib/types";
+import type { InventoryItem, PurchaseOrder, InventoryLocation, Location, PurchaseOrderItem, DeliveryNoteAttachment } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { ReceptionChecklist } from "@/components/receptions/reception-checklist";
 import { collection, onSnapshot, doc, writeBatch, Timestamp, getDocs, updateDoc, arrayUnion, getDoc } from "firebase/firestore";
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db } from "@/lib/firebase";
 import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+
+const MAX_FILE_SIZE = 900 * 1024; // 900KB
+
+const fileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = () => resolve(reader.result as string);
+        reader.onerror = error => reject(error);
+    });
+};
 
 function AttachDeliveryNoteDialog({
     orderId,
@@ -51,7 +61,6 @@ function AttachDeliveryNoteDialog({
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
     const handleAttachClick = () => {
         fileInputRef.current?.click();
@@ -61,69 +70,37 @@ function AttachDeliveryNoteDialog({
         const files = event.target.files;
         if (!files || files.length === 0 || !orderId) return;
 
-        if (!storage) {
-             toast({
-                variant: "destructive",
-                title: "Error de Configuración",
-                description: "Firebase Storage no está configurado. Contacta al administrador."
-            });
-            return;
-        }
-        
         setIsUploading(true);
-        setUploadProgress({});
-
+        
         try {
-            const uploadPromises = Array.from(files).map((file) => {
-                return new Promise<string>((resolve, reject) => {
-                    const storageRef = ref(storage, `delivery-notes/${orderId}/${Date.now()}-${file.name}`);
-                    const uploadTask = uploadBytesResumable(storageRef, file);
+            const deliveryNotes: DeliveryNoteAttachment[] = [];
 
-                    uploadTask.on(
-                        'state_changed',
-                        (snapshot) => {
-                           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-                           setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
-                           console.log(`Upload for ${file.name} is ${progress}% done`);
-                        },
-                        (error) => {
-                           // Manejo de errores de subida mejorado
-                           console.error("Firebase Storage upload error:", error.code, error.message);
-                           let userMessage = `Error al subir '${file.name}'.`;
-                           switch (error.code) {
-                               case 'storage/unauthorized':
-                                   userMessage = "No tienes permiso para subir archivos. Revisa las reglas de seguridad de Firebase Storage.";
-                                   break;
-                               case 'storage/canceled':
-                                   userMessage = "La subida del archivo fue cancelada.";
-                                   break;
-                               case 'storage/unknown':
-                                   userMessage = "Ocurrió un error desconocido durante la subida.";
-                                   break;
-                           }
-                           reject(new Error(userMessage));
-                        },
-                        async () => {
-                            try {
-                                const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                                resolve(downloadURL);
-                            } catch (downloadError) {
-                                reject(downloadError);
-                            }
-                        }
-                    );
+            for (const file of Array.from(files)) {
+                if (file.size > MAX_FILE_SIZE) {
+                    toast({
+                        variant: "destructive",
+                        title: "Archivo Demasiado Grande",
+                        description: `El archivo "${file.name}" supera el límite de 900KB.`,
+                    });
+                    continue; // Skip this file
+                }
+                const base64Data = await fileToBase64(file);
+                deliveryNotes.push({
+                    fileName: file.name,
+                    fileType: file.type,
+                    fileSize: file.size,
+                    data: base64Data,
+                    uploadedAt: new Date().toISOString(),
                 });
-            });
+            }
 
-            const uploadedUrls = await Promise.all(uploadPromises);
-
-            if (uploadedUrls.length > 0) {
-                const result = await linkDeliveryNoteToPurchaseOrder(orderId, uploadedUrls);
+            if (deliveryNotes.length > 0) {
+                const result = await linkDeliveryNoteToPurchaseOrder(orderId, deliveryNotes);
                 
                 if (result.success) {
                     toast({
                         title: "Albarán Adjuntado",
-                        description: `Se ha vinculado ${uploadedUrls.length} albarán(es) a la orden de compra.`,
+                        description: `Se ha vinculado ${deliveryNotes.length} albarán(es) a la orden de compra.`,
                     });
                 } else {
                      toast({
@@ -139,11 +116,10 @@ function AttachDeliveryNoteDialog({
              toast({
                 variant: "destructive",
                 title: "Error de Subida",
-                description: error.message || "No se pudo subir o vincular el albarán."
+                description: error.message || "No se pudo procesar y subir el albarán."
             });
         } finally {
             setIsUploading(false);
-            setUploadProgress({});
         }
     };
 
@@ -153,9 +129,9 @@ function AttachDeliveryNoteDialog({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>¿Desea adjuntar el albarán del proveedor?</DialogTitle>
+                    <DialogTitle>Adjuntar Albarán del Proveedor</DialogTitle>
                     <DialogDescription>
-                        Puedes subir un archivo escaneado en formato PDF, JPG o PNG para dejar constancia y facilitar su posterior consulta y control administrativo.
+                        Sube un archivo (PDF, JPG, PNG) para adjuntarlo a esta orden. Límite de 900KB por archivo.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="py-4 text-center">
@@ -169,6 +145,7 @@ function AttachDeliveryNoteDialog({
                         multiple
                         accept=".pdf,.jpg,.jpeg,.png"
                         style={{ display: 'none' }}
+                        disabled={isUploading}
                     />
                     <Button type="button" variant="outline" onClick={onClose} disabled={isUploading}>
                         Omitir
@@ -179,7 +156,7 @@ function AttachDeliveryNoteDialog({
                         ) : (
                           <UploadCloud className="mr-2 h-4 w-4" />
                         )}
-                        {isUploading ? "Subiendo..." : "Adjuntar albarán"}
+                        {isUploading ? "Procesando..." : "Adjuntar Albarán"}
                     </Button>
                 </DialogFooter>
             </DialogContent>
@@ -329,12 +306,6 @@ export default function ReceptionsPage() {
         setIsChecklistOpen(false);
         setOrderForAttachment(orderId); // Trigger attachment dialog
         
-        // This toast is optional now, as the attachment dialog gives feedback
-        // toast({
-        //     title: "Recepción Procesada",
-        //     description: `La orden ${originalOrder?.orderNumber} ha sido actualizada y el stock ajustado.`
-        // });
-        
     } catch (error) {
         console.error("Error receiving order: ", error);
         toast({
@@ -384,6 +355,16 @@ export default function ReceptionsPage() {
                   <TableCell className="font-medium">
                      <div className="flex items-center gap-2">
                         <span>{order.orderNumber}</span>
+                         {order.hasDeliveryNotes && (
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Info className="h-4 w-4 text-blue-500"/>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                    <p>Esta orden tiene albaranes adjuntos.</p>
+                                </TooltipContent>
+                            </Tooltip>
+                        )}
                         {order.originalOrderId && (
                             <Tooltip>
                                 <TooltipTrigger asChild>

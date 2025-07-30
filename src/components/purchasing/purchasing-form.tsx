@@ -25,13 +25,13 @@ import { Input } from "@/components/ui/input";
 import type { PurchaseOrder, Supplier, InventoryItem, Project, Location } from "@/lib/types";
 import { Textarea } from "../ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { CalendarIcon, PlusCircle, Trash2, Eye, Download } from "lucide-react";
+import { CalendarIcon, PlusCircle, Trash2, Eye, Download, Paperclip } from "lucide-react";
 import { Table, TableBody, TableCell, TableHeader, TableRow, TableHead } from "../ui/table";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
 import { ItemPriceInsight } from "./item-price-insight";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { Calendar } from "../ui/calendar";
 import { ItemCombobox } from "./item-combobox";
@@ -58,7 +58,7 @@ const formSchema = z.object({
     family: z.string().optional(), // Used for filtering, not saved
   })).min(1, "Debes añadir al menos un artículo."),
   total: z.coerce.number(), // Se calculará automáticamente
-  deliveryNoteUrls: z.array(z.string()).optional(),
+  deliveryNotes: z.array(z.any()).optional(),
 });
 
 type PurchasingFormValues = z.infer<typeof formSchema>;
@@ -74,6 +74,16 @@ interface PurchasingFormProps {
   projects: Project[];
   locations: Location[];
 }
+
+const downloadBase64File = (base64Data: string, fileName: string) => {
+    const link = document.createElement("a");
+    link.href = base64Data;
+    link.download = fileName;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+};
+
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, recentSupplierIds, inventoryItems, projects, locations }: PurchasingFormProps) {
   const isEditable = !order || !('id' in order) || order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
@@ -92,7 +102,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         rejectionReason: order.rejectionReason || "",
         items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: order.total || 0,
-        deliveryNoteUrls: order.deliveryNoteUrls || [],
+        deliveryNotes: order.deliveryNotes || [],
        }
     : {
         project: "",
@@ -105,7 +115,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         rejectionReason: "",
         items: [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
         total: 0,
-        deliveryNoteUrls: [],
+        deliveryNotes: [],
       };
 
   const form = useForm<PurchasingFormValues>({
@@ -468,36 +478,31 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             </CardContent>
         </Card>
         
-        {order && 'id' in order && order.deliveryNoteUrls && order.deliveryNoteUrls.length > 0 && (
+        {order && 'id' in order && order.deliveryNotes && order.deliveryNotes.length > 0 && (
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Albaranes Adjuntos</CardTitle>
+                <CardTitle className="text-lg flex items-center gap-2">
+                    <Paperclip className="h-5 w-5" />
+                    Albaranes Adjuntos
+                </CardTitle>
             </CardHeader>
             <CardContent>
               <ul className="space-y-2">
-                {order.deliveryNoteUrls.map((url, index) => {
-                  let fileName = 'Nombre de archivo no disponible';
-                  try {
-                    const urlPath = new URL(url).pathname;
-                    const decodedPath = decodeURIComponent(urlPath);
-                    fileName = decodedPath.substring(decodedPath.lastIndexOf('/') + 1);
-                  } catch (e) {
-                     console.error("Invalid URL for delivery note", url);
-                  }
-                  
+                {order.deliveryNotes.map((note, index) => {
+                  const fileSize = note.fileSize ? `${(note.fileSize / 1024).toFixed(1)} KB` : '';
+                  const uploadedDate = note.uploadedAt ? formatDistanceToNow(new Date(note.uploadedAt as string), { addSuffix: true, locale: es }) : '';
                   return (
-                    <li key={index} className="flex items-center justify-between p-2 border rounded-md">
-                      <span className="font-mono text-sm truncate">{fileName}</span>
+                    <li key={index} className="flex items-center justify-between p-2 border rounded-md hover:bg-muted/50">
+                        <div>
+                            <p className="font-medium text-sm">{note.fileName}</p>
+                            <p className="text-xs text-muted-foreground">{fileSize} - Subido {uploadedDate}</p>
+                        </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" asChild>
-                          <a href={url} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm" onClick={() => window.open(note.data)}>
                             <Eye className="mr-2 h-4 w-4" /> Ver
-                          </a>
                         </Button>
-                        <Button variant="outline" size="sm" asChild>
-                           <a href={url} download>
-                            <Download className="mr-2 h-4 w-4" /> Descargar
-                           </a>
+                        <Button variant="outline" size="sm" onClick={() => downloadBase64File(note.data, note.fileName)}>
+                           <Download className="mr-2 h-4 w-4" /> Descargar
                         </Button>
                       </div>
                     </li>
