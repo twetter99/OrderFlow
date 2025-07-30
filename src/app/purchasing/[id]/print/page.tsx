@@ -166,7 +166,11 @@ export default function PurchaseOrderPrintPage() {
                     {order.items.map((item, index) => (
                         <TableRow key={index}>
                             <TableCell>
-                              {item.supplierProductCode && <p className="text-xs text-gray-500">Cód. Prov: {item.supplierProductCode}</p>}
+                              {item.supplierProductCode && (
+                                <p className="font-bold text-gray-800">
+                                  Código de: {order.supplierDetails?.name} {item.supplierProductCode}
+                                </p>
+                              )}
                               <p className="font-medium">{item.itemName}</p>
                               {item.itemSku && <p className="text-xs text-gray-500">SKU: {item.itemSku}</p>}
                             </TableCell>
