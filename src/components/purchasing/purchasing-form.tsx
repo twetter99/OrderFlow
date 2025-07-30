@@ -123,15 +123,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     return watchedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
   }, [watchedItems]);
 
-  const itemsBySupplier = React.useMemo(() => {
-    if (!watchedSupplier) return [];
-    const supplierDetails = suppliers.find(s => s.name === watchedSupplier);
-    if (!supplierDetails) return [];
-    // Firestore stores supplier IDs, so we need to filter by ID
-    const associatedSupplierIds = inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id)).map(item => item.id);
-    return inventoryItems.filter(item => item.suppliers?.includes(supplierDetails.id));
-  }, [watchedSupplier, inventoryItems, suppliers]);
-
   const sortedProductFamilies = React.useMemo(() => {
     return [...productFamilies].sort((a, b) => a.name.localeCompare(b.name));
   }, []);
@@ -302,9 +293,16 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     <TableBody>
                         {fields.map((field, index) => {
                             const selectedFamily = watchedItems[index]?.family;
-                            const filteredItemsForLine = itemsBySupplier.filter(item => 
+                            const itemsFilteredByFamily = inventoryItems.filter(item => 
                                 !selectedFamily || selectedFamily === 'all' || item.family === selectedFamily
                             );
+                            
+                            const supplierDetails = suppliers.find(s => s.name === watchedSupplier);
+                            
+                            const filteredItemsForLine = itemsFilteredByFamily.filter(item => {
+                                if (!supplierDetails) return false;
+                                return item.suppliers?.includes(supplierDetails.id);
+                            });
                             
                             return (
                             <TableRow key={field.id}>
