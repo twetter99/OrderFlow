@@ -51,6 +51,7 @@ function AttachDeliveryNoteDialog({
     const { toast } = useToast();
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [isUploading, setIsUploading] = useState(false);
+    const [uploadProgress, setUploadProgress] = useState<Record<string, number>>({});
 
     const handleAttachClick = () => {
         fileInputRef.current?.click();
@@ -68,9 +69,10 @@ function AttachDeliveryNoteDialog({
             });
             return;
         }
-
-        setIsUploading(true);
         
+        setIsUploading(true);
+        setUploadProgress({});
+
         try {
             const uploadPromises = Array.from(files).map((file) => {
                 return new Promise<string>((resolve, reject) => {
@@ -79,7 +81,11 @@ function AttachDeliveryNoteDialog({
 
                     uploadTask.on(
                         'state_changed',
-                        null, // No necesitamos seguir el progreso para esta lógica
+                        (snapshot) => {
+                           const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                           setUploadProgress(prev => ({ ...prev, [file.name]: progress }));
+                           console.log(`Upload for ${file.name} is ${progress}% done`);
+                        },
                         (error) => {
                            // Manejo de errores de subida mejorado
                            console.error("Firebase Storage upload error:", error.code, error.message);
@@ -137,6 +143,7 @@ function AttachDeliveryNoteDialog({
             });
         } finally {
             setIsUploading(false);
+            setUploadProgress({});
         }
     };
 
@@ -449,5 +456,3 @@ export default function ReceptionsPage() {
     </div>
   )
 }
-
-    
