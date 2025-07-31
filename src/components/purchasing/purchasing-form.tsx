@@ -140,6 +140,35 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     return [...productFamilies].sort((a, b) => a.name.localeCompare(b.name));
   }, []);
 
+  // Función corregida para visualizar archivos Base64
+  const viewBase64File = (base64Data: string, fileType: string) => {
+    try {
+      // Extrae los datos puros del string base64
+      const base64Content = base64Data.split(';base64,').pop();
+      if (!base64Content) {
+        throw new Error("Formato Base64 inválido.");
+      }
+      // Convierte el string base64 a un array de bytes
+      const byteCharacters = atob(base64Content);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      // Crea un Blob con los datos y el tipo MIME correcto
+      const blob = new Blob([byteArray], { type: fileType });
+      // Crea una URL de objeto temporal para el Blob
+      const fileURL = URL.createObjectURL(blob);
+      // Abre la URL en una nueva pestaña
+      const newWindow = window.open(fileURL, '_blank');
+      // Limpia la URL del objeto después de un tiempo prudencial por si la ventana tarda en cargar
+      setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+    } catch (error) {
+      console.error("Error al visualizar el archivo:", error);
+      // Aquí podrías añadir un toast de error si lo deseas
+    }
+  };
+
 
   function onSubmit(values: PurchasingFormValues) {
     // Remove temporary 'family' field before saving
@@ -498,7 +527,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                             <p className="text-xs text-muted-foreground">{fileSize} - Subido {uploadedDate}</p>
                         </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => window.open(note.data)}>
+                        <Button variant="outline" size="sm" onClick={() => viewBase64File(note.data, note.fileType)}>
                             <Eye className="mr-2 h-4 w-4" /> Ver
                         </Button>
                         <Button variant="outline" size="sm" onClick={() => downloadBase64File(note.data, note.fileName)}>
