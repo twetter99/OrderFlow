@@ -22,7 +22,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle } from "lucide-react";
+import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle, Copy } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,7 +52,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
-import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User, Location } from "@/lib/types";
+import type { PurchaseOrder, PurchaseOrderItem, Supplier, InventoryItem, Project, User, Location, DeliveryNoteAttachment } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
@@ -61,7 +61,7 @@ import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
 import { collection, onSnapshot, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders } from "@/app/purchasing/actions";
+import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 import {
@@ -117,6 +117,7 @@ export function PurchasingClientPage() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isDuplicateDialogOpen, setIsDuplicateDialogOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [isReceptionAlertOpen, setIsReceptionAlertOpen] = useState(false);
   const [isAiClarificationOpen, setIsAiClarificationOpen] = useState(false);
@@ -127,6 +128,7 @@ export function PurchasingClientPage() {
   
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | Partial<PurchaseOrder> | null>(null);
   const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
+  const [orderToDuplicate, setOrderToDuplicate] = useState<PurchaseOrder | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
   const [aiPrompt, setAiPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -276,6 +278,11 @@ export function PurchasingClientPage() {
     setOrderToDelete(order);
     setIsDeleteDialogOpen(true);
   };
+
+  const handleDuplicateClick = (order: PurchaseOrder) => {
+    setOrderToDuplicate(order);
+    setIsDuplicateDialogOpen(true);
+  };
   
   const handleBulkDeleteClick = () => {
     setOrderToDelete(null);
@@ -421,6 +428,35 @@ export function PurchasingClientPage() {
     setIsDeleteDialogOpen(false);
     setOrderToDelete(null);
     setSelectedRowIds([]);
+  };
+
+  const confirmDuplicate = () => {
+    if (!orderToDuplicate) return;
+
+    // Create a new order object, omitting read-only/generated fields
+    const newOrderData: Partial<PurchaseOrder> = {
+        ...orderToDuplicate,
+        status: 'Pendiente de Aprobación', // New status
+    };
+
+    // Delete fields that should not be copied
+    delete newOrderData.id;
+    delete newOrderData.orderNumber;
+    delete newOrderData.date;
+    delete newOrderData.statusHistory;
+    delete newOrderData.rejectionReason;
+    delete newOrderData.receptionNotes;
+    delete newOrderData.deliveryNotes;
+    delete newOrderData.hasDeliveryNotes;
+    delete newOrderData.lastDeliveryNoteUpload;
+    delete newOrderData.originalOrderId;
+    delete newOrderData.backorderIds;
+    
+    // Use the existing handleAddClick to open the form with pre-filled data
+    handleAddClick(newOrderData);
+
+    setIsDuplicateDialogOpen(false);
+    setOrderToDuplicate(null);
   };
 
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
@@ -733,6 +769,10 @@ export function PurchasingClientPage() {
                                 Editar
                             </DropdownMenuItem>
                           )}
+                          <DropdownMenuItem onClick={() => handleDuplicateClick(order)}>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Duplicar Orden
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
                             <History className="mr-2 h-4 w-4"/>
                             Trazabilidad
@@ -913,6 +953,22 @@ export function PurchasingClientPage() {
         </AlertDialogContent>
       </AlertDialog>
 
+      <AlertDialog open={isDuplicateDialogOpen} onOpenChange={setIsDuplicateDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Duplicar Orden de Compra</AlertDialogTitle>
+            <AlertDialogDescription>
+              ¿Crear una nueva orden usando los datos de esta? La nueva orden se creará con estado "Pendiente de Aprobación".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>No</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDuplicate}>
+              Sí
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={isDeleteDialogOpen}
