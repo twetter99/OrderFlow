@@ -70,7 +70,7 @@ interface InvoiceFormProps {
 const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
 
-function OrderPreviewCard({ order, project, className }: { order: PurchaseOrder, project?: Project, className?: string }) {
+function OrderPreviewCard({ order, project, className }: { order: PurchaseOrder | undefined | null, project?: Project, className?: string }) {
     if (!order) return null;
 
     return (
@@ -187,82 +187,71 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-2">
-            
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <FormField
-                    control={form.control}
-                    name="supplierId"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Proveedor</FormLabel>
-                            <SupplierCombobox 
-                                suppliers={suppliers}
-                                recentSupplierIds={[]}
-                                value={supplierName}
-                                onChange={(supplierName, supplierId) => {
-                                    field.onChange(supplierId);
-                                    form.setValue("purchaseOrderId", ""); // Reset PO on supplier change
-                                }}
-                                onAddNew={() => {}}
-                            />
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="purchaseOrderId"
-                    render={({ field }) => (
-                        <FormItem>
-                         <FormLabel className="flex items-center gap-1">
-                            Pedido de Compra Asociado*
-                            <TooltipProvider>
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <Info className="h-3 w-3 text-muted-foreground cursor-help"/>
-                                    </TooltipTrigger>
-                                    <TooltipContent>
-                                        <p>No se puede registrar ninguna factura de proveedor si no está<br/>asociada a un pedido de compra previamente aprobado.</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            </TooltipProvider>
-                        </FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedSupplierId}>
-                            <FormControl>
-                            <SelectTrigger><SelectValue placeholder="Asocia un pedido..." /></SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                            {filteredPurchaseOrders.map(po => (
-                                <SelectItem key={po.id} value={po.id}>{po.orderNumber}</SelectItem>
-                            ))}
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="invoiceNumber"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Número de Factura</FormLabel>
-                        <FormControl><Input placeholder="Ej: F-2024-1234" {...field} /></FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                <FormField
-                    control={form.control}
-                    name="emissionDate"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Fecha de Factura</FormLabel>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-3 space-y-6">
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                    <FormField
+                        control={form.control}
+                        name="supplierId"
+                        render={({ field }) => (
+                            <FormItem className="md:col-span-2">
+                            <FormLabel>Proveedor</FormLabel>
+                                <SupplierCombobox 
+                                    suppliers={suppliers}
+                                    recentSupplierIds={[]}
+                                    value={supplierName}
+                                    onChange={(supplierName, supplierId) => {
+                                        field.onChange(supplierId);
+                                        form.setValue("purchaseOrderId", "");
+                                    }}
+                                    onAddNew={() => {}}
+                                />
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="purchaseOrderId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel className="flex items-center gap-1">
+                                Pedido de Compra Asociado*
+                                <TooltipProvider>
+                                    <Tooltip>
+                                        <TooltipTrigger asChild><Info className="h-3 w-3 text-muted-foreground cursor-help"/></TooltipTrigger>
+                                        <TooltipContent><p>Solo se puede facturar contra un pedido de compra aprobado.</p></TooltipContent>
+                                    </Tooltip>
+                                </TooltipProvider>
+                            </FormLabel>
+                            <Select onValueChange={field.onChange} value={field.value} disabled={!selectedSupplierId}>
+                                <FormControl><SelectTrigger><SelectValue placeholder="Asocia un pedido..." /></SelectTrigger></FormControl>
+                                <SelectContent>
+                                    {filteredPurchaseOrders.map(po => (<SelectItem key={po.id} value={po.id}>{po.orderNumber}</SelectItem>))}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="invoiceNumber"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Número de Factura</FormLabel>
+                            <FormControl><Input placeholder="Ej: F-2024-1234" {...field} /></FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                     <FormField control={form.control} name="emissionDate" render={({ field }) => (
+                        <FormItem className="flex flex-col"><FormLabel>Fecha de Factura</FormLabel>
                         <Popover><PopoverTrigger asChild><FormControl>
                         <Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
                             {field.value ? (format(field.value, "PPP", { locale: es })) : (<span>Elige una fecha</span>)}
@@ -270,15 +259,10 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         </Button>
                         </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover>
                         <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="dueDate"
-                    render={({ field }) => (
-                    <FormItem className="flex flex-col">
-                        <FormLabel>Fecha de Vencimiento</FormLabel>
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="dueDate" render={({ field }) => (
+                        <FormItem className="flex flex-col"><FormLabel>Fecha de Vencimiento</FormLabel>
                         <Popover><PopoverTrigger asChild><FormControl>
                         <Button variant={"outline"} className={cn("pl-3 text-left font-normal",!field.value && "text-muted-foreground")}>
                             {field.value ? (format(field.value, "PPP", { locale: es })) : (<span>Elige una fecha</span>)}
@@ -286,51 +270,35 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         </Button>
                         </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus/></PopoverContent></Popover>
                         <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="baseAmount"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Importe Base (€)</FormLabel>
+                        </FormItem>
+                    )}/>
+                    <FormField control={form.control} name="baseAmount" render={({ field }) => (
+                        <FormItem><FormLabel>Importe Base (€)</FormLabel>
                         <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                         <FormMessage />
                         </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="vatRate"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Tipo de IVA</FormLabel>
+                    )}/>
+                    <FormField control={form.control} name="vatRate" render={({ field }) => (
+                        <FormItem><FormLabel>Tipo de IVA</FormLabel>
                         <Select onValueChange={(value) => field.onChange(Number(value))} defaultValue={String(field.value)}>
                             <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                            <SelectContent>
-                                {vatRates.map(rate => <SelectItem key={rate.label} value={String(rate.value)}>{rate.label}</SelectItem>)}
-                            </SelectContent>
+                            <SelectContent>{vatRates.map(rate => <SelectItem key={rate.label} value={String(rate.value)}>{rate.label}</SelectItem>)}</SelectContent>
                         </Select>
                         <FormMessage />
                         </FormItem>
-                    )}
-                />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
-                <div className="p-2 border rounded-md bg-muted/50">
-                    <p className="text-sm text-muted-foreground">Importe IVA</p>
-                    <p className="font-bold text-lg">{formatCurrency(vatAmount)}</p>
+                    )}/>
                 </div>
-                <div className="p-2 border rounded-md bg-muted/50">
-                    <p className="text-sm text-muted-foreground">Importe Total</p>
-                    <p className="font-bold text-lg">{formatCurrency(totalAmount)}</p>
-                </div>
-                <FormField
-                    control={form.control}
-                    name="status"
-                    render={({ field }) => (
+
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                    <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
+                        <p className="text-sm text-muted-foreground">Importe IVA</p>
+                        <p className="font-bold text-lg">{formatCurrency(vatAmount)}</p>
+                    </div>
+                     <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
+                        <p className="text-sm text-muted-foreground">Importe Total</p>
+                        <p className="font-bold text-lg">{formatCurrency(totalAmount)}</p>
+                    </div>
+                    <FormField control={form.control} name="status" render={({ field }) => (
                         <FormItem>
                         <FormLabel>Estado de la Factura</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
@@ -345,57 +313,38 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         </Select>
                         <FormMessage />
                         </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="attachment"
-                    render={({ field }) => (
+                    )}/>
+                    <FormField control={form.control} name="attachment" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Adjuntar Factura</FormLabel>
                             <FormControl>
                                 <Button type="button" variant="outline" className="w-full justify-start text-left font-normal" disabled>
                                     <FileUp className="mr-2 h-4 w-4" />
-                                    <span className="truncate">
-                                        Subir PDF o imagen...
-                                    </span>
+                                    <span className="truncate">Subir PDF o imagen...</span>
                                 </Button>
                             </FormControl>
                             <FormMessage />
                         </FormItem>
-                    )}
-                />
-            </div>
-            
-            <FormField
-                control={form.control}
-                name="notes"
-                render={({ field }) => (
+                    )}/>
+                </div>
+                
+                <FormField control={form.control} name="notes" render={({ field }) => (
                     <FormItem>
                     <FormLabel>Notas Adicionales</FormLabel>
                     <FormControl><Textarea placeholder="Observaciones sobre la factura..." {...field} /></FormControl>
                     <FormMessage />
                     </FormItem>
-                )}
-            />
+                )}/>
 
-
-            <div className="flex justify-end gap-2 pt-4">
-            <Button type="button" variant="ghost" onClick={onCancel}>
-                Cancelar
-            </Button>
-            <Button type="submit">Guardar Factura</Button>
-            </div>
-        </form>
+                <div className="flex justify-end gap-2 pt-4">
+                    <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
+                    <Button type="submit">Guardar Factura</Button>
+                </div>
+            </form>
         </Form>
-         {selectedOrderForPreview && (
-            <div className="hidden md:block">
-               <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
-            </div>
-        )}
+        <div className="hidden md:block md:col-span-1">
+            <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
+        </div>
     </div>
   );
 }
-
-    
-    
