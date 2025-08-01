@@ -102,16 +102,29 @@ export default function SupplierInvoicesPage() {
   }
 
   const handleSave = async (values: any) => {
+    const { bases, ...rest } = values;
+    
+    // Calculate totals based on the array of bases
+    const vatAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => acc + (item.baseAmount * item.vatRate), 0);
+    const totalAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => acc + item.baseAmount + (item.baseAmount * item.vatRate), 0);
+
+    const finalValues = {
+        ...rest,
+        bases,
+        vatAmount,
+        totalAmount,
+    };
+
     try {
       if (selectedInvoice) {
         const docRef = doc(db, "supplierInvoices", selectedInvoice.id);
-        await updateDoc(docRef, values);
+        await updateDoc(docRef, finalValues);
         toast({
           title: "Factura actualizada",
           description: `La factura ${values.invoiceNumber} se ha guardado correctamente.`,
         });
       } else {
-        await addDoc(collection(db, "supplierInvoices"), values);
+        await addDoc(collection(db, "supplierInvoices"), finalValues);
         toast({
             title: "Factura creada",
             description: `La factura ${values.invoiceNumber} se ha guardado correctamente.`,
@@ -194,7 +207,7 @@ export default function SupplierInvoicesPage() {
                   <TableCell>{invoice.invoiceNumber}</TableCell>
                   <TableCell>{new Date(invoice.emissionDate as string).toLocaleDateString()}</TableCell>
                   <TableCell>{new Date(invoice.dueDate as string).toLocaleDateString()}</TableCell>
-                  <TableCell className="text-right">{formatCurrency(invoice.baseAmount)}</TableCell>
+                   <TableCell className="text-right">{formatCurrency(invoice.bases.reduce((acc, b) => acc + b.baseAmount, 0))}</TableCell>
                   <TableCell className="text-right">{formatCurrency(invoice.vatAmount)}</TableCell>
                   <TableCell className="text-right font-bold">{formatCurrency(invoice.totalAmount)}</TableCell>
                   <TableCell>

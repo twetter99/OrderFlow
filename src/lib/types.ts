@@ -277,16 +277,15 @@ export type Replanteo = {
 
 export type SupplierInvoice = {
   id: string;
-  purchaseOrderId?: string;
+  purchaseOrderIds?: string[]; // Ahora es un array
   deliveryNoteId?: string;
   invoiceNumber: string;
   supplierId: string;
   emissionDate: string | Date;
   dueDate: string | Date;
-  baseAmount: number;
-  vatRate: number; // e.g., 0.21 for 21%
-  vatAmount: number;
-  totalAmount: number;
+  bases: { baseAmount: number; vatRate: number }[]; // Array de bases imponibles
+  vatAmount: number; // Total de IVA (calculado)
+  totalAmount: number; // Total de la factura (calculado)
   status: 'Pendiente de validar' | 'Validada' | 'Disputada' | 'Pendiente de pago' | 'Pagada';
   attachment?: DeliveryNoteAttachment;
   notes?: string;

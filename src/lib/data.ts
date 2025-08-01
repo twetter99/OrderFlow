@@ -308,10 +308,10 @@ const mockReplanteos: Replanteo[] = [
   }
 ];
 const mockSupplierInvoices: SupplierInvoice[] = [
-  { id: 'INV-001', purchaseOrderId: 'WF-PO-2024-001', invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', baseAmount: 3500, vatRate: 0.21, vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
-  { id: 'INV-002', purchaseOrderId: 'WF-PO-2024-002', invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', baseAmount: 775, vatRate: 0.21, vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
-  { id: 'INV-003', purchaseOrderId: 'WF-PO-2024-005', invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', baseAmount: 2550, vatRate: 0.21, vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
-  { id: 'INV-004', purchaseOrderId: 'WF-PO-2024-006', invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', baseAmount: 900, vatRate: 0.21, vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
+  { id: 'INV-001', purchaseOrderIds: ['WF-PO-2024-001'], invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', bases: [{baseAmount: 3500, vatRate: 0.21}], vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
+  { id: 'INV-002', purchaseOrderIds: ['WF-PO-2024-002'], invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', bases: [{baseAmount: 775, vatRate: 0.21}], vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
+  { id: 'INV-003', purchaseOrderIds: ['WF-PO-2024-005'], invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 2550, vatRate: 0.21}], vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
+  { id: 'INV-004', purchaseOrderIds: ['WF-PO-2024-006'], invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 900, vatRate: 0.21}], vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
 ];
 const mockPayments: Payment[] = [
     { id: 'PAY-001', invoiceId: 'INV-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', dueDate: sub(today, {days: 15}).toISOString(), amountDue: 4235, paymentMethod: 'Transferencia', status: 'Pagado total', paymentHistory: [{ date: sub(today, {days: 15}).toISOString(), amount: 4235, reference: 'TR-2024-5821' }] },
