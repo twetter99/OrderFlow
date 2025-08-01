@@ -77,7 +77,7 @@ import { useRouter } from "next/navigation";
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
 
-const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"];
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Rechazado"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
@@ -85,9 +85,9 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
     'Aprobada': ['Enviada al Proveedor', 'Pendiente de Aprobación'], // Permitir revertir a pendiente
     'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
     'Enviada al Proveedor': ['Recibida', 'Recibida Parcialmente'],
-    'Recibida': ['Almacenada'],
-    'Recibida Parcialmente': ['Almacenada', 'Recibida'], // Puede pasar a recibida si llegan los items restantes
-    'Almacenada': [],
+    'Recibida': [], // Estado final
+    'Recibida Parcialmente': ['Recibida'], // Puede pasar a recibida si llegan los items restantes
+    'Almacenada': [], // Estado obsoleto
 };
 
 type SortDescriptor = {
@@ -197,7 +197,7 @@ export function PurchasingClientPage() {
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
     
     let filteredOrders = purchaseOrders
-        .filter(order => order.status !== 'Almacenada')
+        .filter(order => order.status !== 'Recibida')
         .map(order => ({
             ...order,
             projectName: projectMap.get(order.project) || order.project,
@@ -476,7 +476,7 @@ export function PurchasingClientPage() {
   };
 
   const getDeliveryStatus = (order: PurchaseOrder) => {
-    if (order.status === 'Almacenada' || order.status === 'Recibida' || order.status === 'Recibida Parcialmente') {
+    if (order.status === 'Recibida' || order.status === 'Recibida Parcialmente') {
         return { text: 'Entregado', color: 'bg-green-100 text-green-800 border-green-200' };
     }
     const deliveryDate = new Date(order.estimatedDeliveryDate as string);
@@ -719,7 +719,6 @@ export function PurchasingClientPage() {
                           order.status === "Enviada al Proveedor" && "bg-blue-100 text-blue-800 border-blue-200",
                           order.status === "Recibida Parcialmente" && "bg-yellow-100 text-yellow-800 border-yellow-200",
                           order.status === "Recibida" && "bg-purple-100 text-purple-800 border-purple-200",
-                          order.status === "Almacenada" && "bg-primary/10 text-primary border-primary/20",
                           order.status === "Rechazado" && "bg-destructive/20 text-destructive border-destructive/20"
                         )}
                       >
@@ -996,5 +995,7 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+    
 
     

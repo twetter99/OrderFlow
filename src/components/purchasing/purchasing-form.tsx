@@ -45,7 +45,7 @@ const formSchema = z.object({
   supplier: z.string().min(1, "El proveedor es obligatorio."),
   deliveryLocationId: z.string().min(1, "Debes seleccionar un almacén de entrega."),
   estimatedDeliveryDate: z.date({ required_error: "La fecha de entrega es obligatoria." }),
-  status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Almacenada", "Rechazado"]),
+  status: z.enum(["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Rechazado"]),
   rejectionReason: z.string().optional(),
   items: z.array(z.object({
     itemId: z.string().optional(), // Puede ser opcional si el nombre es la clave
@@ -527,10 +527,10 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                             <p className="text-xs text-muted-foreground">{fileSize} - Subido {uploadedDate}</p>
                         </div>
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm" onClick={() => viewBase64File(note.data, note.fileType)}>
+                        <Button variant="outline" size="sm" type="button" onClick={() => viewBase64File(note.data, note.fileType)}>
                             <Eye className="mr-2 h-4 w-4" /> Ver
                         </Button>
-                        <Button variant="outline" size="sm" onClick={() => downloadBase64File(note.data, note.fileName)}>
+                        <Button variant="outline" size="sm" type="button" onClick={() => downloadBase64File(note.data, note.fileName)}>
                            <Download className="mr-2 h-4 w-4" /> Descargar
                         </Button>
                       </div>
@@ -561,7 +561,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                             <SelectItem value="Aprobada">Aprobada</SelectItem>
                             <SelectItem value="Enviada al Proveedor">Enviada al Proveedor</SelectItem>
                             <SelectItem value="Recibida">Recibida</SelectItem>
-                            <SelectItem value="Almacenada">Almacenada</SelectItem>
                             <SelectItem value="Rechazado">Rechazado</SelectItem>
                         </SelectContent>
                         </Select>
@@ -607,3 +606,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     </Form>
   );
 }
+
+
+    

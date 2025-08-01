@@ -80,7 +80,7 @@ export type PurchaseOrder = {
   project: string;
   supplier: string;
   deliveryLocationId: string;
-  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Almacenada' | 'Rechazado';
+  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Rechazado' | 'Almacenada';
   date: string | Timestamp;
   estimatedDeliveryDate: string | Timestamp;
   total: number;
@@ -311,3 +311,5 @@ export type Payment = {
     reference: string;
   }[];
 };
+
+    

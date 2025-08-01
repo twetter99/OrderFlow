@@ -96,7 +96,7 @@ export default function CompletedOrdersPage() {
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
     
     let filteredOrders = purchaseOrders
-        .filter(order => order.status === 'Almacenada')
+        .filter(order => order.status === 'Recibida')
         .map(order => ({
             ...order,
             projectName: projectMap.get(order.project) || order.project,
@@ -303,5 +303,7 @@ export default function CompletedOrdersPage() {
     </div>
   )
 }
+
+    
 
     
