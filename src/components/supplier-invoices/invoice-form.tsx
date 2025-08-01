@@ -100,7 +100,7 @@ function OrderPreviewCard({ order, project, className }: { order: PurchaseOrder,
                 </div>
                 
                 <p className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4"/>Artículos</p>
-                <ScrollArea className="h-[200px] border rounded-md">
+                <ScrollArea className="h-[280px] border rounded-md">
                     <ul className="p-2 text-sm space-y-2">
                         {order.items.map((item, index) => (
                             <li key={index} className="flex justify-between items-center bg-muted/50 p-2 rounded">
@@ -183,9 +183,9 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-2">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField
                     control={form.control}
@@ -371,7 +371,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         </form>
         </Form>
          {selectedOrderForPreview && (
-            <div className="hidden md:block">
+            <div className="hidden md:block md:col-span-2">
                <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
             </div>
         )}
