@@ -34,20 +34,42 @@ import {
 import { MoreHorizontal, PlusCircle, Edit, Trash2 } from "lucide-react";
 import type { SupplierInvoice, Supplier, PurchaseOrder } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { supplierInvoices, suppliers, purchaseOrders } from "@/lib/data"; // Using mock data for now
+import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
+import { cn, convertTimestampsToISO } from "@/lib/utils";
 import { InvoiceForm } from '@/components/supplier-invoices/invoice-form';
 
 export default function SupplierInvoicesPage() {
   const { toast } = useToast();
-  const [invoices, setInvoices] = useState<SupplierInvoice[]>(supplierInvoices);
-  const [loading, setLoading] = useState(false);
+  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoice | null>(null);
+
+  useEffect(() => {
+    const unsubInvoices = onSnapshot(collection(db, "supplierInvoices"), (snapshot) => {
+      setInvoices(snapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as SupplierInvoice));
+      setLoading(false);
+    });
+    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => {
+      setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)));
+    });
+    const unsubPOs = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
+      setPurchaseOrders(snapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as PurchaseOrder));
+    });
+
+    return () => {
+      unsubInvoices();
+      unsubSuppliers();
+      unsubPOs();
+    };
+  }, []);
 
   const enrichedInvoices = useMemo(() => {
     return invoices.map(invoice => {
@@ -60,20 +82,43 @@ export default function SupplierInvoicesPage() {
         invoice.supplierName.toLowerCase().includes(filter.toLowerCase()) ||
         invoice.invoiceNumber.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [invoices, filter]);
+  }, [invoices, filter, suppliers]);
   
   const handleAddClick = () => {
     setSelectedInvoice(null);
     setIsModalOpen(true);
   };
   
-  const handleSave = (values: any) => {
-    // This is where you would save to Firestore
-    toast({
-        title: selectedInvoice ? "Factura actualizada" : "Factura creada",
-        description: `La factura ${values.invoiceNumber} se ha guardado correctamente.`,
-    });
-    setIsModalOpen(false);
+  const handleEditClick = (invoice: SupplierInvoice) => {
+    setSelectedInvoice(invoice);
+    setIsModalOpen(true);
+  }
+
+  const handleSave = async (values: any) => {
+    try {
+      if (selectedInvoice) {
+        const docRef = doc(db, "supplierInvoices", selectedInvoice.id);
+        await updateDoc(docRef, values);
+        toast({
+          title: "Factura actualizada",
+          description: `La factura ${values.invoiceNumber} se ha guardado correctamente.`,
+        });
+      } else {
+        await addDoc(collection(db, "supplierInvoices"), values);
+        toast({
+            title: "Factura creada",
+            description: `La factura ${values.invoiceNumber} se ha guardado correctamente.`,
+        });
+      }
+      setIsModalOpen(false);
+    } catch (error) {
+       console.error("Error saving invoice:", error);
+       toast({
+         variant: "destructive",
+         title: "Error",
+         description: "No se pudo guardar la factura.",
+       });
+    }
   }
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
@@ -140,8 +185,8 @@ export default function SupplierInvoicesPage() {
                 <TableRow key={invoice.id}>
                   <TableCell className="font-medium">{invoice.supplierName}</TableCell>
                   <TableCell>{invoice.invoiceNumber}</TableCell>
-                  <TableCell>{new Date(invoice.emissionDate).toLocaleDateString()}</TableCell>
-                  <TableCell>{new Date(invoice.dueDate).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(invoice.emissionDate as string).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(invoice.dueDate as string).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">{formatCurrency(invoice.baseAmount)}</TableCell>
                   <TableCell className="text-right">{formatCurrency(invoice.vatAmount)}</TableCell>
                   <TableCell className="text-right font-bold">{formatCurrency(invoice.totalAmount)}</TableCell>
@@ -163,7 +208,7 @@ export default function SupplierInvoicesPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
-                        <DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleEditClick(invoice)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Ver / Editar
                         </DropdownMenuItem>

@@ -66,8 +66,8 @@ export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCanc
   const defaultValues: Partial<InvoiceFormValues> = invoice
     ? { 
         ...invoice,
-        emissionDate: new Date(invoice.emissionDate),
-        dueDate: new Date(invoice.dueDate),
+        emissionDate: new Date(invoice.emissionDate as string),
+        dueDate: new Date(invoice.dueDate as string),
       }
     : {
         supplierId: "",
@@ -91,15 +91,15 @@ export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCanc
 
   const vatAmount = useMemo(() => baseAmount * vatRate, [baseAmount, vatRate]);
   const totalAmount = useMemo(() => baseAmount + vatAmount, [baseAmount, vatAmount]);
-
-  const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
-
+  
   const filteredPurchaseOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
+    const supplierDetails = suppliers.find(s => s.id === selectedSupplierId);
+    if (!supplierDetails) return [];
     return purchaseOrders.filter(po => 
-      po.supplier === supplierName && (po.status === 'Recibida' || po.status === 'Recibida Parcialmente')
+      po.supplier === supplierDetails.name && (po.status === 'Recibida' || po.status === 'Recibida Parcialmente')
     );
-  }, [selectedSupplierId, purchaseOrders, supplierName]);
+  }, [selectedSupplierId, purchaseOrders, suppliers]);
   
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
