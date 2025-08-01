@@ -84,6 +84,28 @@ const downloadBase64File = (base64Data: string, fileName: string) => {
     document.body.removeChild(link);
 };
 
+// Función corregida para visualizar archivos Base64
+const viewBase64File = (base64Data: string, fileType: string) => {
+    try {
+      const base64Content = base64Data.split(';base64,').pop();
+      if (!base64Content) {
+        throw new Error("Formato Base64 inválido.");
+      }
+      const byteCharacters = atob(base64Content);
+      const byteNumbers = new Array(byteCharacters.length);
+      for (let i = 0; i < byteCharacters.length; i++) {
+        byteNumbers[i] = byteCharacters.charCodeAt(i);
+      }
+      const byteArray = new Uint8Array(byteNumbers);
+      const blob = new Blob([byteArray], { type: fileType });
+      const fileURL = URL.createObjectURL(blob);
+      window.open(fileURL, '_blank');
+      setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
+    } catch (error) {
+      console.error("Error al visualizar el archivo:", error);
+    }
+};
+
 
 export function PurchasingForm({ order, onSave, onCancel, canApprove = false, suppliers, recentSupplierIds, inventoryItems, projects, locations }: PurchasingFormProps) {
   const isEditable = !order || !('id' in order) || order.status === 'Pendiente de Aprobación' || order.status === 'Aprobada';
@@ -96,8 +118,8 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
         supplier: order.supplier || "",
         deliveryLocationId: order.deliveryLocationId || "",
         orderNumber: order.orderNumber || "",
-        date: order.date ? new Date(order.date) : new Date(),
-        estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate) : new Date(),
+        date: order.date ? new Date(order.date as any) : new Date(),
+        estimatedDeliveryDate: order.estimatedDeliveryDate ? new Date(order.estimatedDeliveryDate as any) : new Date(),
         status: order.status || "Pendiente de Aprobación",
         rejectionReason: order.rejectionReason || "",
         items: order.items?.map(item => ({...item, family: inventoryItems.find(i => i.id === item.itemId)?.family || 'all'})) || [{ itemName: "", itemSku: "", quantity: 1, price: 0, unit: "ud", type: 'Material' as const, family: 'all' }],
@@ -139,35 +161,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const sortedProductFamilies = React.useMemo(() => {
     return [...productFamilies].sort((a, b) => a.name.localeCompare(b.name));
   }, []);
-
-  // Función corregida para visualizar archivos Base64
-  const viewBase64File = (base64Data: string, fileType: string) => {
-    try {
-      // Extrae los datos puros del string base64
-      const base64Content = base64Data.split(';base64,').pop();
-      if (!base64Content) {
-        throw new Error("Formato Base64 inválido.");
-      }
-      // Convierte el string base64 a un array de bytes
-      const byteCharacters = atob(base64Content);
-      const byteNumbers = new Array(byteCharacters.length);
-      for (let i = 0; i < byteCharacters.length; i++) {
-        byteNumbers[i] = byteCharacters.charCodeAt(i);
-      }
-      const byteArray = new Uint8Array(byteNumbers);
-      // Crea un Blob con los datos y el tipo MIME correcto
-      const blob = new Blob([byteArray], { type: fileType });
-      // Crea una URL de objeto temporal para el Blob
-      const fileURL = URL.createObjectURL(blob);
-      // Abre la URL en una nueva pestaña
-      const newWindow = window.open(fileURL, '_blank');
-      // Limpia la URL del objeto después de un tiempo prudencial por si la ventana tarda en cargar
-      setTimeout(() => URL.revokeObjectURL(fileURL), 1000);
-    } catch (error) {
-      console.error("Error al visualizar el archivo:", error);
-      // Aquí podrías añadir un toast de error si lo deseas
-    }
-  };
 
 
   function onSubmit(values: PurchasingFormValues) {
@@ -606,6 +599,3 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     </Form>
   );
 }
-
-
-    

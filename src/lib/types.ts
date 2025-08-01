@@ -80,7 +80,7 @@ export type PurchaseOrder = {
   project: string;
   supplier: string;
   deliveryLocationId: string;
-  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Rechazado' | 'Almacenada';
+  status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Rechazado';
   date: string | Timestamp;
   estimatedDeliveryDate: string | Timestamp;
   total: number;
@@ -280,20 +280,16 @@ export type SupplierInvoice = {
   purchaseOrderId?: string;
   deliveryNoteId?: string;
   invoiceNumber: string;
-  supplierName: string;
-  emissionDate: string;
-  receptionDate: string;
+  supplierId: string;
+  emissionDate: string | Date;
+  dueDate: string | Date;
   baseAmount: number;
+  vatRate: number; // e.g., 0.21 for 21%
   vatAmount: number;
   totalAmount: number;
-  status: 'Pendiente de validar' | 'Validada' | 'Pendiente de pago' | 'Pagada';
-  attachmentUrl?: string;
-  validationHistory?: {
-    userId: string;
-    userName: string;
-    date: string;
-    comment: string;
-  }[];
+  status: 'Pendiente de validar' | 'Validada' | 'Disputada' | 'Pendiente de pago' | 'Pagada';
+  attachment?: DeliveryNoteAttachment;
+  notes?: string;
 };
 
 export type Payment = {
@@ -311,5 +307,3 @@ export type Payment = {
     reference: string;
   }[];
 };
-
-    

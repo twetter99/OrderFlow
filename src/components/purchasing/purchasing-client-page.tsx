@@ -77,7 +77,7 @@ import { useRouter } from "next/navigation";
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
 
-const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Rechazado"];
+const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida Parcialmente", "Rechazado"];
 
 // Lógica de la máquina de estados
 const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['status'][] } = {
@@ -86,8 +86,7 @@ const validTransitions: { [key in PurchaseOrder['status']]: PurchaseOrder['statu
     'Rechazado': ['Pendiente de Aprobación'], // Permitir re-evaluar un rechazo
     'Enviada al Proveedor': ['Recibida', 'Recibida Parcialmente'],
     'Recibida': [], // Estado final
-    'Recibida Parcialmente': ['Recibida'], // Puede pasar a recibida si llegan los items restantes
-    'Almacenada': [], // Estado obsoleto
+    'Recibida Parcialmente': ['Recibida', 'Recibida Parcialmente'], // Puede recibir más partes
 };
 
 type SortDescriptor = {
@@ -995,7 +994,3 @@ export function PurchasingClientPage() {
     </div>
   )
 }
-
-    
-
-    

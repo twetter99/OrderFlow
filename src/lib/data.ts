@@ -159,7 +159,7 @@ const mockInventory: InventoryItem[] = [
   },
 ];
 const mockPurchaseOrders: PurchaseOrder[] = [
-    { id: 'WF-PO-2024-001', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Almacenada', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) })},
+    { id: 'WF-PO-2024-001', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibida', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) })},
     { id: 'WF-PO-2024-002', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: new Date('2024-07-12'), total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }) })},
     { id: 'WF-PO-2024-003', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: new Date('2024-07-15'), total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }) })},
     { id: 'WF-PO-2024-004', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: new Date('2024-07-18'), total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }) })},
@@ -308,10 +308,10 @@ const mockReplanteos: Replanteo[] = [
   }
 ];
 const mockSupplierInvoices: SupplierInvoice[] = [
-  { id: 'INV-001', purchaseOrderId: 'WF-PO-2024-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', emissionDate: '2024-07-11', receptionDate: '2024-07-12', baseAmount: 3500, vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
-  { id: 'INV-002', purchaseOrderId: 'WF-PO-2024-002', invoiceNumber: 'MW-INV-982', supplierName: 'MetalWorks Ltd.', emissionDate: '2024-07-15', receptionDate: '2024-07-16', baseAmount: 775, vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
-  { id: 'INV-003', purchaseOrderId: 'WF-PO-2024-005', invoiceNumber: 'FACT-TECH-508', supplierName: 'TechParts Inc.', emissionDate: '2024-07-22', receptionDate: '2024-07-23', baseAmount: 2550, vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
-  { id: 'INV-004', purchaseOrderId: 'WF-PO-2024-006', invoiceNumber: 'MW-INV-991', supplierName: 'MetalWorks Ltd.', emissionDate: '2024-07-22', receptionDate: '2024-07-23', baseAmount: 900, vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
+  { id: 'INV-001', purchaseOrderId: 'WF-PO-2024-001', invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', baseAmount: 3500, vatRate: 0.21, vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
+  { id: 'INV-002', purchaseOrderId: 'WF-PO-2024-002', invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', baseAmount: 775, vatRate: 0.21, vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
+  { id: 'INV-003', purchaseOrderId: 'WF-PO-2024-005', invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', baseAmount: 2550, vatRate: 0.21, vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
+  { id: 'INV-004', purchaseOrderId: 'WF-PO-2024-006', invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', baseAmount: 900, vatRate: 0.21, vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
 ];
 const mockPayments: Payment[] = [
     { id: 'PAY-001', invoiceId: 'INV-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', dueDate: sub(today, {days: 15}).toISOString(), amountDue: 4235, paymentMethod: 'Transferencia', status: 'Pagado total', paymentHistory: [{ date: sub(today, {days: 15}).toISOString(), amount: 4235, reference: 'TR-2024-5821' }] },
@@ -369,7 +369,7 @@ export const getNotifications = (): Notification[] => {
         notifications.push({
             id: `notif-po-${po.id}`,
             title: 'Aprobación Requerida',
-            description: `El pedido ${po.id} necesita tu revisión.`,
+            description: `El pedido ${po.orderNumber} necesita tu revisión.`,
             type: 'alert',
             link: '/purchasing',
             isRead: false
