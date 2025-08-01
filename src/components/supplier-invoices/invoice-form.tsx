@@ -187,10 +187,11 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-3">
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-2">
+            
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <FormField
                     control={form.control}
                     name="supplierId"
@@ -255,7 +256,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                     )}
                 />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <FormField
                     control={form.control}
                     name="emissionDate"
@@ -317,7 +318,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                 />
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 items-end">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                 <div className="p-2 border rounded-md bg-muted/50">
                     <p className="text-sm text-muted-foreground">Importe IVA</p>
                     <p className="font-bold text-lg">{formatCurrency(vatAmount)}</p>
@@ -388,7 +389,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         </form>
         </Form>
          {selectedOrderForPreview && (
-            <div className="hidden md:block md:col-span-2">
+            <div className="hidden md:block">
                <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
             </div>
         )}
@@ -396,4 +397,5 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   );
 }
 
+    
     
