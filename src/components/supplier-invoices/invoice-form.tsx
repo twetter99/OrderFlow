@@ -192,11 +192,11 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
             <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-3 space-y-6">
                 
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-                    <FormField
+                     <FormField
                         control={form.control}
                         name="supplierId"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
+                            <FormItem className="md:col-span-1">
                             <FormLabel>Proveedor</FormLabel>
                                 <SupplierCombobox 
                                     suppliers={suppliers}
@@ -216,7 +216,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         control={form.control}
                         name="purchaseOrderId"
                         render={({ field }) => (
-                            <FormItem>
+                            <FormItem className="md:col-span-2">
                             <FormLabel className="flex items-center gap-1">
                                 Pedido de Compra Asociado*
                                 <TooltipProvider>
@@ -288,7 +288,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         </FormItem>
                     )}/>
                 </div>
-
+                
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
                     <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
                         <p className="text-sm text-muted-foreground">Importe IVA</p>
@@ -342,7 +342,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                 </div>
             </form>
         </Form>
-        <div className="hidden md:block md:col-span-1">
+        <div className="hidden md:block md:col-span-1 min-w-[380px]">
             <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
         </div>
     </div>
