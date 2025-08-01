@@ -225,7 +225,7 @@ export const SidebarNav = () => {
                 const isActive = isSubItemActive(item.subItems);
                 
                 return (
-                            <Collapsible key={uniqueKey} className="space-y-1">
+                            <Collapsible key={uniqueKey} className="space-y-1" defaultOpen={isActive}>
                       <Tooltip>
                         <TooltipTrigger asChild>
                                     <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
