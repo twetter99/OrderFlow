@@ -15,7 +15,7 @@ export function cn(...inputs: ClassValue[]) {
  * @param data El objeto o array a limpiar.
  * @returns El objeto o array limpio y serializable.
  */
-const convertTimestampsToISO = (data: any): any => {
+export const convertTimestampsToISO = (data: any): any => {
   if (!data) return data;
 
   if (data instanceof Timestamp) {

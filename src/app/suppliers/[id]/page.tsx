@@ -1,8 +1,9 @@
+
 import { SupplierDetailsClient } from "@/components/suppliers/supplier-details-client";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import type { PurchaseOrder, Supplier, InventoryItem, Project, Location, User } from "@/lib/types";
-import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { convertPurchaseOrderTimestamps, convertTimestampsToISO } from "@/lib/utils";
 
 async function getSupplierDetails(id: string) {
     const supplierRef = doc(db, "suppliers", id);
@@ -33,7 +34,7 @@ async function getSupplierDetails(id: string) {
     );
     
     const inventory = inventorySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem));
-    const projects = projectsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
+    const projects = projectsSnapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as Project);
     const locations = locationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location));
     const users = usersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User));
     const suppliers = suppliersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier));
