@@ -32,12 +32,16 @@ import { Input } from "@/components/ui/input"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 import { NotificationsPanel } from "./notifications-panel"
 import { SidebarTrigger } from "../ui/sidebar"
+import { BackButton } from "./back-button"
 
 export function Header() {
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
-      <div className="md:hidden">
-        <SidebarTrigger />
+      <div className="flex items-center gap-2">
+        <div className="md:hidden">
+            <SidebarTrigger />
+        </div>
+        <BackButton />
       </div>
 
       <div className="w-full flex-1">
