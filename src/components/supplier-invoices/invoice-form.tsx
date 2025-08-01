@@ -84,19 +84,19 @@ function OrderPreviewCard({ order, project, className }: { order: PurchaseOrder 
             </CardHeader>
             <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 col-span-2">
                         <Building className="h-4 w-4 text-muted-foreground"/>
                         <strong>Proyecto:</strong>
                         <span className="truncate">{project?.name}</span>
                     </div>
-                    <div className="flex items-center gap-2">
+                     <div className="flex items-center gap-2">
                         <CalendarDays className="h-4 w-4 text-muted-foreground"/>
                         <strong>Fecha:</strong>
                         <span>{new Date(order.date as string).toLocaleDateString()}</span>
                     </div>
-                    <div className="flex items-center gap-2 col-span-2">
+                    <div className="flex items-center gap-2">
                         <Euro className="h-4 w-4 text-muted-foreground"/>
-                        <strong>Total del Pedido:</strong>
+                        <strong>Total Pedido:</strong>
                         <span className="font-bold">{formatCurrency(order.total)}</span>
                     </div>
                 </div>
@@ -187,16 +187,16 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-3 space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="lg:col-span-2 space-y-6">
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField
                         control={form.control}
                         name="supplierId"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-1">
+                            <FormItem>
                             <FormLabel>Proveedor</FormLabel>
                                 <SupplierCombobox 
                                     suppliers={suppliers}
@@ -216,13 +216,13 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         control={form.control}
                         name="purchaseOrderId"
                         render={({ field }) => (
-                            <FormItem className="md:col-span-2">
+                            <FormItem>
                             <FormLabel className="flex items-center gap-1">
                                 Pedido de Compra Asociado*
                                 <TooltipProvider>
                                     <Tooltip>
-                                        <TooltipTrigger asChild><Info className="h-3 w-3 text-muted-foreground cursor-help"/></TooltipTrigger>
-                                        <TooltipContent><p>Solo se puede facturar contra un pedido de compra aprobado.</p></TooltipContent>
+                                        <TooltipTrigger asChild><button type="button" tabIndex={-1}><Info className="h-3 w-3 text-muted-foreground cursor-help"/></button></TooltipTrigger>
+                                        <TooltipContent><p>No se puede registrar una factura sin un pedido de compra.</p></TooltipContent>
                                     </Tooltip>
                                 </TooltipProvider>
                             </FormLabel>
@@ -236,7 +236,10 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                             </FormItem>
                         )}
                     />
-                    <FormField
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField
                         control={form.control}
                         name="invoiceNumber"
                         render={({ field }) => (
@@ -247,9 +250,25 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                             </FormItem>
                         )}
                     />
+                     <FormField control={form.control} name="status" render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Estado de la Factura</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
+                            <SelectContent>
+                            <SelectItem value="Pendiente de validar">Pendiente de validar</SelectItem>
+                            <SelectItem value="Validada">Validada</SelectItem>
+                            <SelectItem value="Disputada">Disputada</SelectItem>
+                            <SelectItem value="Pendiente de pago">Pendiente de pago</SelectItem>
+                            <SelectItem value="Pagada">Pagada</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}/>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      <FormField control={form.control} name="emissionDate" render={({ field }) => (
                         <FormItem className="flex flex-col"><FormLabel>Fecha de Factura</FormLabel>
                         <Popover><PopoverTrigger asChild><FormControl>
@@ -272,7 +291,10 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         <FormMessage />
                         </FormItem>
                     )}/>
-                    <FormField control={form.control} name="baseAmount" render={({ field }) => (
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <FormField control={form.control} name="baseAmount" render={({ field }) => (
                         <FormItem><FormLabel>Importe Base (€)</FormLabel>
                         <FormControl><Input type="number" step="0.01" {...field} /></FormControl>
                         <FormMessage />
@@ -289,7 +311,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                     )}/>
                 </div>
                 
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-end">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
                     <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
                         <p className="text-sm text-muted-foreground">Importe IVA</p>
                         <p className="font-bold text-lg">{formatCurrency(vatAmount)}</p>
@@ -298,22 +320,9 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         <p className="text-sm text-muted-foreground">Importe Total</p>
                         <p className="font-bold text-lg">{formatCurrency(totalAmount)}</p>
                     </div>
-                    <FormField control={form.control} name="status" render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Estado de la Factura</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl>
-                            <SelectContent>
-                            <SelectItem value="Pendiente de validar">Pendiente de validar</SelectItem>
-                            <SelectItem value="Validada">Validada</SelectItem>
-                            <SelectItem value="Disputada">Disputada</SelectItem>
-                            <SelectItem value="Pendiente de pago">Pendiente de pago</SelectItem>
-                            <SelectItem value="Pagada">Pagada</SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <FormMessage />
-                        </FormItem>
-                    )}/>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField control={form.control} name="attachment" render={({ field }) => (
                         <FormItem>
                             <FormLabel>Adjuntar Factura</FormLabel>
@@ -342,7 +351,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                 </div>
             </form>
         </Form>
-        <div className="hidden md:block md:col-span-1 min-w-[380px]">
+        <div className="hidden lg:block lg:col-span-1">
             <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
         </div>
     </div>
