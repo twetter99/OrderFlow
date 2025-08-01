@@ -816,7 +816,10 @@ export function PurchasingClientPage() {
                     </TableCell>
                 </TableRow>
               )})}
-              {activePurchaseOrders.length === 0 && (
+              {loading && (
+                 <TableRow><TableCell colSpan={9} className="text-center">Cargando...</TableCell></TableRow>
+              )}
+              {!loading && activePurchaseOrders.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra que coincidan con los filtros.
@@ -993,3 +996,5 @@ export function PurchasingClientPage() {
     </div>
   )
 }
+
+    

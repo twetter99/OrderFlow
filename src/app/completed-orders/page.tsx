@@ -273,7 +273,10 @@ export default function CompletedOrdersPage() {
                     </TableCell>
                 </TableRow>
               ))}
-              {completedOrders.length === 0 && (
+              {loading && (
+                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
+              )}
+              {!loading && completedOrders.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra completadas.
@@ -300,3 +303,5 @@ export default function CompletedOrdersPage() {
     </div>
   )
 }
+
+    
