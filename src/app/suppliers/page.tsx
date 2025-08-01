@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, Star } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Star, History } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -49,6 +49,7 @@ import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export default function SuppliersPage() {
   const { toast } = useToast();
@@ -209,6 +210,12 @@ export default function SuppliersPage() {
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                            <Link href={`/suppliers/${supplier.id}`}>
+                                <History className="mr-2 h-4 w-4"/>
+                                Ver Historial
+                            </Link>
+                        </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => handleEditClick(supplier)}>
                           <Edit className="mr-2 h-4 w-4" />
                           Editar
