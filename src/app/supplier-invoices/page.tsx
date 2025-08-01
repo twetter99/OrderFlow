@@ -242,7 +242,7 @@ export default function SupplierInvoicesPage() {
       </Card>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-4xl">
+        <DialogContent className="sm:max-w-6xl">
            <DialogHeader>
             <DialogTitle>{selectedInvoice ? "Editar Factura" : "Registrar Nueva Factura"}</DialogTitle>
           </DialogHeader>
