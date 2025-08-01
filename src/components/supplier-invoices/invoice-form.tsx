@@ -25,6 +25,7 @@ import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/ty
 import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Calendar } from "../ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
@@ -377,4 +378,3 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
     </div>
   );
 }
-
