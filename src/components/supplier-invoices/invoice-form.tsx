@@ -21,16 +21,18 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import type { SupplierInvoice, Supplier, PurchaseOrder } from "@/lib/types";
-import { CalendarIcon, FileUp } from "lucide-react";
+import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
+import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Calendar } from "../ui/calendar";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import React, { useEffect, useMemo } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Textarea } from "../ui/textarea";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
+import { ScrollArea } from "../ui/scroll-area";
 
 const vatRates = [
   { label: 'General (21%)', value: 0.21 },
@@ -57,12 +59,15 @@ type InvoiceFormValues = z.infer<typeof formSchema>;
 interface InvoiceFormProps {
   invoice?: SupplierInvoice | null;
   suppliers: Supplier[];
+  projects: Project[];
   purchaseOrders: PurchaseOrder[];
   onSave: (values: any) => void;
   onCancel: () => void;
 }
 
-export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCancel }: InvoiceFormProps) {
+export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSave, onCancel }: InvoiceFormProps) {
+
+  const [hoveredOrder, setHoveredOrder] = useState<PurchaseOrder | null>(null);
 
   const defaultValues: Partial<InvoiceFormValues> = invoice
     ? { 
@@ -139,24 +144,85 @@ export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCanc
                     </FormItem>
                 )}
             />
-            <FormField
-                control={form.control}
-                name="purchaseOrderId"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Pedido de Compra Asociado (Opcional)</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedSupplierId}>
-                        <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Asocia un pedido..." /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {filteredPurchaseOrders.map(p => <SelectItem key={p.id} value={p.id}>{p.orderNumber}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
-                    <FormMessage />
-                    </FormItem>
+            <Popover open={!!hoveredOrder} >
+                <PopoverTrigger asChild>
+                     <FormField
+                        control={form.control}
+                        name="purchaseOrderId"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Pedido de Compra Asociado (Opcional)</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedSupplierId}>
+                                <FormControl>
+                                <SelectTrigger><SelectValue placeholder="Asocia un pedido..." /></SelectTrigger>
+                                </FormControl>
+                                <SelectContent onMouseLeave={() => setHoveredOrder(null)}>
+                                {filteredPurchaseOrders.map(po => {
+                                    return (
+                                        <SelectItem 
+                                            key={po.id} 
+                                            value={po.id}
+                                            onMouseEnter={() => setHoveredOrder(po)}
+                                        >
+                                            {po.orderNumber}
+                                        </SelectItem>
+                                    )
+                                })}
+                                </SelectContent>
+                            </Select>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </PopoverTrigger>
+                {hoveredOrder && (
+                     <PopoverContent side="right" align="start" className="w-[450px]">
+                        <Card className="border-none shadow-none">
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2 text-lg">
+                                    <Tag className="h-5 w-5 text-primary"/>
+                                    Vista Previa del Pedido
+                                </CardTitle>
+                                <CardDescription>{hoveredOrder.orderNumber}</CardDescription>
+                            </CardHeader>
+                            <CardContent className="space-y-4">
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                    <div className="flex items-center gap-2">
+                                        <Building className="h-4 w-4 text-muted-foreground"/>
+                                        <strong>Proyecto:</strong>
+                                        <span className="truncate">{projects.find(p => p.id === hoveredOrder.project)?.name}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <CalendarDays className="h-4 w-4 text-muted-foreground"/>
+                                        <strong>Fecha:</strong>
+                                        <span>{new Date(hoveredOrder.date as string).toLocaleDateString()}</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 col-span-2">
+                                        <Euro className="h-4 w-4 text-muted-foreground"/>
+                                        <strong>Total del Pedido:</strong>
+                                        <span className="font-bold">{formatCurrency(hoveredOrder.total)}</span>
+                                    </div>
+                                </div>
+                                
+                                <p className="text-sm font-medium flex items-center gap-2"><Package className="h-4 w-4"/>Artículos</p>
+                                <ScrollArea className="h-[150px] border rounded-md">
+                                    <ul className="p-2 text-sm space-y-2">
+                                        {hoveredOrder.items.map((item, index) => (
+                                            <li key={index} className="flex justify-between items-center bg-muted/50 p-2 rounded">
+                                                <div className="flex-grow">
+                                                    <p className="font-medium truncate">{item.itemName}</p>
+                                                    <p className="text-xs text-muted-foreground">Cant: {item.quantity} | P.U.: {formatCurrency(item.price)}</p>
+                                                </div>
+                                                <p className="font-semibold">{formatCurrency(item.quantity * item.price)}</p>
+                                            </li>
+                                        ))}
+                                    </ul>
+                                </ScrollArea>
+                            </CardContent>
+                        </Card>
+                    </PopoverContent>
                 )}
-            />
+            </Popover>
              <FormField
                 control={form.control}
                 name="invoiceNumber"
