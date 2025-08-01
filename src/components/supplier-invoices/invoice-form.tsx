@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -33,7 +34,6 @@ import React, { useMemo, useState } from "react";
 import { Textarea } from "../ui/textarea";
 import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
-import { MultiSelect } from "../ui/multi-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
 
@@ -47,7 +47,11 @@ const vatRates = [
 
 const formSchema = z.object({
   supplierId: z.string().min(1, "Debes seleccionar un proveedor."),
-  purchaseOrderIds: z.array(z.string()).min(1, "Debes asociar al menos una orden de compra."),
+  purchaseOrderIds: z.array(
+    z.object({
+        poId: z.string().min(1, "Selecciona un pedido para esta línea.")
+    })
+  ).min(1, "Debes asociar al menos una orden de compra."),
   invoiceNumber: z.string().min(1, "El número de factura es obligatorio."),
   emissionDate: z.date({ required_error: "La fecha de factura es obligatoria." }),
   dueDate: z.date({ required_error: "La fecha de vencimiento es obligatoria." }),
@@ -57,7 +61,13 @@ const formSchema = z.object({
   })).min(1, "Debes añadir al menos una base imponible."),
   status: z.enum(['Pendiente de validar', 'Validada', 'Disputada', 'Pendiente de pago', 'Pagada']),
   notes: z.string().optional(),
-  attachment: z.any().optional(), // For file handling
+  attachment: z.any().optional(),
+}).refine((data) => {
+    const poIds = data.purchaseOrderIds.map(item => item.poId);
+    return new Set(poIds).size === poIds.length;
+}, {
+    message: "No puedes seleccionar la misma orden de compra más de una vez.",
+    path: ["purchaseOrderIds"],
 });
 
 type InvoiceFormValues = z.infer<typeof formSchema>;
@@ -134,14 +144,14 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const defaultValues: Partial<InvoiceFormValues> = invoice
     ? { 
         ...invoice,
-        purchaseOrderIds: invoice.purchaseOrderIds || [],
+        purchaseOrderIds: invoice.purchaseOrderIds?.map(id => ({ poId: id })) || [{ poId: '' }],
         emissionDate: new Date(invoice.emissionDate as string),
         dueDate: new Date(invoice.dueDate as string),
         bases: invoice.bases || [{ baseAmount: 0, vatRate: 0.21 }]
       }
     : {
         supplierId: "",
-        purchaseOrderIds: [],
+        purchaseOrderIds: [{ poId: '' }],
         invoiceNumber: "",
         emissionDate: new Date(),
         dueDate: new Date(),
@@ -155,16 +165,14 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
     defaultValues,
   });
 
-  const { fields, append, remove } = useFieldArray({
-    control: form.control,
-    name: "bases"
-  });
+  const { fields: poFields, append: appendPo, remove: removePo } = useFieldArray({ control: form.control, name: "purchaseOrderIds" });
+  const { fields: baseFields, append: appendBase, remove: removeBase } = useFieldArray({ control: form.control, name: "bases" });
   
   const [isEmissionDatePickerOpen, setIsEmissionDatePickerOpen] = useState(false);
   const [isDueDatePickerOpen, setIsDueDatePickerOpen] = useState(false);
 
   const selectedSupplierId = useWatch({ control: form.control, name: 'supplierId' });
-  const selectedPOIds = useWatch({ control: form.control, name: 'purchaseOrderIds' });
+  const selectedPOFields = useWatch({ control: form.control, name: 'purchaseOrderIds' });
   const watchedBases = useWatch({ control: form.control, name: 'bases' });
 
   const vatAmount = useMemo(() => watchedBases.reduce((acc, item) => acc + (item.baseAmount * item.vatRate), 0), [watchedBases]);
@@ -180,65 +188,87 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   }, [selectedSupplierId, purchaseOrders, suppliers]);
   
   const selectedOrdersForPreview = useMemo(() => {
-    if (!selectedPOIds || selectedPOIds.length === 0) return [];
-    return selectedPOIds.map(id => purchaseOrders.find(po => po.id === id)).filter(Boolean);
-  }, [selectedPOIds, purchaseOrders]);
-
+    if (!selectedPOFields || selectedPOFields.length === 0) return [];
+    return selectedPOFields
+      .map(field => purchaseOrders.find(po => po.id === field.poId))
+      .filter(Boolean);
+  }, [selectedPOFields, purchaseOrders]);
 
   function onSubmit(values: InvoiceFormValues) {
-    onSave(values);
+    const finalValues = {
+        ...values,
+        purchaseOrderIds: values.purchaseOrderIds.map(item => item.poId)
+    };
+    onSave(finalValues);
   }
   
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-2 space-y-6">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <FormField
-                        control={form.control}
-                        name="supplierId"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Proveedor</FormLabel>
-                                <SupplierCombobox
-                                    suppliers={suppliers}
-                                    recentSupplierIds={[]}
-                                    value={supplierName}
-                                    onChange={(supplierName, supplierId) => {
-                                        field.onChange(supplierId);
-                                        form.setValue("purchaseOrderIds", []);
-                                    }}
-                                    onAddNew={() => {}}
-                                />
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="purchaseOrderIds"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel className="flex items-center gap-1">
-                                Pedido de Compra Asociado*
-                                <TooltipProvider><Tooltip>
-                                        <TooltipTrigger asChild><button type="button" tabIndex={-1}><Info className="h-3 w-3 text-muted-foreground cursor-help"/></button></TooltipTrigger>
-                                        <TooltipContent><p>No se puede registrar ninguna factura de proveedor si no está asociada a un pedido de compra previamente aprobado.</p></TooltipContent>
-                                </Tooltip></TooltipProvider>
-                            </FormLabel>
-                             <MultiSelect
-                                options={filteredPurchaseOrders.map(po => ({ value: po.id, label: po.orderNumber || po.id }))}
-                                selected={field.value}
-                                onChange={field.onChange}
-                                placeholder="Selecciona pedidos..."
-                                className="min-h-10"
+            <form onSubmit={form.handleSubmit(onSubmit)} className="lg:col-span-2 space-y-6">
+                <FormField
+                    control={form.control}
+                    name="supplierId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Proveedor</FormLabel>
+                            <SupplierCombobox
+                                suppliers={suppliers}
+                                recentSupplierIds={[]}
+                                value={supplierName}
+                                onChange={(supplierName, supplierId) => {
+                                    form.setValue("supplierId", supplierId || "");
+                                    form.setValue("purchaseOrderIds", [{poId: ''}]);
+                                }}
+                                onAddNew={() => {}}
                             />
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                    />
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+                
+                <div className="space-y-2">
+                     <FormLabel>
+                        Pedido de Compra Asociado*
+                        <TooltipProvider>
+                            <Tooltip>
+                                <TooltipTrigger asChild><button type="button" tabIndex={-1} className="ml-1"><Info className="h-3 w-3 text-muted-foreground cursor-help"/></button></TooltipTrigger>
+                                <TooltipContent><p>No se puede registrar ninguna factura si no está asociada a un pedido de compra.</p></TooltipContent>
+                            </Tooltip>
+                        </TooltipProvider>
+                    </FormLabel>
+                    {poFields.map((field, index) => (
+                        <div key={field.id} className="flex items-center gap-2">
+                             <FormField
+                                control={form.control}
+                                name={`purchaseOrderIds.${index}.poId`}
+                                render={({ field }) => (
+                                    <FormItem className="flex-grow">
+                                        <Select onValueChange={field.onChange} defaultValue={field.value} disabled={filteredPurchaseOrders.length === 0}>
+                                            <FormControl>
+                                                <SelectTrigger>
+                                                    <SelectValue placeholder={filteredPurchaseOrders.length > 0 ? "Selecciona un pedido..." : "No hay pedidos recibidos para este proveedor"} />
+                                                </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                                {filteredPurchaseOrders.map(po => <SelectItem key={po.id} value={po.id}>{po.orderNumber || po.id}</SelectItem>)}
+                                            </SelectContent>
+                                        </Select>
+                                        <FormMessage />
+                                    </FormItem>
+                                )}
+                            />
+                            {poFields.length > 1 && (
+                                <Button type="button" variant="ghost" size="icon" onClick={() => removePo(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button>
+                            )}
+                        </div>
+                    ))}
+                    <Button type="button" variant="outline" size="sm" onClick={() => appendPo({ poId: '' })}>
+                        <PlusCircle className="mr-2 h-4 w-4"/> Añadir otra orden de compra
+                    </Button>
+                    <FormField control={form.control} name="purchaseOrderIds" render={() => (<FormItem><FormMessage/></FormItem>)} />
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -279,7 +309,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                         </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={(date) => { field.onChange(date); setIsEmissionDatePickerOpen(false);}} initialFocus/>
+                          <Calendar mode="single" selected={field.value} onSelect={(date) => { if(date) { field.onChange(date); setIsEmissionDatePickerOpen(false); } }} initialFocus/>
                         </PopoverContent></Popover>
                         <FormMessage />
                         </FormItem>
@@ -292,7 +322,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                             <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
                         </Button>
                         </FormControl></PopoverTrigger><PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={(date) => { field.onChange(date); setIsDueDatePickerOpen(false); }} initialFocus/>
+                          <Calendar mode="single" selected={field.value} onSelect={(date) => { if(date) { field.onChange(date); setIsDueDatePickerOpen(false); } }} initialFocus/>
                         </PopoverContent></Popover>
                         <FormMessage />
                         </FormItem>
@@ -310,7 +340,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                         <TableHead />
                       </TableRow></TableHeader>
                       <TableBody>
-                        {fields.map((field, index) => (
+                        {baseFields.map((field, index) => (
                           <TableRow key={field.id}>
                             <TableCell><FormField control={form.control} name={`bases.${index}.baseAmount`} render={({ field }) => (
                               <FormItem><FormControl><Input type="number" step="0.01" {...field}/></FormControl><FormMessage/></FormItem>
@@ -319,12 +349,12 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                               <FormItem><Select onValueChange={(v) => field.onChange(Number(v))} defaultValue={String(field.value)}><FormControl><SelectTrigger><SelectValue/></SelectTrigger></FormControl><SelectContent>{vatRates.map(r => <SelectItem key={r.label} value={String(r.value)}>{r.label}</SelectItem>)}</SelectContent></Select><FormMessage/></FormItem>
                             )}/></TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(watchedBases[index].baseAmount * watchedBases[index].vatRate)}</TableCell>
-                            <TableCell><Button type="button" variant="ghost" size="icon" onClick={() => remove(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
+                            <TableCell><Button type="button" variant="ghost" size="icon" onClick={() => removeBase(index)}><Trash2 className="h-4 w-4 text-destructive"/></Button></TableCell>
                           </TableRow>
                         ))}
                       </TableBody>
                     </Table>
-                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => append({ baseAmount: 0, vatRate: 0.21 })}>
+                    <Button type="button" variant="outline" size="sm" className="mt-4" onClick={() => appendBase({ baseAmount: 0, vatRate: 0.21 })}>
                       <PlusCircle className="mr-2 h-4 w-4"/> Añadir Base Imponible
                     </Button>
                   </CardContent>

@@ -277,7 +277,7 @@ export type Replanteo = {
 
 export type SupplierInvoice = {
   id: string;
-  purchaseOrderIds?: string[]; // Ahora es un array
+  purchaseOrderIds: string[]; // Ahora es un array
   deliveryNoteId?: string;
   invoiceNumber: string;
   supplierId: string;
