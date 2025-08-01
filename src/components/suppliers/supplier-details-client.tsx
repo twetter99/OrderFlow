@@ -19,26 +19,51 @@ import { Input } from "@/components/ui/input";
 import { DateRange } from "react-day-picker";
 import { addDays, format, subDays } from "date-fns";
 import { es } from "date-fns/locale";
-import { Download, Calendar as CalendarIcon, History, Contact, Mail, Phone } from "lucide-react";
+import { Download, Calendar as CalendarIcon, History, Contact, Mail, Phone, Eye, MoreHorizontal } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import type { PurchaseOrder, Supplier } from "@/lib/types";
+import type { PurchaseOrder, Supplier, InventoryItem, Project, Location, User } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { PurchasingForm } from "@/components/purchasing/purchasing-form";
+import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
+
 
 interface SupplierDetailsClientProps {
   supplier: Supplier;
   initialPurchaseOrders: PurchaseOrder[];
+  inventoryItems: InventoryItem[];
+  projects: Project[];
+  locations: Location[];
+  users: User[];
+  allSuppliers: Supplier[];
 }
 
 const ALL_STATUSES: PurchaseOrder['status'][] = ["Pendiente de Aprobación", "Aprobada", "Enviada al Proveedor", "Recibida", "Recibida Parcialmente", "Rechazado"];
 
-export function SupplierDetailsClient({ supplier, initialPurchaseOrders }: SupplierDetailsClientProps) {
+export function SupplierDetailsClient({ supplier, initialPurchaseOrders, inventoryItems, projects, locations, users, allSuppliers }: SupplierDetailsClientProps) {
   const [filters, setFilters] = useState({
     orderNumber: "",
     status: "all",
     date: undefined as DateRange | undefined,
   });
+
+  const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
 
   const filteredOrders = useMemo(() => {
     return initialPurchaseOrders.filter((order) => {
@@ -58,6 +83,16 @@ export function SupplierDetailsClient({ supplier, initialPurchaseOrders }: Suppl
 
   const handleFilterChange = (filterName: keyof typeof filters, value: any) => {
     setFilters((prev) => ({ ...prev, [filterName]: value }));
+  };
+  
+  const handleDetailsClick = (order: PurchaseOrder) => {
+    setSelectedOrder(order);
+    setIsDetailsModalOpen(true);
+  }
+
+  const handleHistoryClick = (order: PurchaseOrder) => {
+    setSelectedOrder(order);
+    setIsHistoryModalOpen(true);
   };
 
   const clearFilters = () => {
@@ -186,6 +221,7 @@ export function SupplierDetailsClient({ supplier, initialPurchaseOrders }: Suppl
                             <TableHead>Fecha</TableHead>
                             <TableHead>Estado</TableHead>
                             <TableHead className="text-right">Total</TableHead>
+                            <TableHead className="text-right">Acciones</TableHead>
                         </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -195,11 +231,31 @@ export function SupplierDetailsClient({ supplier, initialPurchaseOrders }: Suppl
                             <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                             <TableCell><Badge variant="outline">{order.status}</Badge></TableCell>
                             <TableCell className="text-right font-medium">{formatCurrency(order.total)}</TableCell>
+                            <TableCell className="text-right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                        <span className="sr-only">Abrir menú</span>
+                                        <MoreHorizontal className="h-4 w-4" />
+                                    </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem onClick={() => handleDetailsClick(order)}>
+                                            <Eye className="mr-2 h-4 w-4" />
+                                            Ver Detalles
+                                        </DropdownMenuItem>
+                                         <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
+                                            <History className="mr-2 h-4 w-4" />
+                                            Trazabilidad
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </TableCell>
                             </TableRow>
                         ))}
                         {filteredOrders.length === 0 && (
                             <TableRow>
-                                <TableCell colSpan={4} className="text-center h-24">No se encontraron órdenes con los filtros actuales.</TableCell>
+                                <TableCell colSpan={5} className="text-center h-24">No se encontraron órdenes con los filtros actuales.</TableCell>
                             </TableRow>
                         )}
                         </TableBody>
@@ -246,6 +302,42 @@ export function SupplierDetailsClient({ supplier, initialPurchaseOrders }: Suppl
             </Card>
         </TabsContent>
       </Tabs>
+      
+      <Dialog open={isDetailsModalOpen} onOpenChange={(isOpen) => {
+        setIsDetailsModalOpen(isOpen);
+        if (!isOpen) setSelectedOrder(null);
+      }}>
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Pedido {selectedOrder?.orderNumber}</DialogTitle>
+            <DialogDescription>
+              Información completa de la orden de compra.
+            </DialogDescription>
+          </DialogHeader>
+          <PurchasingForm
+            order={selectedOrder}
+            onSave={() => {}} // No-op, es solo vista
+            onCancel={() => setIsDetailsModalOpen(false)}
+            suppliers={allSuppliers}
+            recentSupplierIds={[]}
+            inventoryItems={inventoryItems}
+            projects={projects}
+            locations={locations}
+          />
+        </DialogContent>
+      </Dialog>
+      
+       <Dialog open={isHistoryModalOpen} onOpenChange={setIsHistoryModalOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Trazabilidad del Pedido {selectedOrder?.orderNumber}</DialogTitle>
+                <DialogDescription>
+                    Historial de todos los cambios de estado para este pedido.
+                </DialogDescription>
+            </DialogHeader>
+            {selectedOrder && <OrderStatusHistory history={selectedOrder.statusHistory || []} />}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
