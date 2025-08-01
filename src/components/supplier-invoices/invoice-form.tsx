@@ -35,6 +35,7 @@ import { ScrollArea } from "../ui/scroll-area";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { MultiSelect } from "../ui/multi-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
+import { SupplierCombobox } from "../inventory/supplier-combobox";
 
 
 const vatRates = [
@@ -195,21 +196,22 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-2 space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <FormField
+                    <FormField
                         control={form.control}
                         name="supplierId"
                         render={({ field }) => (
                             <FormItem>
                             <FormLabel>Proveedor</FormLabel>
-                                <Select onValueChange={(value) => {
-                                  field.onChange(value);
-                                  form.setValue("purchaseOrderIds", []);
-                                }}>
-                                  <FormControl><SelectTrigger><SelectValue placeholder="Selecciona un proveedor..." /></SelectTrigger></FormControl>
-                                  <SelectContent>
-                                    {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                                  </SelectContent>
-                                </Select>
+                                <SupplierCombobox
+                                    suppliers={suppliers}
+                                    recentSupplierIds={[]}
+                                    value={supplierName}
+                                    onChange={(supplierName, supplierId) => {
+                                        field.onChange(supplierId);
+                                        form.setValue("purchaseOrderIds", []);
+                                    }}
+                                    onAddNew={() => {}}
+                                />
                             <FormMessage />
                             </FormItem>
                         )}
@@ -223,7 +225,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                                 Pedido de Compra Asociado*
                                 <TooltipProvider><Tooltip>
                                         <TooltipTrigger asChild><button type="button" tabIndex={-1}><Info className="h-3 w-3 text-muted-foreground cursor-help"/></button></TooltipTrigger>
-                                        <TooltipContent><p>Una factura puede estar asociada a una o varias órdenes de compra.</p></TooltipContent>
+                                        <TooltipContent><p>No se puede registrar ninguna factura de proveedor si no está asociada a un pedido de compra previamente aprobado.</p></TooltipContent>
                                 </Tooltip></TooltipProvider>
                             </FormLabel>
                              <MultiSelect
