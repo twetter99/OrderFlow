@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
-import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro } from "lucide-react";
+import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro, Info } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -33,6 +33,8 @@ import React, { useMemo } from "react";
 import { Textarea } from "../ui/textarea";
 import { SupplierCombobox } from "../inventory/supplier-combobox";
 import { ScrollArea } from "../ui/scroll-area";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
+
 
 const vatRates = [
   { label: 'General (21%)', value: 0.21 },
@@ -43,7 +45,7 @@ const vatRates = [
 
 const formSchema = z.object({
   supplierId: z.string().min(1, "Debes seleccionar un proveedor."),
-  purchaseOrderId: z.string().optional(),
+  purchaseOrderId: z.string().min(1, "Para registrar una factura de proveedor, es obligatorio asociar un Pedido de Compra aprobado. No se admiten facturas sin orden de compra."),
   invoiceNumber: z.string().min(1, "El número de factura es obligatorio."),
   emissionDate: z.date({ required_error: "La fecha de factura es obligatoria." }),
   dueDate: z.date({ required_error: "La fecha de vencimiento es obligatoria." }),
@@ -124,11 +126,13 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const defaultValues: Partial<InvoiceFormValues> = invoice
     ? { 
         ...invoice,
+        purchaseOrderId: invoice.purchaseOrderId || "",
         emissionDate: new Date(invoice.emissionDate as string),
         dueDate: new Date(invoice.dueDate as string),
       }
     : {
         supplierId: "",
+        purchaseOrderId: "",
         invoiceNumber: "",
         emissionDate: new Date(),
         dueDate: new Date(),
@@ -183,9 +187,9 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="grid grid-cols-1 md:grid-cols-5 gap-6">
         <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-2">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6 md:col-span-3">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <FormField
                     control={form.control}
@@ -199,6 +203,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                                 value={supplierName}
                                 onChange={(supplierName, supplierId) => {
                                     field.onChange(supplierId);
+                                    form.setValue("purchaseOrderId", ""); // Reset PO on supplier change
                                 }}
                                 onAddNew={() => {}}
                             />
@@ -211,7 +216,19 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                     name="purchaseOrderId"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel>Pedido de Compra Asociado (Opcional)</FormLabel>
+                         <FormLabel className="flex items-center gap-1">
+                            Pedido de Compra Asociado*
+                            <TooltipProvider>
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <Info className="h-3 w-3 text-muted-foreground cursor-help"/>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                        <p>No se puede registrar ninguna factura de proveedor si no está<br/>asociada a un pedido de compra previamente aprobado.</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            </TooltipProvider>
+                        </FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value} disabled={!selectedSupplierId}>
                             <FormControl>
                             <SelectTrigger><SelectValue placeholder="Asocia un pedido..." /></SelectTrigger>
@@ -371,10 +388,12 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         </form>
         </Form>
          {selectedOrderForPreview && (
-            <div className="hidden md:block md:col-span-1">
+            <div className="hidden md:block md:col-span-2">
                <OrderPreviewCard order={selectedOrderForPreview} project={selectedProjectForPreview || undefined} />
             </div>
         )}
     </div>
   );
 }
+
+    
