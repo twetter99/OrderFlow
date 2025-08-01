@@ -30,6 +30,7 @@ import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import React, { useEffect, useMemo } from "react";
 import { Textarea } from "../ui/textarea";
+import { SupplierCombobox } from "../inventory/supplier-combobox";
 
 const vatRates = [
   { label: 'General (21%)', value: 0.21 },
@@ -113,6 +114,8 @@ export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCanc
     onSave(finalValues);
   }
   
+  const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -123,14 +126,15 @@ export function InvoiceForm({ invoice, suppliers, purchaseOrders, onSave, onCanc
                 render={({ field }) => (
                     <FormItem>
                     <FormLabel>Proveedor</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                        <FormControl>
-                        <SelectTrigger><SelectValue placeholder="Selecciona un proveedor" /></SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                        {suppliers.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
-                        </SelectContent>
-                    </Select>
+                        <SupplierCombobox 
+                            suppliers={suppliers}
+                            recentSupplierIds={[]}
+                            value={supplierName}
+                            onChange={(supplierName, supplierId) => {
+                                field.onChange(supplierId);
+                            }}
+                            onAddNew={() => {}}
+                        />
                     <FormMessage />
                     </FormItem>
                 )}
