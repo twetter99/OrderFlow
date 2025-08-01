@@ -178,8 +178,20 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const selectedPOFields = useWatch({ control: form.control, name: 'purchaseOrderIds' });
   const watchedBases = useWatch({ control: form.control, name: 'bases' });
 
-  const vatAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + ((item.baseAmount || 0) * (item.vatRate || 0)), 0), [watchedBases]);
-  const totalAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + (item.baseAmount || 0) + ((item.baseAmount || 0) * (item.vatRate || 0)), 0), [watchedBases]);
+  const vatAmount = useMemo(() =>
+    (watchedBases || []).reduce((acc, item) => {
+        const base = Number(item.baseAmount) || 0;
+        const rate = Number(item.vatRate) || 0;
+        return acc + (base * rate);
+    }, 0), [watchedBases]);
+
+  const totalAmount = useMemo(() =>
+      (watchedBases || []).reduce((acc, item) => {
+          const base = Number(item.baseAmount) || 0;
+          const rate = Number(item.vatRate) || 0;
+          const vat = base * rate;
+          return acc + base + vat;
+      }, 0), [watchedBases]);
   
   const filteredPurchaseOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
