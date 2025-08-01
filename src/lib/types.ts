@@ -289,6 +289,8 @@ export type SupplierInvoice = {
   status: 'Pendiente de validar' | 'Validada' | 'Disputada' | 'Pendiente de pago' | 'Pagada';
   attachment?: DeliveryNoteAttachment;
   notes?: string;
+  totalAmountDifference?: number;
+  differenceJustification?: string;
 };
 
 export type Payment = {

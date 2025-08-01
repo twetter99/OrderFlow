@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -22,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
-import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro, Info, Trash2, PlusCircle } from "lucide-react";
+import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro, Info, Trash2, PlusCircle, AlertTriangle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -61,6 +62,7 @@ const formSchema = z.object({
   status: z.enum(['Pendiente de validar', 'Validada', 'Disputada', 'Pendiente de pago', 'Pagada']),
   notes: z.string().optional(),
   attachment: z.any().optional(),
+  differenceJustification: z.string().optional(),
 }).refine((data) => {
     const poIds = data.purchaseOrderIds.map(item => item.poId);
     return new Set(poIds).size === poIds.length;
@@ -143,10 +145,11 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const defaultValues: Partial<InvoiceFormValues> = invoice
     ? { 
         ...invoice,
-        purchaseOrderIds: invoice.purchaseOrderIds?.map(id => ({ poId: id })) || [{ poId: '' }],
+        purchaseOrderIds: (invoice.purchaseOrderIds || []).map(id => ({ poId: id })),
         emissionDate: new Date(invoice.emissionDate as string),
         dueDate: new Date(invoice.dueDate as string),
-        bases: invoice.bases || [{ baseAmount: 0, vatRate: 0.21 }]
+        bases: invoice.bases || [{ baseAmount: 0, vatRate: 0.21 }],
+        differenceJustification: invoice.differenceJustification || "",
       }
     : {
         supplierId: "",
@@ -157,6 +160,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         bases: [{ baseAmount: 0, vatRate: 0.21 }],
         status: "Pendiente de validar",
         notes: "",
+        differenceJustification: "",
       };
 
   const form = useForm<InvoiceFormValues>({
@@ -174,8 +178,8 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const selectedPOFields = useWatch({ control: form.control, name: 'purchaseOrderIds' });
   const watchedBases = useWatch({ control: form.control, name: 'bases' });
 
-  const vatAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + (item.baseAmount * item.vatRate), 0), [watchedBases]);
-  const totalAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + item.baseAmount + (item.baseAmount * item.vatRate), 0), [watchedBases]);
+  const vatAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + ((item.baseAmount || 0) * (item.vatRate || 0)), 0), [watchedBases]);
+  const totalAmount = useMemo(() => (watchedBases || []).reduce((acc, item) => acc + (item.baseAmount || 0) + ((item.baseAmount || 0) * (item.vatRate || 0)), 0), [watchedBases]);
   
   const filteredPurchaseOrders = useMemo(() => {
     if (!selectedSupplierId) return [];
@@ -186,12 +190,30 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
     );
   }, [selectedSupplierId, purchaseOrders, suppliers]);
   
-  const selectedOrdersForPreview = useMemo(() => {
-    if (!selectedPOFields || selectedPOFields.length === 0) return [];
-    return selectedPOFields
+  const { selectedOrdersForPreview, poTotalAmount, isDifference, differenceAmount } = useMemo(() => {
+    if (!selectedPOFields || selectedPOFields.length === 0) return { selectedOrdersForPreview: [], poTotalAmount: 0, isDifference: false, differenceAmount: 0 };
+    
+    const selectedOrders = selectedPOFields
       .map(field => purchaseOrders.find(po => po.id === field.poId))
       .filter(Boolean);
-  }, [selectedPOFields, purchaseOrders]);
+    
+    const poTotal = selectedOrders.reduce((acc, order) => acc + (order?.total || 0), 0);
+    const diff = totalAmount - poTotal;
+    
+    return {
+      selectedOrdersForPreview: selectedOrders,
+      poTotalAmount: poTotal,
+      isDifference: Math.abs(diff) > 1, // Umbral de 1€ para considerar diferencia
+      differenceAmount: diff
+    };
+  }, [selectedPOFields, purchaseOrders, totalAmount]);
+  
+  const canSave = useMemo(() => {
+    if(isDifference) {
+      return !!form.getValues('differenceJustification');
+    }
+    return true;
+  }, [isDifference, form.watch('differenceJustification')]);
 
   function onSubmit(values: InvoiceFormValues) {
     const finalValues = {
@@ -204,9 +226,9 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
   const supplierName = suppliers.find(s => s.id === selectedSupplierId)?.name || '';
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-5 gap-8">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-3 space-y-6">
+            <form onSubmit={form.handleSubmit(onSubmit)} className="md:col-span-2 space-y-6">
                 
                 <div className="space-y-4">
                     <FormField
@@ -361,32 +383,46 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                     </CardContent>
                     </Card>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                        <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
-                            <p className="text-sm text-muted-foreground">Importe IVA</p>
-                            <p className="font-bold text-lg">{formatCurrency(vatAmount)}</p>
-                        </div>
-                        <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
-                            <p className="text-sm text-muted-foreground">Importe Total</p>
-                            <p className="font-bold text-lg">{formatCurrency(totalAmount)}</p>
-                        </div>
-                    </div>
+                    <Card>
+                        <CardHeader><CardTitle className="text-base">Control Financiero</CardTitle></CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
+                                    <p className="text-sm text-muted-foreground">Total Pedido(s)</p>
+                                    <p className="font-bold text-lg">{formatCurrency(poTotalAmount)}</p>
+                                </div>
+                                 <div className="p-2 border rounded-md bg-muted/50 h-16 flex flex-col justify-center">
+                                    <p className="text-sm text-muted-foreground">Total Factura</p>
+                                    <p className="font-bold text-lg">{formatCurrency(totalAmount)}</p>
+                                </div>
+                                <div className={cn("p-2 border rounded-md h-16 flex flex-col justify-center", isDifference ? "bg-destructive/10 border-destructive" : "bg-green-500/10 border-green-500")}>
+                                    <p className="text-sm">Diferencia</p>
+                                    <p className="font-bold text-lg">{formatCurrency(differenceAmount)}</p>
+                                </div>
+                            </div>
+                            {isDifference && (
+                                <div className="p-3 border-l-4 border-destructive bg-destructive/5 text-destructive-foreground/90 space-y-2">
+                                    <div className="flex items-center gap-2 font-semibold">
+                                        <AlertTriangle className="h-5 w-5"/>
+                                        <span>Atención: Descuadre Detectado</span>
+                                    </div>
+                                    <p className="text-sm">Existe una diferencia de {formatCurrency(Math.abs(differenceAmount))} entre la factura y el/los pedido(s) asociado(s).</p>
+                                    <FormField
+                                        control={form.control}
+                                        name="differenceJustification"
+                                        render={({ field }) => (
+                                            <FormItem>
+                                                <FormLabel className="text-sm">Justificación del descuadre (obligatorio)</FormLabel>
+                                                <FormControl><Textarea placeholder="Ej: Costes de transporte no incluidos en el pedido original..." {...field} /></FormControl>
+                                                <FormMessage />
+                                            </FormItem>
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
 
-                     <div className="grid grid-cols-1">
-                        <FormField control={form.control} name="attachment" render={({ field }) => (
-                            <FormItem>
-                                <FormLabel>Adjuntar Factura</FormLabel>
-                                <FormControl>
-                                    <Button type="button" variant="outline" className="w-full justify-start text-left font-normal" disabled>
-                                        <FileUp className="mr-2 h-4 w-4" />
-                                        <span className="truncate">Subir PDF o imagen...</span>
-                                    </Button>
-                                </FormControl>
-                                <FormMessage />
-                            </FormItem>
-                        )}/>
-                    </div>
-                    
                     <FormField control={form.control} name="notes" render={({ field }) => (
                         <FormItem>
                         <FormLabel>Notas Adicionales</FormLabel>
@@ -397,12 +433,12 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit">Guardar Factura</Button>
+                        <Button type="submit" disabled={!canSave}>Guardar Factura</Button>
                     </div>
                 </div>
             </form>
         </Form>
-        <div className="hidden md:block md:col-span-2">
+        <div className="hidden md:block">
             <OrderPreviewCard orders={selectedOrdersForPreview || []} projects={projects} />
         </div>
     </div>
