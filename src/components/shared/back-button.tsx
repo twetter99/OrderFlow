@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function BackButton() {
   const router = useRouter();
@@ -23,13 +24,24 @@ export function BackButton() {
   }
 
   return (
-    <Button
-      variant="outline"
-      size="icon"
-      onClick={() => router.back()}
-    >
-      <ArrowLeft className="h-4 w-4" />
-      <span className="sr-only">Volver</span>
-    </Button>
+    <TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="secondary"
+            size="default"
+            onClick={() => router.back()}
+            className="flex items-center gap-2"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            <span className="hidden md:inline">Volver</span>
+            <span className="sr-only">Volver a la página anterior</span>
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>
+          <p>Volver a la página anterior</p>
+        </TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
