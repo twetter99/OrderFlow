@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -32,7 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { MoreHorizontal, PlusCircle, Edit, Trash2 } from "lucide-react";
-import type { SupplierInvoice, Supplier, PurchaseOrder } from "@/lib/types";
+import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -46,6 +47,7 @@ export default function SupplierInvoicesPage() {
   const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
@@ -55,7 +57,7 @@ export default function SupplierInvoicesPage() {
   useEffect(() => {
     const unsubInvoices = onSnapshot(collection(db, "supplierInvoices"), (snapshot) => {
       setInvoices(snapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as SupplierInvoice));
-      setLoading(false);
+      if(loading) setLoading(false);
     });
     const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => {
       setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)));
@@ -63,15 +65,20 @@ export default function SupplierInvoicesPage() {
     const unsubPOs = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
       setPurchaseOrders(snapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as PurchaseOrder));
     });
+    const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
+      setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
+    });
 
     return () => {
       unsubInvoices();
       unsubSuppliers();
       unsubPOs();
+      unsubProjects();
     };
-  }, []);
+  }, [loading]);
 
   const enrichedInvoices = useMemo(() => {
+    if (loading) return [];
     return invoices.map(invoice => {
         const supplier = suppliers.find(s => s.id === invoice.supplierId);
         return {
@@ -82,7 +89,7 @@ export default function SupplierInvoicesPage() {
         invoice.supplierName.toLowerCase().includes(filter.toLowerCase()) ||
         invoice.invoiceNumber.toLowerCase().includes(filter.toLowerCase())
     );
-  }, [invoices, filter, suppliers]);
+  }, [invoices, filter, suppliers, loading]);
   
   const handleAddClick = () => {
     setSelectedInvoice(null);
@@ -242,7 +249,8 @@ export default function SupplierInvoicesPage() {
           <InvoiceForm
             invoice={selectedInvoice}
             suppliers={suppliers}
-            purchaseOrders={purchaseOrders}
+            purchaseOrders={purchaseOrders || []}
+            projects={projects || []}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
