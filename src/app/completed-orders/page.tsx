@@ -36,7 +36,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import type { PurchaseOrder, Supplier, Project, Location } from "@/lib/types";
+import type { PurchaseOrder, Supplier, Project, Location, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -45,6 +45,7 @@ import { collection, onSnapshot } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 
 
 type SortDescriptor = {
@@ -58,6 +59,7 @@ export default function CompletedOrdersPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -67,6 +69,7 @@ export default function CompletedOrdersPage() {
   });
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
@@ -83,12 +86,14 @@ export default function CompletedOrdersPage() {
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
     const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier))));
     const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location))));
+    const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
 
     return () => {
         unsubPO();
         unsubProjects();
         unsubSuppliers();
         unsubLocations();
+        unsubInventory();
     };
   }, []);
 
@@ -137,6 +142,11 @@ export default function CompletedOrdersPage() {
     setSelectedOrder(order);
     setIsHistoryModalOpen(true);
   };
+  
+  const handleDetailsClick = (order: PurchaseOrder) => {
+    setSelectedOrder(order);
+    setIsDetailsModalOpen(true);
+  }
 
   const handlePrintClick = (order: PurchaseOrder) => {
     const projectDetails = projects.find(p => p.id === order.project);
@@ -260,6 +270,10 @@ export default function CompletedOrdersPage() {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Acciones</DropdownMenuLabel>
                           <DropdownMenuSeparator />
+                           <DropdownMenuItem onClick={() => handleDetailsClick(order)}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Ver Detalles
+                            </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleHistoryClick(order)}>
                             <History className="mr-2 h-4 w-4"/>
                             Ver Trazabilidad
@@ -300,10 +314,30 @@ export default function CompletedOrdersPage() {
             {selectedOrder && <OrderStatusHistory history={selectedOrder.statusHistory || []} />}
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isDetailsModalOpen} onOpenChange={(isOpen) => {
+        setIsDetailsModalOpen(isOpen);
+        if (!isOpen) setSelectedOrder(null);
+      }}>
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Detalles del Pedido {selectedOrder?.orderNumber}</DialogTitle>
+            <DialogDescription>
+              Información completa de la orden de compra archivada.
+            </DialogDescription>
+          </DialogHeader>
+          <PurchasingForm
+            order={selectedOrder}
+            onSave={() => {}} // No-op, es solo vista
+            onCancel={() => setIsDetailsModalOpen(false)}
+            suppliers={suppliers}
+            recentSupplierIds={[]}
+            inventoryItems={inventory}
+            projects={projects}
+            locations={locations}
+          />
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
-
-    
-
-    
