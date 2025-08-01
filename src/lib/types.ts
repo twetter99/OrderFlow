@@ -290,7 +290,6 @@ export type SupplierInvoice = {
   attachment?: DeliveryNoteAttachment;
   notes?: string;
   totalAmountDifference?: number;
-  differenceJustification?: string;
 };
 
 export type Payment = {

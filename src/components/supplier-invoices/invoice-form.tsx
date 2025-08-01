@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
-import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro, Info, Trash2, PlusCircle, AlertTriangle } from "lucide-react";
+import { CalendarIcon, FileUp, Package, Tag, Building, CalendarDays, Euro, Info, Trash2, PlusCircle } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
 import { Calendar } from "../ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -62,7 +62,6 @@ const formSchema = z.object({
   status: z.enum(['Pendiente de validar', 'Validada', 'Disputada', 'Pendiente de pago', 'Pagada']),
   notes: z.string().optional(),
   attachment: z.any().optional(),
-  differenceJustification: z.string().optional(),
 }).refine((data) => {
     const poIds = data.purchaseOrderIds.map(item => item.poId);
     return new Set(poIds).size === poIds.length;
@@ -93,7 +92,7 @@ function OrderPreviewCard({ orders, projects, className }: { orders: (PurchaseOr
     const project = projects?.find(p => p.id === firstOrder?.project);
     
     return (
-        <Card className={cn("sticky top-4 min-w-[380px]", className)}>
+        <Card className={cn("sticky top-4", className)}>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-lg">
                     <Tag className="h-5 w-5 text-primary"/>
@@ -149,7 +148,6 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         emissionDate: new Date(invoice.emissionDate as string),
         dueDate: new Date(invoice.dueDate as string),
         bases: invoice.bases || [{ baseAmount: 0, vatRate: 0.21 }],
-        differenceJustification: invoice.differenceJustification || "",
       }
     : {
         supplierId: "",
@@ -160,7 +158,6 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
         bases: [{ baseAmount: 0, vatRate: 0.21 }],
         status: "Pendiente de validar",
         notes: "",
-        differenceJustification: "",
       };
 
   const form = useForm<InvoiceFormValues>({
@@ -220,17 +217,12 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
     };
   }, [selectedPOFields, purchaseOrders, totalAmount]);
   
-  const canSave = useMemo(() => {
-    if(isDifference) {
-      return !!form.getValues('differenceJustification');
-    }
-    return true;
-  }, [isDifference, form.watch('differenceJustification')]);
 
   function onSubmit(values: InvoiceFormValues) {
     const finalValues = {
         ...values,
-        purchaseOrderIds: values.purchaseOrderIds.map(item => item.poId)
+        purchaseOrderIds: values.purchaseOrderIds.map(item => item.poId),
+        totalAmountDifference: differenceAmount
     };
     onSave(finalValues);
   }
@@ -412,26 +404,6 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
                                     <p className="font-bold text-lg">{formatCurrency(differenceAmount)}</p>
                                 </div>
                             </div>
-                            {isDifference && (
-                                <div className="p-3 border-l-4 border-destructive bg-destructive/5 text-destructive-foreground/90 space-y-2">
-                                    <div className="flex items-center gap-2 font-semibold">
-                                        <AlertTriangle className="h-5 w-5"/>
-                                        <span>Atención: Descuadre Detectado</span>
-                                    </div>
-                                    <p className="text-sm">Existe una diferencia de {formatCurrency(Math.abs(differenceAmount))} entre la factura y el/los pedido(s) asociado(s).</p>
-                                    <FormField
-                                        control={form.control}
-                                        name="differenceJustification"
-                                        render={({ field }) => (
-                                            <FormItem>
-                                                <FormLabel className="text-sm">Justificación del descuadre (obligatorio)</FormLabel>
-                                                <FormControl><Textarea placeholder="Ej: Costes de transporte no incluidos en el pedido original..." {...field} /></FormControl>
-                                                <FormMessage />
-                                            </FormItem>
-                                        )}
-                                    />
-                                </div>
-                            )}
                         </CardContent>
                     </Card>
 
@@ -445,7 +417,7 @@ export function InvoiceForm({ invoice, suppliers, projects, purchaseOrders, onSa
 
                     <div className="flex justify-end gap-2 pt-4">
                         <Button type="button" variant="ghost" onClick={onCancel}>Cancelar</Button>
-                        <Button type="submit" disabled={!canSave}>Guardar Factura</Button>
+                        <Button type="submit">Guardar Factura</Button>
                     </div>
                 </div>
             </form>

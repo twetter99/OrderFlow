@@ -106,8 +106,16 @@ export default function SupplierInvoicesPage() {
     const { bases, ...rest } = values;
     
     // Calculate totals based on the array of bases
-    const vatAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => acc + (item.baseAmount * (item.vatRate || 0)), 0);
-    const totalAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => acc + item.baseAmount + (item.baseAmount * (item.vatRate || 0)), 0);
+    const vatAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => {
+        const base = Number(item.baseAmount) || 0;
+        const rate = Number(item.vatRate) || 0;
+        return acc + (base * rate);
+    }, 0);
+    const totalAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => {
+        const base = Number(item.baseAmount) || 0;
+        const rate = Number(item.vatRate) || 0;
+        return acc + base + (base * rate);
+    }, 0);
 
     const poTotal = (values.purchaseOrderIds || []).reduce((acc: number, poId: string) => {
         const order = purchaseOrders.find(po => po.id === poId);
@@ -122,7 +130,6 @@ export default function SupplierInvoicesPage() {
         vatAmount,
         totalAmount,
         totalAmountDifference: difference,
-        // La justificación ya viene en 'values' si es necesaria
     };
 
     try {
