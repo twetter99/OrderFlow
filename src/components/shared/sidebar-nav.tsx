@@ -47,7 +47,7 @@ const navGroups = [
     title: "OPERACIONES",
     items: [
       { 
-        label: "Proyectos", 
+        label: "Gestor de Proyectos", 
         icon: FolderKanban,
         subItems: [
             { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
@@ -69,24 +69,24 @@ const navGroups = [
     title: "GESTIÓN DE STOCK",
     items: [
       { 
-        label: "Gestión de Stock", 
+        label: "Control de Stock", 
         icon: Package,
         subItems: [
           { href: "/inventory", label: "Inventario", icon: Warehouse },
           { href: "/locations", label: "Almacenes", icon: Building2 },
-          { href: "/receptions", label: "Recepciones", icon: Anchor },
-          { href: "/despatches", label: "Despachos", icon: QrCode },
+          { href: "/receptions", label: "Recepción de Stock", icon: Anchor },
+          { href: "/despatches", label: "Salidas de Material", icon: QrCode },
         ]
       },
       {
         label: "Gestión de Proveedores",
         icon: ShoppingCart,
         subItems: [
-          { href: "/purchasing", label: "Compras", icon: ShoppingCart },
-          { href: "/completed-orders", label: "Órdenes Completadas", icon: Archive },
-          { href: "/suppliers", label: "Proveedores", icon: Truck },
-          { href: "/supplier-invoices", label: "Facturas Proveedor", icon: FileDigit },
-          { href: "/payments", label: "Vencimientos y Pagos", icon: Banknote },
+          { href: "/purchasing", label: "Órdenes de Compra", icon: ShoppingCart },
+          { href: "/completed-orders", label: "Órdenes Finalizadas", icon: Archive },
+          { href: "/suppliers", label: "Directorio de Proveedores", icon: Truck },
+          { href: "/supplier-invoices", label: "Gestión de Facturas", icon: FileDigit },
+          { href: "/payments", label: "Gestión de Pagos", icon: Banknote },
         ]
       }
     ]
@@ -113,14 +113,14 @@ const navGroups = [
         label: "Gestión General",
         icon: Settings,
         subItems: [
-          { href: "/dashboard", label: "Panel de Control", icon: LayoutDashboard },
-          { href: "/clients", label: "Clientes", icon: Building2 },
+          { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+          { href: "/clients", label: "Directorio de Clientes", icon: Building2 },
           { href: "/operadores", label: "Operadores", icon: Truck },
           { href: "/technicians", label: "Técnicos", icon: HardHat },
           { href: "/supervisores", label: "Supervisores", icon: ShieldCheck },
-          { href: "/users", label: "Usuarios y Permisos", icon: Users },
+          { href: "/users", label: "Gestión de Accesos", icon: Users },
           { href: "/approval-flows", label: "Flujos de Aprobación", icon: Network },
-          { href: "/settings", label: "Configuración App", icon: Settings },
+          { href: "/settings", label: "Configuración General", icon: Settings },
         ]
       }
     ]
