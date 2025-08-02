@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Anchor, Link2, UploadCloud, FileText, Loader2, CheckCircle, Info } from "lucide-react";
+import { Anchor, Link2, UploadCloud, FileText, Loader2, CheckCircle, Info, Trash2 } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -37,6 +37,7 @@ import { db } from "@/lib/firebase";
 import { createPurchaseOrder, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Tooltip, TooltipProvider, TooltipTrigger, TooltipContent } from "@/components/ui/tooltip";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const MAX_FILE_SIZE = 900 * 1024; // 900KB
 
@@ -173,6 +174,7 @@ export default function ReceptionsPage() {
   const [isChecklistOpen, setIsChecklistOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
   const [orderForAttachment, setOrderForAttachment] = useState<string | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
 
   useEffect(() => {
@@ -316,6 +318,22 @@ export default function ReceptionsPage() {
     }
   }
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(ordersToReceive.map(o => o.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   if (loading) {
     return <div>Cargando recepciones...</div>
   }
@@ -342,6 +360,13 @@ export default function ReceptionsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === ordersToReceive.length && ordersToReceive.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>ID de Orden</TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Fecha de Entrega Estimada</TableHead>
@@ -351,7 +376,14 @@ export default function ReceptionsPage() {
             </TableHeader>
             <TableBody>
               {ordersToReceive.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) && "selected"}>
+                  <TableCell>
+                     <Checkbox
+                      checked={selectedRowIds.includes(order.id)}
+                      onCheckedChange={() => handleRowSelect(order.id)}
+                      aria-label={`Seleccionar orden ${order.orderNumber}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">
                      <div className="flex items-center gap-2">
                         <span>{order.orderNumber}</span>
@@ -397,7 +429,7 @@ export default function ReceptionsPage() {
               ))}
                {ordersToReceive.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No hay pedidos de material pendientes de recibir.
                     </TableCell>
                 </TableRow>

@@ -52,6 +52,7 @@ import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, 
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function LocationsPage() {
   const { toast } = useToast();
@@ -69,6 +70,7 @@ export default function LocationsPage() {
   
   const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const [locationToDelete, setLocationToDelete] = useState<Location | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => {
@@ -129,37 +131,49 @@ export default function LocationsPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  const handleBulkDeleteClick = () => {
+    setLocationToDelete(null);
+    setIsDeleteDialogOpen(true);
+  };
+
   const confirmDelete = async () => {
-    if (!locationToDelete) return;
-    try {
-      // Check if location has stock
-      const hasStock = inventoryLocations.some(il => il.locationId === locationToDelete.id && il.quantity > 0);
-      if (hasStock) {
-        toast({
-          variant: "destructive",
-          title: "Error de eliminación",
-          description: "No se puede eliminar un almacén que contiene stock. Transfiere o elimina los artículos primero.",
-        });
-        setIsDeleteDialogOpen(false);
-        return;
-      }
-      
-      await deleteDoc(doc(db, "locations", locationToDelete.id));
-      toast({
-        variant: "destructive",
-        title: "Almacén eliminado",
-        description: `El almacén "${locationToDelete.name}" ha sido eliminado.`,
-      });
-    } catch (error) {
-      console.error("Error deleting location:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el almacén."
-      });
+    const batch = writeBatch(db);
+    const locationsToDelete = locationToDelete ? [locationToDelete] : enrichedLocations.filter(loc => selectedRowIds.includes(loc.id));
+
+    for (const loc of locationsToDelete) {
+        const hasStock = inventoryLocations.some(il => il.locationId === loc.id && il.quantity > 0);
+        if (hasStock) {
+            toast({
+                variant: "destructive",
+                title: "Error de eliminación",
+                description: `No se puede eliminar "${loc.name}" porque contiene stock. Transfiere los artículos primero.`,
+            });
+            setIsDeleteDialogOpen(false);
+            return;
+        }
+        const docRef = doc(db, "locations", loc.id);
+        batch.delete(docRef);
     }
+    
+    try {
+        await batch.commit();
+        toast({
+            variant: "destructive",
+            title: "Almacén(es) eliminado(s)",
+            description: `Se han eliminado ${locationsToDelete.length} almacén(es).`,
+        });
+    } catch (error) {
+        console.error("Error deleting location(s):", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudieron eliminar los almacenes."
+        });
+    }
+    
     setIsDeleteDialogOpen(false);
     setLocationToDelete(null);
+    setSelectedRowIds([]);
   };
 
   const handleSave = async (values: any) => {
@@ -233,6 +247,22 @@ export default function LocationsPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(enrichedLocations.map(l => l.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
 
@@ -245,24 +275,37 @@ export default function LocationsPage() {
             Gestiona las ubicaciones físicas y móviles de tu inventario.
           </p>
         </div>
-        <div className="flex gap-2">
-            <Button variant="outline" onClick={handleTransferClick}>
-                <Move className="mr-2 h-4 w-4" />
-                Realizar Transferencia
-            </Button>
-            <Button onClick={handleAddClick}>
-                <PlusCircle className="mr-2 h-4 w-4" />
-                Añadir Almacén
-            </Button>
-        </div>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Almacenes</CardTitle>
-          <CardDescription>
-            Busca y gestiona tus almacenes.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Listado de Almacenes</CardTitle>
+              <CardDescription>
+                Busca y gestiona tus almacenes.
+              </CardDescription>
+            </div>
+            <div className="flex gap-2">
+                {selectedRowIds.length > 0 ? (
+                  <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar ({selectedRowIds.length})
+                  </Button>
+                ) : (
+                  <>
+                    <Button variant="outline" onClick={handleTransferClick}>
+                        <Move className="mr-2 h-4 w-4" />
+                        Realizar Transferencia
+                    </Button>
+                    <Button onClick={handleAddClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Añadir Almacén
+                    </Button>
+                  </>
+                )}
+            </div>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -275,6 +318,13 @@ export default function LocationsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === enrichedLocations.length && enrichedLocations.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre del Almacén</TableHead>
                 <TableHead>Tipo</TableHead>
                 <TableHead>Nº Artículos Únicos</TableHead>
@@ -284,9 +334,16 @@ export default function LocationsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
               ) : enrichedLocations.map((loc) => (
-                <TableRow key={loc.id}>
+                <TableRow key={loc.id} data-state={selectedRowIds.includes(loc.id) && "selected"}>
+                   <TableCell>
+                    <Checkbox
+                      checked={selectedRowIds.includes(loc.id)}
+                      onCheckedChange={() => handleRowSelect(loc.id)}
+                      aria-label={`Seleccionar almacén ${loc.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{loc.name}</TableCell>
                   <TableCell>
                     <Badge variant={loc.type === 'physical' ? 'secondary' : 'outline'}>
@@ -330,7 +387,7 @@ export default function LocationsPage() {
               ))}
               {!loading && enrichedLocations.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se encontraron almacenes.
                     </TableCell>
                 </TableRow>
@@ -374,7 +431,7 @@ export default function LocationsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el almacén "{locationToDelete?.name}".
+              Esta acción no se puede deshacer. {locationToDelete ? `Se eliminará permanentemente el almacén "${locationToDelete.name}".` : `Se eliminarán los ${selectedRowIds.length} almacenes seleccionados.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

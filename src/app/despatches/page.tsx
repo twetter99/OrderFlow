@@ -50,6 +50,7 @@ import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, query, where, getDocs, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function DespatchesPage() {
   const { toast } = useToast();
@@ -68,6 +69,7 @@ export default function DespatchesPage() {
   
   const [selectedNote, setSelectedNote] = useState<DeliveryNote | null>(null);
   const [noteToDelete, setNoteToDelete] = useState<DeliveryNote | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubNotes = onSnapshot(collection(db, "deliveryNotes"), (snapshot) => {
@@ -112,6 +114,48 @@ export default function DespatchesPage() {
   
   const handlePrintClick = (note: DeliveryNote) => {
     window.open(`/despatches/${note.id}/print`, '_blank');
+  };
+
+  const handleDeleteTrigger = (note: DeliveryNote) => {
+    setNoteToDelete(note);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
+    setNoteToDelete(null);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    const batch = writeBatch(db);
+    const notesToDelete = noteToDelete ? [noteToDelete] : enrichedDeliveryNotes.filter(n => selectedRowIds.includes(n.id));
+
+    if (notesToDelete.length === 0) return;
+
+    notesToDelete.forEach(note => {
+        const docRef = doc(db, "deliveryNotes", note.id);
+        batch.delete(docRef);
+    });
+
+    try {
+        await batch.commit();
+        toast({
+            variant: "destructive",
+            title: "Albarán(es) eliminado(s)",
+            description: `Se han eliminado ${notesToDelete.length} albarán(es).`,
+        });
+    } catch (error) {
+        console.error("Error deleting despatch note(s):", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudieron eliminar los albaranes."
+        });
+    }
+    
+    setIsDeleteDialogOpen(false);
+    setNoteToDelete(null);
+    setSelectedRowIds([]);
   };
 
   const handleSave = async (values: any) => {
@@ -183,6 +227,22 @@ export default function DespatchesPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(enrichedDeliveryNotes.map(n => n.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -192,18 +252,29 @@ export default function DespatchesPage() {
             Crea y gestiona los albaranes de salida de material para proyectos.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Crear Albarán
-        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Albaranes</CardTitle>
-          <CardDescription>
-            Busca y gestiona los despachos de material.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Listado de Albaranes</CardTitle>
+              <CardDescription>
+                Busca y gestiona los despachos de material.
+              </CardDescription>
+            </div>
+             {selectedRowIds.length > 0 ? (
+                <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar ({selectedRowIds.length})
+                </Button>
+            ) : (
+                <Button onClick={handleAddClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Crear Albarán
+                </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -216,6 +287,13 @@ export default function DespatchesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === enrichedDeliveryNotes.length && enrichedDeliveryNotes.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Albarán ID</TableHead>
                 <TableHead>Fecha</TableHead>
                 <TableHead>Cliente</TableHead>
@@ -226,9 +304,16 @@ export default function DespatchesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
               ) : enrichedDeliveryNotes.map((note) => (
-                <TableRow key={note.id}>
+                <TableRow key={note.id} data-state={selectedRowIds.includes(note.id) && "selected"}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRowIds.includes(note.id)}
+                      onCheckedChange={() => handleRowSelect(note.id)}
+                      aria-label={`Seleccionar albarán ${note.id}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono">{note.id}</TableCell>
                   <TableCell>{note.date ? new Date((note.date as any).seconds * 1000).toLocaleDateString() : 'N/A'}</TableCell>
                   <TableCell>{note.clientName}</TableCell>
@@ -239,16 +324,35 @@ export default function DespatchesPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="outline" size="sm" onClick={() => handlePrintClick(note)}>
-                        <Printer className="mr-2 h-4 w-4"/>
-                        Imprimir
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" className="h-8 w-8 p-0">
+                          <span className="sr-only">Abrir menú</span>
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Acciones</DropdownMenuLabel>
+                        <DropdownMenuItem onClick={() => handlePrintClick(note)}>
+                            <Printer className="mr-2 h-4 w-4"/>
+                            Imprimir
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem
+                          className="text-red-600"
+                          onClick={() => handleDeleteTrigger(note)}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Eliminar
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
               ))}
               {!loading && enrichedDeliveryNotes.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No se encontraron albaranes.
                     </TableCell>
                 </TableRow>
@@ -275,6 +379,22 @@ export default function DespatchesPage() {
           />
         </DialogContent>
       </Dialog>
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+               Esta acción no se puede deshacer. Se eliminará permanentemente {noteToDelete ? ` el albarán "${noteToDelete.id}".` : `los ${selectedRowIds.length} albaranes seleccionados.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
