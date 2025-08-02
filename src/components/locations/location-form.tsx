@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -16,10 +15,9 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import type { Location } from "@/lib/types";
+import type { Location, Technician } from "@/lib/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card";
-import { technicians } from "@/lib/data";
 
 
 const formSchema = z.object({
@@ -46,11 +44,12 @@ type LocationFormValues = z.infer<typeof formSchema>;
 
 interface LocationFormProps {
   location?: Location | null;
+  technicians: Technician[];
   onSave: (values: LocationFormValues) => void;
   onCancel: () => void;
 }
 
-export function LocationForm({ location, onSave, onCancel }: LocationFormProps) {
+export function LocationForm({ location, technicians, onSave, onCancel }: LocationFormProps) {
   const defaultValues = location
     ? { ...location }
     : {

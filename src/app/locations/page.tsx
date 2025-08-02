@@ -46,7 +46,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { LocationForm } from "@/components/locations/location-form";
 import { TransferForm } from "@/components/inventory-locations/transfer-form";
-import type { Location, InventoryLocation, InventoryItem } from "@/lib/types";
+import type { Location, InventoryLocation, InventoryItem, Technician } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch, query, where, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -58,6 +58,7 @@ export default function LocationsPage() {
   const [locations, setLocations] = useState<Location[]>([]);
   const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
   
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
@@ -80,11 +81,15 @@ export default function LocationsPage() {
      const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
       setInventoryItems(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
     });
+    const unsubTechnicians = onSnapshot(collection(db, "technicians"), (snapshot) => {
+        setTechnicians(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician)))
+    });
 
     return () => {
         unsubLocations();
         unsubInvLocations();
         unsubInventory();
+        unsubTechnicians();
     };
   }, []);
 
@@ -342,6 +347,7 @@ export default function LocationsPage() {
           </DialogHeader>
           <LocationForm 
             location={selectedLocation}
+            technicians={technicians}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />
