@@ -46,10 +46,11 @@ import {
 import { SupplierForm } from "@/components/suppliers/supplier-form";
 import type { Supplier } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import Link from "next/link";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function SuppliersPage() {
   const { toast } = useToast();
@@ -62,6 +63,7 @@ export default function SuppliersPage() {
   
   const [selectedSupplier, setSelectedSupplier] = useState<Supplier | null>(null);
   const [supplierToDelete, setSupplierToDelete] = useState<Supplier | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => {
@@ -92,24 +94,45 @@ export default function SuppliersPage() {
     setSupplierToDelete(supplier);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleBulkDeleteClick = () => {
+    setSupplierToDelete(null);
+    setIsDeleteDialogOpen(true);
+  };
 
   const confirmDelete = async () => {
-    if (!supplierToDelete) return;
-    try {
-      await deleteDoc(doc(db, "suppliers", supplierToDelete.id));
-      toast({
-        variant: "destructive",
-        title: "Proveedor eliminado",
-        description: `El proveedor "${supplierToDelete.name}" ha sido eliminado.`,
-      });
-    } catch (error) {
-      console.error("Error deleting supplier:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el proveedor."
-      });
+    if (supplierToDelete) {
+        try {
+            await deleteDoc(doc(db, "suppliers", supplierToDelete.id));
+            toast({
+                variant: "destructive",
+                title: "Proveedor eliminado",
+                description: `El proveedor "${supplierToDelete.name}" ha sido eliminado.`,
+            });
+        } catch (error) {
+            console.error("Error deleting supplier:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el proveedor." });
+        }
+    } else if (selectedRowIds.length > 0) {
+        const batch = writeBatch(db);
+        selectedRowIds.forEach(id => {
+            const docRef = doc(db, "suppliers", id);
+            batch.delete(docRef);
+        });
+        try {
+            await batch.commit();
+            toast({
+                variant: "destructive",
+                title: "Proveedores eliminados",
+                description: `Se eliminaron ${selectedRowIds.length} proveedores.`,
+            });
+        } catch (error) {
+            console.error("Error deleting multiple suppliers:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron eliminar los proveedores." });
+        }
+        setSelectedRowIds([]);
     }
+
     setIsDeleteDialogOpen(false);
     setSupplierToDelete(null);
   };
@@ -141,6 +164,22 @@ export default function SuppliersPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(filteredSuppliers.map(s => s.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -150,18 +189,29 @@ export default function SuppliersPage() {
             Gestiona la información y el rendimiento de tus proveedores.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Proveedor
-        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Proveedores</CardTitle>
-          <CardDescription>
-            Busca y gestiona tus proveedores.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Listado de Proveedores</CardTitle>
+              <CardDescription>
+                Busca y gestiona tus proveedores.
+              </CardDescription>
+            </div>
+            {selectedRowIds.length > 0 ? (
+                <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar ({selectedRowIds.length})
+                </Button>
+            ) : (
+                <Button onClick={handleAddClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Proveedor
+                </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -174,6 +224,13 @@ export default function SuppliersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === filteredSuppliers.length && filteredSuppliers.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre</TableHead>
                 <TableHead>Contacto</TableHead>
                 <TableHead>Email</TableHead>
@@ -184,9 +241,16 @@ export default function SuppliersPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
               ) : filteredSuppliers.map((supplier) => (
-                <TableRow key={supplier.id}>
+                <TableRow key={supplier.id} data-state={selectedRowIds.includes(supplier.id) && "selected"}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRowIds.includes(supplier.id)}
+                      onCheckedChange={() => handleRowSelect(supplier.id)}
+                      aria-label={`Seleccionar proveedor ${supplier.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{supplier.name}</TableCell>
                   <TableCell>{supplier.contactPerson}</TableCell>
                   <TableCell>{supplier.email}</TableCell>
@@ -235,7 +299,7 @@ export default function SuppliersPage() {
               ))}
               {!loading && filteredSuppliers.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No se encontraron proveedores.
                     </TableCell>
                 </TableRow>
@@ -263,7 +327,7 @@ export default function SuppliersPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el proveedor "{supplierToDelete?.name}".
+              Esta acción no se puede deshacer. {supplierToDelete ? `Se eliminará permanentemente el proveedor "${supplierToDelete.name}".` : `Se eliminarán los ${selectedRowIds.length} proveedores seleccionados.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

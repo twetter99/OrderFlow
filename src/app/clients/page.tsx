@@ -46,9 +46,10 @@ import {
 import { ClientForm } from "@/components/clients/client-form";
 import type { Client } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export default function ClientsPage() {
   const { toast } = useToast();
@@ -61,6 +62,7 @@ export default function ClientsPage() {
   
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   useEffect(() => {
     const unsubClients = onSnapshot(collection(db, "clients"), (snapshot) => {
@@ -92,24 +94,44 @@ export default function ClientsPage() {
     setClientToDelete(client);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleBulkDeleteClick = () => {
+    setClientToDelete(null);
+    setIsDeleteDialogOpen(true);
+  };
 
   const confirmDelete = async () => {
-    if (!clientToDelete) return;
-    try {
-      await deleteDoc(doc(db, "clients", clientToDelete.id));
-      toast({
-        variant: "destructive",
-        title: "Cliente eliminado",
-        description: `El cliente "${clientToDelete.name}" ha sido eliminado.`,
-      });
-    } catch (error) {
-      console.error("Error deleting client:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "No se pudo eliminar el cliente."
-      });
+    if (clientToDelete) {
+        try {
+            await deleteDoc(doc(db, "clients", clientToDelete.id));
+            toast({
+                variant: "destructive",
+                title: "Cliente eliminado",
+                description: `El cliente "${clientToDelete.name}" ha sido eliminado.`,
+            });
+        } catch (error) {
+            console.error("Error deleting client:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudo eliminar el cliente." });
+        }
+    } else if (selectedRowIds.length > 0) {
+        const batch = writeBatch(db);
+        selectedRowIds.forEach(id => {
+            batch.delete(doc(db, "clients", id));
+        });
+        try {
+            await batch.commit();
+            toast({
+                variant: "destructive",
+                title: "Clientes eliminados",
+                description: `Se eliminaron ${selectedRowIds.length} clientes.`,
+            });
+        } catch (error) {
+            console.error("Error deleting multiple clients:", error);
+            toast({ variant: "destructive", title: "Error", description: "No se pudieron eliminar los clientes." });
+        }
+        setSelectedRowIds([]);
     }
+
     setIsDeleteDialogOpen(false);
     setClientToDelete(null);
   };
@@ -141,6 +163,22 @@ export default function ClientsPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(filteredClients.map(c => c.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -150,18 +188,29 @@ export default function ClientsPage() {
             Gestiona la información de los clientes de tu empresa.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Cliente
-        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Clientes</CardTitle>
-          <CardDescription>
-            Busca y gestiona tus clientes.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Listado de Clientes</CardTitle>
+                <CardDescription>
+                  Busca y gestiona tus clientes.
+                </CardDescription>
+              </div>
+               {selectedRowIds.length > 0 ? (
+                    <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                        <Trash2 className="mr-2 h-4 w-4" />
+                        Eliminar ({selectedRowIds.length})
+                    </Button>
+                ) : (
+                    <Button onClick={handleAddClick}>
+                        <PlusCircle className="mr-2 h-4 w-4" />
+                        Añadir Cliente
+                    </Button>
+                )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -174,6 +223,13 @@ export default function ClientsPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                 <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === filteredClients.length && filteredClients.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Nombre del Cliente</TableHead>
                 <TableHead>Persona de Contacto</TableHead>
                 <TableHead>Email</TableHead>
@@ -183,9 +239,16 @@ export default function ClientsPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={5} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
               ) : filteredClients.map((client) => (
-                <TableRow key={client.id}>
+                <TableRow key={client.id} data-state={selectedRowIds.includes(client.id) && "selected"}>
+                  <TableCell>
+                     <Checkbox
+                      checked={selectedRowIds.includes(client.id)}
+                      onCheckedChange={() => handleRowSelect(client.id)}
+                      aria-label={`Seleccionar cliente ${client.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{client.name}</TableCell>
                   <TableCell>{client.contactPerson}</TableCell>
                   <TableCell>{client.email}</TableCell>
@@ -219,7 +282,7 @@ export default function ClientsPage() {
               ))}
               {!loading && filteredClients.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={5} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se encontraron clientes.
                     </TableCell>
                 </TableRow>
@@ -247,7 +310,7 @@ export default function ClientsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el cliente "{clientToDelete?.name}".
+               Esta acción no se puede deshacer. Se eliminará permanentemente {clientToDelete ? ` el cliente "${clientToDelete.name}".` : `los ${selectedRowIds.length} clientes seleccionados.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

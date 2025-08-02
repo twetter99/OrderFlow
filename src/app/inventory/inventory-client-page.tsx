@@ -55,6 +55,7 @@ import { ItemDetailsModal } from "@/components/inventory/item-details-modal";
 import { Input } from "@/components/ui/input";
 import { AddStockForm } from "./add-stock-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Checkbox } from "@/components/ui/checkbox";
 
 type SortableColumn = keyof InventoryItem | 'totalStock' | 'supplierName';
 type SortDescriptor = {
@@ -80,6 +81,7 @@ export function InventoryClientPage() {
   
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
   const [itemToDelete, setItemToDelete] = useState<InventoryItem | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
       column: 'name',
@@ -201,53 +203,54 @@ export function InventoryClientPage() {
     setItemToDelete(item);
     setIsDeleteDialogOpen(true);
   };
+  
+  const handleBulkDeleteClick = () => {
+    setItemToDelete(null);
+    setIsDeleteDialogOpen(true);
+  };
 
   const confirmDelete = async () => {
-    if (!itemToDelete) return;
+    const batch = writeBatch(db);
+    const itemsToDelete = itemToDelete ? [itemToDelete] : inventory.filter(i => selectedRowIds.includes(i.id));
 
-    // Check if item is used in any composite item
-     const isComponent = inventory.some(item => 
-        item.type === 'composite' && item.components?.some(c => c.itemId === itemToDelete.id)
-     );
+    for (const item of itemsToDelete) {
+        const isComponent = inventory.some(i => 
+            i.type === 'composite' && i.components?.some(c => c.itemId === item.id)
+        );
 
-     if (isComponent) {
+        if (isComponent) {
+            toast({
+                variant: "destructive",
+                title: "Error de eliminación",
+                description: `El artículo "${item.name}" no se puede eliminar porque es un componente de al menos un kit.`,
+            });
+            setIsDeleteDialogOpen(false);
+            return;
+        }
+
+        const docRef = doc(db, "inventory", item.id);
+        batch.delete(docRef);
+    }
+    
+    try {
+        await batch.commit();
         toast({
             variant: "destructive",
-            title: "Error de eliminación",
-            description: `El artículo "${itemToDelete.name}" no se puede eliminar porque es un componente de al menos un kit.`,
+            title: "Artículo(s) eliminado(s)",
+            description: `Se han eliminado ${itemsToDelete.length} artículo(s).`,
         });
-        setIsDeleteDialogOpen(false);
-        return;
-     }
-
-    try {
-      await deleteDoc(doc(db, "inventory", itemToDelete.id));
-      
-      // Also delete all inventoryLocation entries for this item
-      const q = query(collection(db, "inventoryLocations"), where("itemId", "==", itemToDelete.id));
-      const querySnapshot = await getDocs(q);
-      const batch = writeBatch(db);
-      querySnapshot.forEach(doc => {
-          batch.delete(doc.ref);
-      });
-      await batch.commit();
-
-      toast({
-        variant: "destructive",
-        title: "Artículo eliminado",
-        description: `El artículo "${itemToDelete.name}" ha sido eliminado.`,
-      });
     } catch (error) {
-        console.error("Error deleting item:", error);
+        console.error("Error deleting item(s):", error);
         toast({
             variant: "destructive",
             title: "Error",
-            description: "No se pudo eliminar el artículo."
+            description: "No se pudieron eliminar los artículos."
         });
     }
     
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);
+    setSelectedRowIds([]);
   };
 
   const handleSave = async (values: any) => {
@@ -317,6 +320,22 @@ export function InventoryClientPage() {
     }
   }
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(sortedInventory.map(i => i.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
   return (
@@ -328,18 +347,29 @@ export function InventoryClientPage() {
             Gestiona todos los artículos, kits y servicios de tu empresa.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Artículo
-        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Artículos</CardTitle>
-           <CardDescription>
-                Busca y filtra para encontrar artículos, kits o servicios en tu inventario.
-            </CardDescription>
+           <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Listado de Artículos</CardTitle>
+                <CardDescription>
+                      Busca y filtra para encontrar artículos, kits o servicios en tu inventario.
+                  </CardDescription>
+              </div>
+              {selectedRowIds.length > 0 ? (
+                  <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                      <Trash2 className="mr-2 h-4 w-4" />
+                      Eliminar ({selectedRowIds.length})
+                  </Button>
+              ) : (
+                  <Button onClick={handleAddClick}>
+                      <PlusCircle className="mr-2 h-4 w-4" />
+                      Añadir Artículo
+                  </Button>
+              )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -352,6 +382,13 @@ export function InventoryClientPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                 <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === sortedInventory.length && sortedInventory.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>
                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('sku')}>
                         SKU {getSortIcon('sku')}
@@ -383,14 +420,21 @@ export function InventoryClientPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center">Cargando...</TableCell></TableRow>
               ) : sortedInventory.map((item) => {
                 const itemSuppliers = item.suppliers
                     ?.map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
                     .filter(Boolean) as string[] || [];
                 
                 return (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} data-state={selectedRowIds.includes(item.id) && "selected"}>
+                  <TableCell>
+                    <Checkbox
+                      checked={selectedRowIds.includes(item.id)}
+                      onCheckedChange={() => handleRowSelect(item.id)}
+                      aria-label={`Seleccionar artículo ${item.name}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-mono">{item.sku}</TableCell>
                   <TableCell className="font-medium">{item.name}</TableCell>
                   <TableCell>
@@ -465,7 +509,7 @@ export function InventoryClientPage() {
               )})}
                {!loading && sortedInventory.length === 0 && (
                  <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         {filter ? "No se han encontrado artículos que coincidan con tu búsqueda." : "No se encontraron artículos."}
                     </TableCell>
                 </TableRow>
@@ -521,7 +565,7 @@ export function InventoryClientPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
             <AlertDialogDescription>
-              Esta acción no se puede deshacer. Se eliminará permanentemente el artículo "{itemToDelete?.name}".
+              Esta acción no se puede deshacer. {itemToDelete ? `Se eliminará permanentemente el artículo "${itemToDelete.name}".` : `Se eliminarán los ${selectedRowIds.length} artículos seleccionados.`}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
