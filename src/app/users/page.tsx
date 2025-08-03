@@ -44,7 +44,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { UserForm } from "@/components/users/user-form";
-import type { User } from "@/lib/types";
+import type { User, Technician, Supervisor } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -54,6 +54,9 @@ import { Badge } from "@/components/ui/badge";
 export default function UsersPage() {
   const { toast } = useToast();
   const [users, setUsers] = useState<User[]>([]);
+  const [technicians, setTechnicians] = useState<Technician[]>([]);
+  const [supervisors, setSupervisors] = useState<Supervisor[]>([]);
+  
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('');
 
@@ -66,10 +69,21 @@ export default function UsersPage() {
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
-      setLoading(false);
+      if (loading) setLoading(false);
     });
-    return () => unsubUsers();
-  }, []);
+     const unsubTechs = onSnapshot(collection(db, "technicians"), (snapshot) => {
+      setTechnicians(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Technician)));
+    });
+    const unsubSupervisors = onSnapshot(collection(db, "supervisores"), (snapshot) => {
+      setSupervisors(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supervisor)));
+    });
+    
+    return () => {
+        unsubUsers();
+        unsubTechs();
+        unsubSupervisors();
+    };
+  }, [loading]);
 
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
@@ -140,12 +154,18 @@ export default function UsersPage() {
       });
     }
   };
+  
+  const getRoleFromPermissions = (permissions: string[]): User['role'] => {
+      if(permissions.includes('settings')) return 'Administrador';
+      if(permissions.includes('receptions')) return 'Almacén';
+      return 'Empleado';
+  }
 
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold font-headline uppercase">Usuarios y Permisos</h1>
+          <h1 className="text-3xl font-bold font-headline uppercase">Gestión de Accesos</h1>
           <p className="text-muted-foreground">
             Gestiona los usuarios de la aplicación y sus roles de acceso.
           </p>
@@ -188,8 +208,8 @@ export default function UsersPage() {
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                    <TableCell>
-                    <Badge variant={user.role === 'Administrador' ? 'destructive' : 'secondary'}>
-                        {user.role}
+                    <Badge variant={getRoleFromPermissions(user.permissions) === 'Administrador' ? 'destructive' : 'secondary'}>
+                        {getRoleFromPermissions(user.permissions)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -238,6 +258,8 @@ export default function UsersPage() {
           </DialogHeader>
           <UserForm 
             user={selectedUser}
+            technicians={technicians}
+            supervisors={supervisors}
             onSave={handleSave}
             onCancel={() => setIsModalOpen(false)}
           />

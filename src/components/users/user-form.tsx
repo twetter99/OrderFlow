@@ -16,9 +16,10 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import type { User } from "@/lib/types";
+import type { User, Technician, Supervisor } from "@/lib/types";
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 
 const modules = [
     { id: 'dashboard', label: 'Dashboard' },
@@ -50,6 +51,7 @@ const modules = [
 ] as const;
 
 const formSchema = z.object({
+  personId: z.string().min(1, "Debes vincular el usuario a un técnico o supervisor existente."),
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
@@ -62,19 +64,31 @@ type UserFormValues = z.infer<typeof formSchema>;
 
 interface UserFormProps {
   user?: User | null;
+  technicians: Technician[];
+  supervisors: Supervisor[];
   onSave: (values: UserFormValues) => void;
   onCancel: () => void;
 }
 
 
-export function UserForm({ user, onSave, onCancel }: UserFormProps) {
+export function UserForm({ user, technicians, supervisors, onSave, onCancel }: UserFormProps) {
   
+  const isEditing = !!user;
+
+  const availablePeople = React.useMemo(() => {
+    const techOptions = technicians.map(t => ({ id: `tech-${t.id}`, name: t.name, email: t.email, phone: t.phone, role: 'Técnico' }));
+    const supOptions = supervisors.map(s => ({ id: `sup-${s.id}`, name: s.name, email: s.email, phone: s.phone, role: 'Supervisor' }));
+    return [...techOptions, ...supOptions];
+  }, [technicians, supervisors]);
+
   const defaultValues = user
     ? { 
         ...user,
+        personId: user.id, // For editing, we assume personId is the user's own ID
         permissions: user.permissions || [],
       }
     : {
+        personId: "",
         name: "",
         email: "",
         phone: "",
@@ -102,9 +116,18 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
     }
   };
 
+  const handlePersonChange = (personId: string) => {
+    const selectedPerson = availablePeople.find(p => p.id === personId);
+    if (selectedPerson) {
+        form.setValue('name', selectedPerson.name);
+        form.setValue('email', selectedPerson.email);
+        form.setValue('phone', selectedPerson.phone);
+    }
+  }
 
   function onSubmit(values: UserFormValues) {
-    onSave(values);
+    const { personId, ...rest } = values; // We don't save personId to the User object
+    onSave(rest as any);
   }
 
   return (
@@ -115,6 +138,37 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                 <CardTitle className="text-lg">Información del Usuario</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+                 {!isEditing && (
+                 <FormField
+                    control={form.control}
+                    name="personId"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Vincular Usuario a</FormLabel>
+                        <Select
+                            onValueChange={(value) => {
+                                field.onChange(value);
+                                handlePersonChange(value);
+                            }}
+                            defaultValue={field.value}
+                            disabled={availablePeople.length === 0}
+                        >
+                            <FormControl>
+                            <SelectTrigger>
+                                <SelectValue placeholder={availablePeople.length > 0 ? "Selecciona un técnico o supervisor..." : "No hay personal disponible"} />
+                            </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                            {availablePeople.map(p => (
+                                <SelectItem key={p.id} value={p.id}>{p.name} ({p.role})</SelectItem>
+                            ))}
+                            </SelectContent>
+                        </Select>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                 )}
                 <FormField
                 control={form.control}
                 name="name"
@@ -122,7 +176,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                     <FormItem>
                     <FormLabel>Nombre Completo</FormLabel>
                     <FormControl>
-                        <Input placeholder="p. ej., Juan Pérez" {...field} />
+                        <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -136,7 +190,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                             <FormItem>
                             <FormLabel>Correo Electrónico de Acceso</FormLabel>
                             <FormControl>
-                                <Input type="email" placeholder="p. ej., juan.perez@example.com" {...field} />
+                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -149,7 +203,7 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
                         <FormItem>
                         <FormLabel>Teléfono de Contacto</FormLabel>
                         <FormControl>
-                            <Input placeholder="p. ej., 600 123 456" {...field} />
+                            <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
