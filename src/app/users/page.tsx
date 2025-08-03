@@ -155,7 +155,8 @@ export default function UsersPage() {
     }
   };
   
-  const getRoleFromPermissions = (permissions: string[]): User['role'] => {
+  const getRoleFromPermissions = (permissions: string[] | undefined): User['role'] => {
+      if (!permissions) return 'Empleado'; // Safeguard for undefined permissions
       if(permissions.includes('settings')) return 'Administrador';
       if(permissions.includes('receptions')) return 'Almacén';
       return 'Empleado';
