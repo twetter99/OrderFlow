@@ -1,14 +1,16 @@
 
 "use server"
 
-import { auth, db } from "@/lib/firebase-admin";
-import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
+import { getFirebaseAuth, getFirestore } from "@/lib/firebase-admin";
+import * as admin from 'firebase-admin';
 
 // NOTA: Este archivo debe usar el SDK de Admin de Firebase
 // para poder crear usuarios sin estar autenticado.
 
 export async function createUser(userData: any) {
   const { email, password, name, phone, permissions, personId } = userData;
+  const auth = getFirebaseAuth();
+  const db = getFirestore();
 
   if (!email || !password) {
     return { success: false, message: "El correo y la contraseña son obligatorios." };
@@ -22,16 +24,16 @@ export async function createUser(userData: any) {
       displayName: name,
     });
 
-    // 2. Crear documento de usuario en Firestore
-    const userDocRef = doc(db, "usuarios", userRecord.uid);
-    await setDoc(userDocRef, {
+    // 2. Crear documento de usuario en Firestore usando la API del Admin SDK
+    const userDocRef = db.collection("usuarios").doc(userRecord.uid);
+    await userDocRef.set({
       uid: userRecord.uid,
       personId,
       name,
       email,
       phone: phone || '',
       permissions,
-      createdAt: serverTimestamp(),
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
       lastLoginAt: null,
       providerId: 'password'
     });
@@ -52,6 +54,8 @@ export async function createUser(userData: any) {
 
 export async function updateUser(uid: string, userData: any) {
   const { password, name, phone, permissions, personId } = userData;
+  const auth = getFirebaseAuth();
+  const db = getFirestore();
 
   try {
     const updateAuthData: any = {};
@@ -67,9 +71,9 @@ export async function updateUser(uid: string, userData: any) {
         await auth.updateUser(uid, updateAuthData);
     }
     
-    // 2. Actualizar documento en Firestore
-    const userDocRef = doc(db, "usuarios", uid);
-    await setDoc(userDocRef, {
+    // 2. Actualizar documento en Firestore usando la API del Admin SDK
+    const userDocRef = db.collection("usuarios").doc(uid);
+    await userDocRef.set({
       name,
       phone: phone || '',
       permissions,
@@ -89,13 +93,15 @@ export async function updateUser(uid: string, userData: any) {
 }
 
 export async function deleteUser(uid: string) {
+    const auth = getFirebaseAuth();
+    const db = getFirestore();
     try {
         // 1. Eliminar de Firebase Authentication
         await auth.deleteUser(uid);
         
-        // 2. Eliminar de Firestore
-        const userDocRef = doc(db, "usuarios", uid);
-        await deleteDoc(userDocRef);
+        // 2. Eliminar de Firestore usando la API del Admin SDK
+        const userDocRef = db.collection("usuarios").doc(uid);
+        await userDocRef.delete();
 
         return { success: true, message: "Usuario eliminado." };
     } catch(error: any) {
@@ -104,8 +110,8 @@ export async function deleteUser(uid: string) {
         if (error.code === 'auth/user-not-found') {
             message = "El usuario ya no existe en Firebase Authentication. Se procederá a limpiar los datos locales.";
             // Intentar eliminar solo de firestore si en auth no existe
-             const userDocRef = doc(db, "usuarios", uid);
-             await deleteDoc(userDocRef);
+             const userDocRef = db.collection("usuarios").doc(uid);
+             await userDocRef.delete();
              return { success: true, message };
         }
         return { success: false, message };

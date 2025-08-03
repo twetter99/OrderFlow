@@ -30,17 +30,14 @@ const getFirebaseAdminApp = () => {
 // Exporta funciones getter para los servicios.
 // Estas funciones se aseguran de que la app esté inicializada antes de devolver el servicio.
 export const getFirebaseAuth = () => {
-    getFirebaseAdminApp();
-    return admin.auth();
+    const app = getFirebaseAdminApp();
+    return admin.auth(app);
 };
 
 export const getFirestore = () => {
-    getFirebaseAdminApp();
-    return admin.firestore();
+    const app = getFirebaseAdminApp();
+    return admin.firestore(app);
 };
 
-// Para mantener la compatibilidad con el código anterior, podemos exportar los servicios directamente
-// después de asegurarnos de la inicialización, aunque el patrón de getter es más seguro.
-const app = getFirebaseAdminApp();
-export const auth = admin.auth(app);
-export const db = admin.firestore(app);
+// Se exporta el namespace de admin para poder usar tipos como `admin.firestore.FieldValue`
+export { admin };
