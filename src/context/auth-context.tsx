@@ -33,15 +33,10 @@ const createUserProfile = async (firebaseUser: FirebaseUser) => {
     lastLoginAt: serverTimestamp(),
   };
 
-  if (firebaseUser.displayName) {
-    userData.name = firebaseUser.displayName;
-  }
-  if (firebaseUser.email) {
-    userData.email = firebaseUser.email;
-  }
-  if (firebaseUser.photoURL) {
-    userData.photoURL = firebaseUser.photoURL;
-  }
+  // Only add fields if they exist to avoid writing null/undefined to Firestore
+  if (firebaseUser.displayName) userData.name = firebaseUser.displayName;
+  if (firebaseUser.email) userData.email = firebaseUser.email;
+  if (firebaseUser.photoURL) userData.photoURL = firebaseUser.photoURL;
 
   // Use set with merge to create if not exists, or update if it does.
   await setDoc(userRef, userData, { merge: true });
@@ -52,7 +47,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
-  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -66,9 +60,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
               email: firebaseUser.email,
               photoURL: firebaseUser.photoURL,
             });
-            if (pathname === '/login') {
-                router.push('/dashboard');
-            }
         } catch (error) {
             console.error("Error creating user profile in Firestore:", error);
             toast({
@@ -76,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 title: "Error de perfil",
                 description: "No se pudo crear o actualizar tu perfil de usuario. Por favor, intenta iniciar sesión de nuevo."
             });
-            await signOut(auth); // Log out the user if profile creation fails
+            await signOut(auth);
             setUser(null);
         }
       } else {
@@ -86,14 +77,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname, toast]);
+  }, [toast]);
 
   const signInWithGoogle = async () => {
     setLoading(true);
     const provider = new GoogleAuthProvider();
     try {
       await signInWithPopup(auth, provider);
-      // The onAuthStateChanged listener will handle the rest
+      // The onAuthStateChanged listener will handle setting user state
+      // and we redirect here AFTER the popup is successful.
+      router.push('/dashboard');
     } catch (error: any) {
       console.error("Error signing in with Google: ", error);
        if (error.code === 'auth/unauthorized-domain') {
@@ -124,14 +117,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
     }
   };
-
-  if (loading && pathname !== '/login') {
-     return (
-        <div className="flex h-screen w-full items-center justify-center bg-background">
-            <Loader2 className="h-10 w-10 animate-spin text-primary" />
-        </div>
-     )
-  }
 
   return (
     <AuthContext.Provider value={{ user, loading, signInWithGoogle, logOut }}>
