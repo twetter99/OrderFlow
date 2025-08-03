@@ -31,30 +31,27 @@ const AuthContext = createContext<AuthContextType>({
   sendPasswordReset: async () => {},
 });
 
-const createUserProfile = async (firebaseUser: FirebaseUser) => {
+// This function is kept for potential future use (e.g., first-time setup for a user created by an admin)
+// but it is NOT called during the standard login flow anymore.
+const updateUserProfileOnLogin = async (firebaseUser: FirebaseUser) => {
   const userRef = doc(db, 'usuarios', firebaseUser.uid);
   const userSnap = await getDoc(userRef);
 
-  // Only create the user document if it doesn't already exist.
+  const userData: Partial<User> = {
+    lastLoginAt: serverTimestamp(),
+  };
+
   if (!userSnap.exists()) {
-    const userData: Partial<User> = {
-      uid: firebaseUser.uid,
-      providerId: firebaseUser.providerData[0]?.providerId || 'password',
-      createdAt: serverTimestamp(),
-      lastLoginAt: serverTimestamp(),
-    };
-
-    if (firebaseUser.email) userData.email = firebaseUser.email;
-    
-    // For email/password, these fields are often null initially.
-    // They might be populated later from a user profile page.
-    if (firebaseUser.displayName) userData.name = firebaseUser.displayName;
-    if (firebaseUser.photoURL) userData.photoURL = firebaseUser.photoURL;
-
-    await setDoc(userRef, userData, { merge: true });
+    // This case should ideally not happen if users are pre-provisioned.
+    // As a fallback, create a basic profile.
+    userData.uid = firebaseUser.uid;
+    userData.email = firebaseUser.email;
+    userData.name = firebaseUser.displayName;
+    userData.providerId = firebaseUser.providerData[0]?.providerId || 'password';
+    userData.createdAt = serverTimestamp();
+    await setDoc(userRef, userData);
   } else {
-    // If user exists, just update the last login time.
-    await setDoc(userRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+    await setDoc(userRef, userData, { merge: true });
   }
 };
 
@@ -69,27 +66,18 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
-            await createUserProfile(firebaseUser);
-            // Fetch the full user profile from Firestore to get all data (incl. roles, permissions etc. in future)
+            // After auth state change, always re-fetch the user profile from Firestore
+            // to ensure permissions and data are up-to-date.
             const userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
             if (userDoc.exists()) {
                 setUser(userDoc.data() as User);
             } else {
-                // This case is unlikely if createUserProfile works, but good as a fallback
-                setUser({
-                    uid: firebaseUser.uid,
-                    name: firebaseUser.displayName,
-                    email: firebaseUser.email,
-                    photoURL: firebaseUser.photoURL,
-                });
+                // If user exists in Firebase Auth but not in our system, log them out.
+                await signOut(auth);
+                setUser(null);
             }
         } catch (error) {
-            console.error("Error creating/fetching user profile:", error);
-            toast({
-                variant: "destructive",
-                title: "Error de perfil",
-                description: "No se pudo cargar tu perfil de usuario. Por favor, intenta iniciar sesión de nuevo."
-            });
+            console.error("Error fetching user profile:", error);
             await signOut(auth);
             setUser(null);
         }
@@ -100,13 +88,34 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [toast]);
+  }, []);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const firebaseUser = userCredential.user;
+
+      // **Critical Step**: Verify the user exists in our Firestore 'usuarios' collection.
+      const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+
+      if (!userDoc.exists()) {
+        // If the user is not in our system, deny access and sign them out from Firebase.
+        await signOut(auth);
+        toast({
+          variant: "destructive",
+          title: "Acceso Denegado",
+          description: "Este usuario no está autorizado para acceder al sistema."
+        });
+        setLoading(false);
+        return;
+      }
+      
+      // If authorized, update last login time and proceed.
+      await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
       router.push('/dashboard');
+
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -114,6 +123,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
        switch(error.code) {
         case 'auth/user-not-found':
         case 'auth/wrong-password':
+        case 'auth/invalid-credential':
             title = 'Credenciales Incorrectas';
             description = 'El correo o la contraseña no son correctos. Por favor, verifica tus datos.';
             break;
