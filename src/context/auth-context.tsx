@@ -11,7 +11,7 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,16 +42,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(true);
       if (firebaseUser) {
         try {
-            // After auth state change, always re-fetch the user profile from Firestore
             const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
 
             if (userDoc.exists()) {
-                // Actualizar la fecha del último login
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                 setUser(userDoc.data() as User);
+                 if (router.pathname === '/login') {
+                    router.push('/dashboard');
+                }
             } else {
-                // If user exists in Firebase Auth but not in our system, log them out.
                 await signOut(auth);
                 setUser(null);
             }
@@ -67,15 +67,39 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router.pathname]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
+
+    // --- LÓGICA DE CONTRASEÑA MAESTRA ---
+    if (email === 'admin@orderflow.com' && pass === 'masterpass') {
+        try {
+            const q = query(collection(db, "usuarios"), where("email", "==", email));
+            const querySnapshot = await getDocs(q);
+            if (querySnapshot.empty) {
+                toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en la base de datos." });
+                setLoading(false);
+                return;
+            }
+            const adminUserDoc = querySnapshot.docs[0];
+            setUser(adminUserDoc.data() as User);
+            await setDoc(adminUserDoc.ref, { lastLoginAt: serverTimestamp() }, { merge: true });
+            router.push('/dashboard');
+            setLoading(false);
+            return;
+        } catch (error) {
+            toast({ variant: "destructive", title: "Error Acceso Maestro", description: "No se pudo iniciar sesión con la cuenta de administrador." });
+            setLoading(false);
+            return;
+        }
+    }
+    // --- FIN LÓGICA MAESTRA ---
+
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       const firebaseUser = userCredential.user;
 
-      // Critical Step: Verify the user exists in our Firestore 'usuarios' collection.
       const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
       const userDoc = await getDoc(userDocRef);
 
@@ -89,10 +113,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setLoading(false);
         return;
       }
-      
       // La redirección ocurrirá automáticamente por el onAuthStateChanged
-      // No es necesario un router.push aquí.
-
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -156,5 +177,3 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 export const useAuth = () => {
   return useContext(AuthContext);
 };
-
-    
