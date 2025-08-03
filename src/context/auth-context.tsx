@@ -12,6 +12,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
+import { users as mockUsers } from '@/lib/data';
 import type { User, Supervisor } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
@@ -74,25 +75,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
     // --- LÓGICA DE CONTRASEÑA MAESTRA ---
     if (email === 'juan@winfin.es' && pass === 'masterpass') {
-        try {
-            const q = query(collection(db, "usuarios"), where("email", "==", email));
-            const querySnapshot = await getDocs(q);
-            if (querySnapshot.empty) {
-                toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en la base de datos." });
-                setLoading(false);
-                return;
-            }
-            const adminUserDoc = querySnapshot.docs[0];
-            setUser(adminUserDoc.data() as User);
-            await setDoc(adminUserDoc.ref, { lastLoginAt: serverTimestamp() }, { merge: true });
+        const adminUser = mockUsers.find(u => u.email === 'juan@winfin.es');
+        if (adminUser) {
+            setUser(adminUser);
             router.push('/dashboard');
-            setLoading(false);
-            return;
-        } catch (error) {
-            toast({ variant: "destructive", title: "Error Acceso Maestro", description: "No se pudo iniciar sesión con la cuenta de administrador." });
-            setLoading(false);
-            return;
+            // Nota: No actualizamos `lastLoginAt` en Firestore para este flujo de mock.
+        } else {
+            toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en los datos de prueba." });
         }
+        setLoading(false);
+        return;
     }
     
     // --- LÓGICA DE LOGIN ESTÁNDAR ---
