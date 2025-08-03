@@ -12,7 +12,7 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
-import type { User } from '@/lib/types';
+import type { User, Supervisor } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
@@ -94,7 +94,33 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             return;
         }
     }
-    // --- FIN LÓGICA MAESTRA ---
+    
+    // --- LÓGICA DE LOGIN PARA SUPERVISORES (TEMPORAL) ---
+    try {
+        const supervisorsQuery = query(collection(db, "supervisores"), where("email", "==", email));
+        const supervisorSnapshot = await getDocs(supervisorsQuery);
+        if (!supervisorSnapshot.empty) {
+            const supervisorDoc = supervisorSnapshot.docs[0];
+            const supervisorData = supervisorDoc.data() as Supervisor;
+            if (supervisorData.password === pass) {
+                // Simula un objeto User para la sesión
+                setUser({
+                    uid: supervisorDoc.id,
+                    name: supervisorData.name,
+                    email: supervisorData.email,
+                    phone: supervisorData.phone,
+                    role: 'Administrador', // Asignamos rol de admin por defecto
+                    permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'],
+                });
+                router.push('/dashboard');
+                setLoading(false);
+                return;
+            }
+        }
+    } catch(e) {
+        console.error("Error checking supervisors for login", e);
+    }
+    // --- FIN LÓGICA SUPERVISORES ---
 
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
@@ -163,6 +189,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     } catch (error) {
       console.error("Error signing out: ", error);
     } finally {
+        setUser(null);
         setLoading(false);
     }
   };
