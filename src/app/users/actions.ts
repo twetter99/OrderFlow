@@ -2,13 +2,13 @@
 "use server"
 
 import { auth, db } from "@/lib/firebase-admin";
-import { doc, setDoc, serverTimestamp } from "firebase/firestore";
+import { doc, setDoc, serverTimestamp, deleteDoc } from "firebase/firestore";
 
 // NOTA: Este archivo debe usar el SDK de Admin de Firebase
 // para poder crear usuarios sin estar autenticado.
 
 export async function createUser(userData: any) {
-  const { email, password, name, phone, permissions } = userData;
+  const { email, password, name, phone, permissions, personId } = userData;
 
   if (!email || !password) {
     return { success: false, message: "El correo y la contraseña son obligatorios." };
@@ -20,13 +20,13 @@ export async function createUser(userData: any) {
       email,
       password,
       displayName: name,
-      // phoneNumber: phone, // El SDK de Admin no soporta añadir teléfono directamente en la creación
     });
 
     // 2. Crear documento de usuario en Firestore
     const userDocRef = doc(db, "usuarios", userRecord.uid);
     await setDoc(userDocRef, {
       uid: userRecord.uid,
+      personId,
       name,
       email,
       phone: phone || '',
@@ -51,23 +51,20 @@ export async function createUser(userData: any) {
 }
 
 export async function updateUser(uid: string, userData: any) {
-  const { password, name, phone, permissions } = userData;
+  const { password, name, phone, permissions, personId } = userData;
 
   try {
-    const updateData: any = {};
+    const updateAuthData: any = {};
     if (password) {
-        updateData.password = password;
+        updateAuthData.password = password;
     }
     if (name) {
-        updateData.displayName = name;
+        updateAuthData.displayName = name;
     }
-     // if (phone) { // El SDK de Admin no soporta actualizar el teléfono directamente
-    //     updateData.phoneNumber = phone;
-    // }
     
     // 1. Actualizar usuario en Firebase Authentication
-    if (Object.keys(updateData).length > 0) {
-        await auth.updateUser(uid, updateData);
+    if (Object.keys(updateAuthData).length > 0) {
+        await auth.updateUser(uid, updateAuthData);
     }
     
     // 2. Actualizar documento en Firestore
@@ -76,6 +73,7 @@ export async function updateUser(uid: string, userData: any) {
       name,
       phone: phone || '',
       permissions,
+      personId,
     }, { merge: true });
 
     return { success: true, message: "Usuario actualizado correctamente." };
@@ -113,5 +111,4 @@ export async function deleteUser(uid: string) {
         return { success: false, message };
     }
 }
-
     
