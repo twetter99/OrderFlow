@@ -2,7 +2,7 @@
 
 import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador, SupplierInvoice, Payment } from './types';
+import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador, Supervisor, SupplierInvoice, Payment } from './types';
 import { add, sub } from 'date-fns';
 
 const today = new Date();
@@ -189,6 +189,10 @@ const mockUsers: User[] = [
   { id: 'WF-USER-002', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
   { id: 'WF-USER-003', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
 ];
+const mockSupervisores: Supervisor[] = [
+    { id: 'WF-SUPV-001', name: 'Laura Martín', email: 'l.martin@winfin.es', phone: '600-111-222', notes: 'Supervisora de zona centro.'},
+    { id: 'WF-SUPV-002', name: 'Roberto Sánchez', email: 'r.sanchez@winfin.es', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.'},
+];
 const mockTechnicians: Technician[] = [
     { id: 'WF-TECH-001', name: 'Mario García', email: 'm.garcia@tecnicos.com', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados' },
     { id: 'WF-TECH-002', name: 'Laura Jimenez', email: 'l.jimenez@tecnicos.com', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)' },
@@ -308,10 +312,10 @@ const mockReplanteos: Replanteo[] = [
   }
 ];
 const mockSupplierInvoices: SupplierInvoice[] = [
-  { id: 'INV-001', purchaseOrderIds: ['WF-PO-2024-001'], invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', bases: [{baseAmount: 3500, vatRate: 0.21}], vatAmount: 735, totalAmount: 4235, status: 'Pagada'},
-  { id: 'INV-002', purchaseOrderIds: ['WF-PO-2024-002'], invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', bases: [{baseAmount: 775, vatRate: 0.21}], vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago' },
-  { id: 'INV-003', purchaseOrderIds: ['WF-PO-2024-005'], invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 2550, vatRate: 0.21}], vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada'},
-  { id: 'INV-004', purchaseOrderIds: ['WF-PO-2024-006'], invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 900, vatRate: 0.21}], vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar' },
+  { id: 'INV-001', purchaseOrderIds: ['WF-PO-2024-001'], invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', bases: [{baseAmount: 3500, vatRate: 0.21}], vatAmount: 735, totalAmount: 4235, status: 'Pagada', totalAmountDifference: 0},
+  { id: 'INV-002', purchaseOrderIds: ['WF-PO-2024-002'], invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', bases: [{baseAmount: 775, vatRate: 0.21}], vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago', totalAmountDifference: 0 },
+  { id: 'INV-003', purchaseOrderIds: ['WF-PO-2024-005'], invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 2550, vatRate: 0.21}], vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada', totalAmountDifference: 0},
+  { id: 'INV-004', purchaseOrderIds: ['WF-PO-2024-006'], invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 900, vatRate: 0.21}], vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar', totalAmountDifference: 0 },
 ];
 const mockPayments: Payment[] = [
     { id: 'PAY-001', invoiceId: 'INV-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', dueDate: sub(today, {days: 15}).toISOString(), amountDue: 4235, paymentMethod: 'Transferencia', status: 'Pagado total', paymentHistory: [{ date: sub(today, {days: 15}).toISOString(), amount: 4235, reference: 'TR-2024-5821' }] },
@@ -348,6 +352,7 @@ export const purchaseOrders: PurchaseOrder[] = mockPurchaseOrders;
 export const suppliers: Supplier[] = mockSuppliers;
 export const clients: Client[] = mockClients;
 export const users: User[] = mockUsers;
+export const supervisors: Supervisor[] = mockSupervisores;
 export const technicians: Technician[] = mockTechnicians;
 export const operadores: Operador[] = mockOperadores;
 export const locations: Location[] = mockLocations;

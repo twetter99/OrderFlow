@@ -122,6 +122,14 @@ export type User = {
   role?: 'Administrador' | 'Empleado' | 'Almacén'; // Legacy, can be removed later
 };
 
+export type Supervisor = {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+    notes?: string;
+};
+
 export type OperadorDepot = {
   id?: string;
   name: string;
@@ -277,19 +285,20 @@ export type Replanteo = {
 
 export type SupplierInvoice = {
   id: string;
-  purchaseOrderIds: string[]; // Ahora es un array
+  purchaseOrderIds: string[];
   deliveryNoteId?: string;
   invoiceNumber: string;
   supplierId: string;
   emissionDate: string | Date;
   dueDate: string | Date;
-  bases: { baseAmount: number; vatRate: number }[]; // Array de bases imponibles
-  vatAmount: number; // Total de IVA (calculado)
-  totalAmount: number; // Total de la factura (calculado)
+  bases: { baseAmount: number; vatRate: number }[];
+  vatAmount: number;
+  totalAmount: number;
   status: 'Pendiente de validar' | 'Validada' | 'Disputada' | 'Pendiente de pago' | 'Pagada';
   attachment?: DeliveryNoteAttachment;
   notes?: string;
-  totalAmountDifference?: number;
+  totalAmountDifference: number;
+  differenceJustification?: string;
 };
 
 export type Payment = {
