@@ -42,7 +42,7 @@ import { useSidebar } from "../ui/sidebar";
 import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { users } from "@/lib/data";
+import { useAuth } from "@/context/auth-context";
 
 
 const navGroups = [
@@ -132,13 +132,11 @@ const navGroups = [
 
 export const SidebarNav = () => {
   const pathname = usePathname();
-  const { open, setOpen, isMobile } = useSidebar();
+  const { open, setOpen } = useSidebar();
+  const { user, logOut } = useAuth();
   const [isHovered, setIsHovered] = React.useState(false);
   const [hasMounted, setHasMounted] = useState(false);
   
-  // Simulación de usuario logueado. En una app real, esto vendría de un contexto de autenticación.
-  const loggedInUser = users.find(u => u.id === 'WF-USER-001');
-
   useEffect(() => {
     setHasMounted(true);
   }, []);
@@ -285,18 +283,18 @@ export const SidebarNav = () => {
         <div className="mt-auto p-2 border-t border-white/10">
           <div className={cn("flex items-center gap-3 rounded-md transition-all", isExpanded ? 'p-2' : 'p-0 justify-center')}>
               <Avatar className="h-9 w-9">
-                  <AvatarImage src={loggedInUser?.avatar} alt={loggedInUser?.name} />
-                  <AvatarFallback>{loggedInUser ? loggedInUser.name.charAt(0).toUpperCase() : 'S'}</AvatarFallback>
+                  <AvatarImage src={user?.photoURL || undefined} alt={user?.name || ''} />
+                  <AvatarFallback>{user ? user.name?.charAt(0).toUpperCase() : 'S'}</AvatarFallback>
               </Avatar>
               {isExpanded && (
                   <div className="flex-1 overflow-hidden">
-                      <p className="text-sm font-semibold truncate">{loggedInUser ? loggedInUser.name : 'Simulación'}</p>
-                      <p className="text-xs text-white/60 truncate">{loggedInUser ? loggedInUser.email : 'sin usuario definido'}</p>
+                      <p className="text-sm font-semibold truncate">{user?.name || 'Simulación'}</p>
+                      <p className="text-xs text-white/60 truncate">{user?.email || 'sin usuario definido'}</p>
                   </div>
               )}
                <Tooltip>
                 <TooltipTrigger asChild>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-white/70 hover:bg-white/10 hover:text-white">
+                    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-white/70 hover:bg-white/10 hover:text-white" onClick={logOut} disabled={!user}>
                         <LogOut className="h-4 w-4" />
                     </Button>
                 </TooltipTrigger>

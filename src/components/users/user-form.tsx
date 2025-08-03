@@ -51,10 +51,11 @@ const modules = [
 ] as const;
 
 const formSchema = z.object({
+  uid: z.string(), // We don't show this, but it's part of the user object
   personId: z.string().min(1, "Debes vincular el usuario a un técnico o supervisor existente."),
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
-  phone: z.string().min(1, "El teléfono es obligatorio."),
+  phone: z.string().optional(),
   permissions: z.array(z.string()).refine((value) => value.some((item) => item), {
     message: "Debes seleccionar al menos un permiso.",
   }),
@@ -84,10 +85,11 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
   const defaultValues = user
     ? { 
         ...user,
-        personId: user.id, // For editing, we assume personId is the user's own ID
+        personId: user.uid, // This is a bit of a hack for the form, the real ID is uid.
         permissions: user.permissions || [],
       }
     : {
+        uid: "",
         personId: "",
         name: "",
         email: "",
@@ -176,7 +178,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                     <FormItem>
                     <FormLabel>Nombre Completo</FormLabel>
                     <FormControl>
-                        <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing} />
+                        <Input placeholder="Se rellena al vincular" {...field} disabled />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -190,7 +192,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                             <FormItem>
                             <FormLabel>Correo Electrónico de Acceso</FormLabel>
                             <FormControl>
-                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
+                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -203,7 +205,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                         <FormItem>
                         <FormLabel>Teléfono de Contacto</FormLabel>
                         <FormControl>
-                            <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
+                            <Input placeholder="Se rellena al vincular" {...field} disabled/>
                         </FormControl>
                         <FormMessage />
                         </FormItem>
@@ -250,9 +252,9 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                                         checked={field.value?.includes(item.id)}
                                         onCheckedChange={(checked) => {
                                             return checked
-                                            ? field.onChange([...field.value, item.id])
+                                            ? field.onChange([...(field.value || []), item.id])
                                             : field.onChange(
-                                                field.value?.filter(
+                                                (field.value || [])?.filter(
                                                 (value) => value !== item.id
                                                 )
                                             )

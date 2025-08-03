@@ -114,12 +114,15 @@ export type Client = {
 };
 
 export type User = {
-  id: string;
-  name: string;
-  email: string;
-  phone: string;
-  permissions: string[]; // List of module IDs the user has access to
-  role?: 'Administrador' | 'Empleado' | 'Almacén'; // Legacy, can be removed later
+  uid: string;
+  name: string | null;
+  email: string | null;
+  photoURL: string | null;
+  providerId?: string;
+  createdAt?: Timestamp;
+  lastLoginAt?: Timestamp;
+  role?: 'Administrador' | 'Empleado' | 'Almacén';
+  permissions?: string[]; 
 };
 
 export type Supervisor = {
@@ -299,7 +302,6 @@ export type SupplierInvoice = {
   status: 'Pendiente de validar' | 'Validada' | 'Disputada' | 'Pendiente de pago' | 'Pagada';
   attachment?: DeliveryNoteAttachment;
   notes?: string;
-  totalAmountDifference: number;
 };
 
 export type Payment = {
