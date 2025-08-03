@@ -20,6 +20,7 @@ import type { User, Technician, Supervisor } from "@/lib/types";
 import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { PasswordInput } from '../shared/password-input';
 
 const modules = [
     { id: 'dashboard', label: 'Dashboard' },
@@ -50,8 +51,13 @@ const modules = [
     { id: 'settings', label: 'Configuración General' },
 ] as const;
 
-const formSchema = z.object({
-  uid: z.string(), // We don't show this, but it's part of the user object
+const passwordSchema = z.string()
+  .length(6, "La contraseña debe tener exactamente 6 caracteres.")
+  .regex(/^(?=.*[a-zA-Z])(?=.*[0-9])/, "Debe contener letras y números.")
+  .refine(s => !/(.)\1{5,}/.test(s), "La contraseña no puede tener 6 caracteres idénticos.")
+  .refine(s => !["123456", "abcdef"].includes(s), "La contraseña es demasiado simple.");
+
+const baseFormSchema = z.object({
   personId: z.string().min(1, "Debes vincular el usuario a un técnico o supervisor existente."),
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
@@ -61,13 +67,22 @@ const formSchema = z.object({
   }),
 });
 
-type UserFormValues = z.infer<typeof formSchema>;
+// Esquema para crear un usuario (la contraseña es obligatoria)
+const createUserSchema = baseFormSchema.extend({
+  password: passwordSchema,
+});
+
+// Esquema para editar un usuario (la contraseña es opcional)
+const updateUserSchema = baseFormSchema.extend({
+  password: passwordSchema.optional().or(z.literal('')),
+});
+
 
 interface UserFormProps {
   user?: User | null;
   technicians: Technician[];
   supervisors: Supervisor[];
-  onSave: (values: UserFormValues) => void;
+  onSave: (values: any) => void;
   onCancel: () => void;
 }
 
@@ -75,6 +90,9 @@ interface UserFormProps {
 export function UserForm({ user, technicians, supervisors, onSave, onCancel }: UserFormProps) {
   
   const isEditing = !!user;
+
+  const formSchema = isEditing ? updateUserSchema : createUserSchema;
+  type UserFormValues = z.infer<typeof formSchema>;
 
   const availablePeople = React.useMemo(() => {
     const techOptions = technicians.map(t => ({ id: `tech-${t.id}`, name: t.name, email: t.email, phone: t.phone, role: 'Técnico' }));
@@ -85,16 +103,17 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
   const defaultValues = user
     ? { 
         ...user,
-        personId: user.uid, // This is a bit of a hack for the form, the real ID is uid.
+        personId: user.uid,
         permissions: user.permissions || [],
+        password: '', // La contraseña nunca se carga, solo se puede cambiar
       }
     : {
-        uid: "",
         personId: "",
         name: "",
         email: "",
         phone: "",
         permissions: [],
+        password: "",
       };
 
   const form = useForm<UserFormValues>({
@@ -123,13 +142,12 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     if (selectedPerson) {
         form.setValue('name', selectedPerson.name);
         form.setValue('email', selectedPerson.email);
-        form.setValue('phone', selectedPerson.phone);
+        form.setValue('phone', selectedPerson.phone || '');
     }
   }
 
   function onSubmit(values: UserFormValues) {
-    const { personId, ...rest } = values; // We don't save personId to the User object
-    onSave(rest as any);
+    onSave(values);
   }
 
   return (
@@ -199,17 +217,21 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                         )}
                     />
                     <FormField
-                    control={form.control}
-                    name="phone"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Teléfono de Contacto</FormLabel>
-                        <FormControl>
-                            <Input placeholder="Se rellena al vincular" {...field} disabled/>
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                             <FormItem>
+                                <FormLabel>Contraseña de Acceso</FormLabel>
+                                <FormControl>
+                                <PasswordInput
+                                    {...field}
+                                    onValueChange={field.onChange}
+                                    isOptional={isEditing}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
                     />
                 </div>
             </CardContent>
@@ -287,3 +309,5 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     </Form>
   );
 }
+
+    

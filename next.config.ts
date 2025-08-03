@@ -1,3 +1,4 @@
+
 import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
@@ -14,6 +15,13 @@ const nextConfig: NextConfig = {
     // Asegúrate de ejecutar `npm run lint` localmente.
     ignoreDuringBuilds: true,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["6000-firebase-studio-1752214678917.cluster-c3a7z3wnwzapkx3rfr5kz62dac.cloudworkstations.dev"],
+    },
+  },
 };
 
 export default nextConfig;
+
+    

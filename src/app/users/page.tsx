@@ -50,6 +50,8 @@ import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc } from "fireb
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { createUser, updateUser, deleteUser } from "./actions";
+
 
 export default function UsersPage() {
   const { toast } = useToast();
@@ -67,8 +69,8 @@ export default function UsersPage() {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
 
   useEffect(() => {
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => {
-      setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)));
+    const unsubUsers = onSnapshot(collection(db, "usuarios"), (snapshot) => {
+      setUsers(snapshot.docs.map(doc => ({ ...doc.data() } as User)));
       if (loading) setLoading(false);
     });
      const unsubTechs = onSnapshot(collection(db, "technicians"), (snapshot) => {
@@ -87,8 +89,8 @@ export default function UsersPage() {
 
   const filteredUsers = useMemo(() => {
     return users.filter(user =>
-      user.name.toLowerCase().includes(filter.toLowerCase()) ||
-      user.email.toLowerCase().includes(filter.toLowerCase())
+      user.name?.toLowerCase().includes(filter.toLowerCase()) ||
+      user.email?.toLowerCase().includes(filter.toLowerCase())
     );
   }, [users, filter]);
 
@@ -110,18 +112,22 @@ export default function UsersPage() {
   const confirmDelete = async () => {
     if (!userToDelete) return;
     try {
-      await deleteDoc(doc(db, "users", userToDelete.id));
-      toast({
-        variant: "destructive",
-        title: "Usuario eliminado",
-        description: `El usuario "${userToDelete.name}" ha sido eliminado.`,
-      });
+      // Server Action para eliminar el usuario
+      const result = await deleteUser(userToDelete.uid);
+      if (result.success) {
+        toast({
+            title: "Usuario eliminado",
+            description: `El usuario "${userToDelete.name}" ha sido eliminado.`,
+        });
+      } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+      }
     } catch (error) {
       console.error("Error deleting user:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "No se pudo eliminar el usuario."
+        description: "No se pudo eliminar el usuario.",
       });
     }
     setIsDeleteDialogOpen(false);
@@ -130,21 +136,28 @@ export default function UsersPage() {
 
   const handleSave = async (values: any) => {
     try {
+      let result;
       if (selectedUser) {
-        const docRef = doc(db, "users", selectedUser.id);
-        await updateDoc(docRef, values);
-        toast({
-          title: "Usuario actualizado",
-          description: `El usuario "${values.name}" se ha actualizado correctamente.`,
-        });
+        // Server Action para actualizar
+        result = await updateUser(selectedUser.uid, values);
       } else {
-        await addDoc(collection(db, "users"), values);
+        // Server Action para crear
+        result = await createUser(values);
+      }
+
+      if (result.success) {
         toast({
-          title: "Usuario creado",
-          description: `El usuario "${values.name}" se ha creado correctamente.`,
+          title: selectedUser ? "Usuario actualizado" : "Usuario creado",
+          description: `El usuario "${values.name}" se ha guardado correctamente.`,
+        });
+        setIsModalOpen(false);
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: result.message,
         });
       }
-      setIsModalOpen(false);
     } catch (error) {
       console.error("Error saving user:", error);
       toast({
@@ -156,7 +169,7 @@ export default function UsersPage() {
   };
   
   const getRoleFromPermissions = (permissions: string[] | undefined): User['role'] => {
-      if (!permissions) return 'Empleado'; // Safeguard for undefined permissions
+      if (!permissions) return 'Empleado';
       if(permissions.includes('settings')) return 'Administrador';
       if(permissions.includes('receptions')) return 'Almacén';
       return 'Empleado';
@@ -205,7 +218,7 @@ export default function UsersPage() {
               {loading ? (
                 <TableRow><TableCell colSpan={4} className="text-center">Cargando...</TableCell></TableRow>
               ) : filteredUsers.map((user) => (
-                <TableRow key={user.id}>
+                <TableRow key={user.uid}>
                   <TableCell className="font-medium">{user.name}</TableCell>
                   <TableCell>{user.email}</TableCell>
                    <TableCell>
@@ -286,3 +299,5 @@ export default function UsersPage() {
     </div>
   );
 }
+
+    

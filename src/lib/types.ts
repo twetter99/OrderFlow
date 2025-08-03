@@ -117,10 +117,11 @@ export type User = {
   uid: string;
   name: string | null;
   email: string | null;
-  photoURL?: string | null; // Keep optional for email/pass users
+  phone?: string | null;
+  photoURL?: string | null; 
   providerId?: string;
   createdAt?: Timestamp;
-  lastLoginAt?: Timestamp;
+  lastLoginAt?: Timestamp | null;
   role?: 'Administrador' | 'Empleado' | 'Almacén';
   permissions?: string[]; 
 };
@@ -319,3 +320,5 @@ export type Payment = {
     reference: string;
   }[];
 };
+
+    
