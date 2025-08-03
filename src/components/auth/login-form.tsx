@@ -11,6 +11,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useAuth } from '@/context/auth-context';
 import { Loader2 } from 'lucide-react';
+import { PasswordInput } from '../shared/password-input';
 
 const formSchema = z.object({
   email: z.string().email("Por favor, introduce un correo electrónico válido."),
@@ -66,7 +67,11 @@ export function LoginForm() {
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <PasswordInput 
+                      {...field}
+                      onValueChange={field.onChange}
+                      placeholder="••••••••" 
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
