@@ -127,6 +127,7 @@ export type Supervisor = {
     name: string;
     email: string;
     phone: string;
+    password?: string;
     notes?: string;
 };
 
@@ -173,6 +174,7 @@ export type Technician = {
     name: string;
     email: string;
     phone: string;
+    password?: string;
     specialty: string;
     category: TechnicianCategory;
     notes?: string;
@@ -298,7 +300,6 @@ export type SupplierInvoice = {
   attachment?: DeliveryNoteAttachment;
   notes?: string;
   totalAmountDifference: number;
-  differenceJustification?: string;
 };
 
 export type Payment = {

@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -16,11 +17,19 @@ import {
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import type { Supervisor } from "@/lib/types";
+import { PasswordInput } from "../shared/password-input";
+
+const passwordSchema = z.string()
+  .length(6, "La contraseña debe tener exactamente 6 caracteres.")
+  .regex(/^(?=.*[a-zA-Z])(?=.*[0-9])/, "Debe contener letras y números.")
+  .refine(s => !/(.)\1{5,}/.test(s), "La contraseña no puede tener 6 caracteres idénticos.")
+  .refine(s => !["123456", "abcdef"].includes(s), "La contraseña es demasiado simple.");
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
+  password: passwordSchema.optional().or(z.literal('')),
   notes: z.string().optional(),
 });
 
@@ -34,11 +43,12 @@ interface SupervisorFormProps {
 
 export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormProps) {
   const defaultValues = supervisor
-    ? { ...supervisor }
+    ? { ...supervisor, password: supervisor.password || '' }
     : {
         name: "",
         email: "",
         phone: "",
+        password: "",
         notes: "",
       };
 
@@ -95,6 +105,23 @@ export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormP
                 )}
             />
         </div>
+        <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Contraseña de Acceso</FormLabel>
+                    <FormControl>
+                       <PasswordInput
+                          {...field}
+                          onValueChange={field.onChange}
+                          isOptional={!supervisor} // La contraseña es opcional si el supervisor ya existe
+                        />
+                    </FormControl>
+                     <FormMessage />
+                </FormItem>
+            )}
+        />
          <FormField
             control={form.control}
             name="notes"

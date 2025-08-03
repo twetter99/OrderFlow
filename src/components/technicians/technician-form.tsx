@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -21,6 +22,7 @@ import type { Technician, TechnicianCategory } from "@/lib/types";
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { PasswordInput } from '../shared/password-input';
 
 const technicianCategoryDefinitions = [
     { name: 'Técnico Ayudante / Auxiliar', description: 'Apoya en tareas básicas de instalación, cableado y montaje bajo supervisión directa.' },
@@ -45,12 +47,19 @@ const rateSchema = z.object({
   rateNotes: z.string().optional(),
 });
 
+const passwordSchema = z.string()
+  .length(6, "La contraseña debe tener exactamente 6 caracteres.")
+  .regex(/^(?=.*[a-zA-Z])(?=.*[0-9])/, "Debe contener letras y números.")
+  .refine(s => !/(.)\1{5,}/.test(s), "La contraseña no puede tener 6 caracteres idénticos.")
+  .refine(s => !["123456", "abcdef"].includes(s), "La contraseña es demasiado simple.");
+
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
   specialty: z.string().min(1, "La especialidad es obligatoria."),
   category: z.enum(technicianCategories, { required_error: "La categoría es obligatoria."}),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   email: z.string().email("Debe ser un correo electrónico válido."),
+  password: passwordSchema.optional().or(z.literal('')),
   notes: z.string().optional(),
   rates: rateSchema.optional(),
 });
@@ -162,6 +171,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
   const defaultValues: Partial<Technician> = technician
     ? { 
         ...technician, 
+        password: technician.password || '',
         notes: technician.notes || '',
         rates: {
             rateWorkHour: technician.rates?.rateWorkHour || 0,
@@ -179,6 +189,7 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
         category: 'Técnico Ayudante / Auxiliar',
         phone: "",
         email: "",
+        password: "",
         notes: "",
         rates: {
             rateWorkHour: 0,
@@ -268,6 +279,23 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                             )}
                         />
                     </div>
+                     <FormField
+                        control={form.control}
+                        name="password"
+                        render={({ field }) => (
+                            <FormItem>
+                                <FormLabel>Contraseña de Acceso</FormLabel>
+                                <FormControl>
+                                <PasswordInput
+                                    {...field}
+                                    onValueChange={field.onChange}
+                                    isOptional={!!technician}
+                                    />
+                                </FormControl>
+                                <FormMessage />
+                            </FormItem>
+                        )}
+                    />
                     <FormField
                     control={form.control}
                     name="phone"
