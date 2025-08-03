@@ -131,6 +131,7 @@ export type Supervisor = {
     name: string;
     phone: string;
     notes?: string;
+    email: string;
 };
 
 export type OperadorDepot = {
@@ -179,6 +180,7 @@ export type Technician = {
     category: TechnicianCategory;
     notes?: string;
     rates?: OperadorRates;
+    email: string;
 }
 
 export type Location = {
