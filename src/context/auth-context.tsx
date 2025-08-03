@@ -26,17 +26,24 @@ const AuthContext = createContext<AuthContextType>({
 
 const createUserProfile = async (firebaseUser: FirebaseUser) => {
   const userRef = doc(db, 'usuarios', firebaseUser.uid);
+  
   const userData: Partial<User> = {
     uid: firebaseUser.uid,
-    name: firebaseUser.displayName,
-    email: firebaseUser.email,
-    photoURL: firebaseUser.photoURL,
     providerId: firebaseUser.providerData[0]?.providerId || 'google.com',
     lastLoginAt: serverTimestamp(),
   };
 
+  if (firebaseUser.displayName) {
+    userData.name = firebaseUser.displayName;
+  }
+  if (firebaseUser.email) {
+    userData.email = firebaseUser.email;
+  }
+  if (firebaseUser.photoURL) {
+    userData.photoURL = firebaseUser.photoURL;
+  }
+
   // Use set with merge to create if not exists, or update if it does.
-  // This also handles updating the lastLoginAt timestamp on every login.
   await setDoc(userRef, userData, { merge: true });
 };
 
@@ -51,15 +58,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        await createUserProfile(firebaseUser);
-        setUser({
-          uid: firebaseUser.uid,
-          name: firebaseUser.displayName,
-          email: firebaseUser.email,
-          photoURL: firebaseUser.photoURL,
-        });
-        if (pathname === '/login') {
-            router.push('/dashboard');
+        try {
+            await createUserProfile(firebaseUser);
+            setUser({
+              uid: firebaseUser.uid,
+              name: firebaseUser.displayName,
+              email: firebaseUser.email,
+              photoURL: firebaseUser.photoURL,
+            });
+            if (pathname === '/login') {
+                router.push('/dashboard');
+            }
+        } catch (error) {
+            console.error("Error creating user profile in Firestore:", error);
+            toast({
+                variant: "destructive",
+                title: "Error de perfil",
+                description: "No se pudo crear o actualizar tu perfil de usuario. Por favor, intenta iniciar sesión de nuevo."
+            });
+            await signOut(auth); // Log out the user if profile creation fails
+            setUser(null);
         }
       } else {
         setUser(null);
@@ -68,7 +86,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router, pathname]);
+  }, [router, pathname, toast]);
 
   const signInWithGoogle = async () => {
     setLoading(true);
@@ -84,7 +102,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             title: "Dominio no autorizado",
             description: "Este dominio no está autorizado para la autenticación. Añádelo en la configuración de Authentication de tu Firebase Console.",
         })
-       } else {
+       } else if (error.code !== 'auth/popup-closed-by-user') {
          toast({
             variant: "destructive",
             title: "Error de autenticación",
