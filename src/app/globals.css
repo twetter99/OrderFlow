@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -87,5 +88,18 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+
+  /* Fondo abstracto para la página de login */
+  html:has(div[class*="LoginPage_container"]) {
+    background-color: #f0f2f5;
+    background-image:
+      radial-gradient(at 10% 20%, hsla(0,0%,100%,.4) 0px, transparent 50%),
+      radial-gradient(at 80% 0%, hsla(0,0%,100%,.3) 0px, transparent 50%),
+      radial-gradient(at 80% 80%, hsla(0,0%,100%,.2) 0px, transparent 50%);
+  }
+  
+  body:has(div[class*="LoginPage_container"]) {
+    background-color: transparent;
   }
 }

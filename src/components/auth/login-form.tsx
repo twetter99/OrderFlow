@@ -22,7 +22,6 @@ type LoginFormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
   const { signInWithEmail, sendPasswordReset, loading } = useAuth();
-  const [emailForReset, setEmailForReset] = React.useState("");
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -43,18 +42,22 @@ export function LoginForm() {
   };
 
   return (
-    <Card>
+    <Card className="bg-transparent border-none shadow-none">
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4 pt-6">
+          <CardContent className="space-y-4 pt-6 p-0">
             <FormField
               control={form.control}
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Correo Electrónico</FormLabel>
+                  <FormLabel className="text-black/80">Correo Electrónico</FormLabel>
                   <FormControl>
-                    <Input placeholder="tu@email.com" {...field} />
+                    <Input 
+                        placeholder="tu@email.com" 
+                        {...field}
+                        className="bg-white/70 border-gray-300/80 focus:ring-black/80 text-black"
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -65,12 +68,23 @@ export function LoginForm() {
               name="password"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
+                  <div className="flex justify-between items-center">
+                    <FormLabel className="text-black/80">Contraseña</FormLabel>
+                    <Button
+                        type="button"
+                        variant="link"
+                        className="p-0 h-auto font-normal text-xs text-gray-600 hover:text-black"
+                        onClick={handleForgotPassword}
+                    >
+                      ¿Has olvidado tu contraseña?
+                    </Button>
+                  </div>
                   <FormControl>
                     <PasswordInput 
                       {...field}
                       onValueChange={field.onChange}
-                      placeholder="••••••••" 
+                      placeholder="••••••••"
+                      className="bg-white/70 border-gray-300/80 focus:ring-black/80 text-black"
                     />
                   </FormControl>
                   <FormMessage />
@@ -78,18 +92,14 @@ export function LoginForm() {
               )}
             />
           </CardContent>
-          <CardFooter className="flex-col gap-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+          <CardFooter className="flex-col gap-4 p-0 pt-6">
+            <Button 
+                type="submit" 
+                className="w-full bg-black text-white rounded-lg hover:bg-gray-800" 
+                disabled={loading}
+            >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Verificando..." : "Acceder"}
-            </Button>
-            <Button
-                type="button"
-                variant="link"
-                className="p-0 h-auto font-normal text-muted-foreground"
-                onClick={handleForgotPassword}
-            >
-              ¿Has olvidado tu contraseña?
             </Button>
           </CardFooter>
         </form>
