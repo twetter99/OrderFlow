@@ -58,7 +58,7 @@ const mockProjects: Project[] = [
     spent: 23000,
     margen_previsto: 0.15,
     centro_coste: 'CC-INST-VEH',
-    responsable_proyecto_id: 'WF-USER-001',
+    responsable_proyecto_id: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2',
     equipo_tecnico_ids: ['WF-TECH-001', 'WF-TECH-002'],
     operador_ids: ['WF-OP-001']
   },
@@ -83,7 +83,7 @@ const mockProjects: Project[] = [
     spent: 18500,
     margen_previsto: 0.20,
     centro_coste: 'CC-PROY-ESP',
-    responsable_proyecto_id: 'WF-USER-001',
+    responsable_proyecto_id: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2',
     equipo_tecnico_ids: ['WF-TECH-001']
   },
   {
@@ -107,7 +107,7 @@ const mockProjects: Project[] = [
     spent: 0,
     margen_previsto: 0.18,
     centro_coste: 'CC-SEGURIDAD',
-    responsable_proyecto_id: 'WF-USER-001',
+    responsable_proyecto_id: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2',
     equipo_tecnico_ids: []
   },
   {
@@ -131,7 +131,7 @@ const mockProjects: Project[] = [
     spent: 9800,
     margen_previsto: 0.12,
     centro_coste: 'CC-MANT',
-    responsable_proyecto_id: 'WF-USER-001',
+    responsable_proyecto_id: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2',
     equipo_tecnico_ids: ['WF-TECH-002']
   },
 ];
@@ -185,17 +185,17 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  { uid: 'f8tJ9eWk2xVq3YhL8kPzN7jDc5s2', name: 'Admin User', email: 'admin@orderflow.com', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'] },
+  { uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', name: 'Juan Winfin', email: 'juan@winfin.es', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'] },
   { uid: 'gH7jKlM9nBvC1xZ2a3s4d5f6g7h8', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
   { uid: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
 ];
 const mockSupervisores: Supervisor[] = [
-    { id: 'WF-SUPV-001', name: 'Laura Martín', email: 'l.martin@winfin.es', phone: '600-111-222', notes: 'Supervisora de zona centro.'},
-    { id: 'WF-SUPV-002', name: 'Roberto Sánchez', email: 'r.sanchez@winfin.es', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.'},
+    { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.'},
+    { id: 'WF-SUPV-002', name: 'Roberto Sánchez', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.'},
 ];
 const mockTechnicians: Technician[] = [
-    { id: 'WF-TECH-001', name: 'Mario García', email: 'm.garcia@tecnicos.com', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados' },
-    { id: 'WF-TECH-002', name: 'Laura Jimenez', email: 'l.jimenez@tecnicos.com', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)' },
+    { id: 'WF-TECH-001', name: 'Mario García', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados' },
+    { id: 'WF-TECH-002', name: 'Laura Jimenez', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)' },
 ];
 const mockOperadores: Operador[] = [
     {

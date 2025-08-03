@@ -129,7 +129,6 @@ export type User = {
 export type Supervisor = {
     id: string;
     name: string;
-    email: string;
     phone: string;
     notes?: string;
 };
@@ -175,7 +174,6 @@ export type TechnicianCategory =
 export type Technician = {
     id: string;
     name: string;
-    email: string;
     phone: string;
     specialty: string;
     category: TechnicianCategory;

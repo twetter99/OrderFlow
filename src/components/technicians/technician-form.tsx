@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import React from 'react';
@@ -50,7 +51,6 @@ const formSchema = z.object({
   specialty: z.string().min(1, "La especialidad es obligatoria."),
   category: z.enum(technicianCategories, { required_error: "La categoría es obligatoria."}),
   phone: z.string().min(1, "El teléfono es obligatorio."),
-  email: z.string().email("Debe ser un correo electrónico válido."),
   notes: z.string().optional(),
   rates: rateSchema.optional(),
 });
@@ -178,7 +178,6 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
         specialty: "General",
         category: 'Técnico Ayudante / Auxiliar',
         phone: "",
-        email: "",
         notes: "",
         rates: {
             rateWorkHour: 0,
@@ -276,19 +275,6 @@ export function TechnicianForm({ technician, onSave, onCancel }: TechnicianFormP
                         <FormLabel>Teléfono</FormLabel>
                         <FormControl>
                             <Input placeholder="Número de contacto" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <FormField
-                    control={form.control}
-                    name="email"
-                    render={({ field }) => (
-                        <FormItem>
-                        <FormLabel>Email de Contacto</FormLabel>
-                        <FormControl>
-                            <Input type="email" placeholder="Correo electrónico" {...field} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>

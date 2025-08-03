@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import { z } from "zod";
@@ -19,7 +20,6 @@ import type { Supervisor } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
-  email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   notes: z.string().optional(),
 });
@@ -34,10 +34,9 @@ interface SupervisorFormProps {
 
 export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormProps) {
   const defaultValues = supervisor
-    ? { ...supervisor, email: supervisor.email || '', notes: supervisor.notes || '' }
+    ? { ...supervisor, notes: supervisor.notes || '' }
     : {
         name: "",
-        email: "",
         phone: "",
         notes: "",
       };
@@ -67,34 +66,19 @@ export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormP
             </FormItem>
           )}
         />
-        <div className="grid grid-cols-2 gap-4">
-            <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Email de Contacto</FormLabel>
-                    <FormControl>
-                        <Input type="email" placeholder="p. ej., l.martin@winfin.es" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-            <FormField
-                control={form.control}
-                name="phone"
-                render={({ field }) => (
-                    <FormItem>
-                    <FormLabel>Teléfono</FormLabel>
-                    <FormControl>
-                        <Input placeholder="p. ej., 600 111 222" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                    </FormItem>
-                )}
-            />
-        </div>
+        <FormField
+            control={form.control}
+            name="phone"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Teléfono</FormLabel>
+                <FormControl>
+                    <Input placeholder="p. ej., 600 111 222" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
+        />
          <FormField
             control={form.control}
             name="notes"
