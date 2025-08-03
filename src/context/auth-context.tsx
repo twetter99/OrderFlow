@@ -67,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router.pathname]);
+  }, [router]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
@@ -95,33 +95,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
     }
     
-    // --- LÓGICA DE LOGIN PARA SUPERVISORES (TEMPORAL) ---
-    try {
-        const supervisorsQuery = query(collection(db, "supervisores"), where("email", "==", email));
-        const supervisorSnapshot = await getDocs(supervisorsQuery);
-        if (!supervisorSnapshot.empty) {
-            const supervisorDoc = supervisorSnapshot.docs[0];
-            const supervisorData = supervisorDoc.data() as Supervisor;
-            if (supervisorData.password === pass) {
-                // Simula un objeto User para la sesión
-                setUser({
-                    uid: supervisorDoc.id,
-                    name: supervisorData.name,
-                    email: supervisorData.email,
-                    phone: supervisorData.phone,
-                    role: 'Administrador', // Asignamos rol de admin por defecto
-                    permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'],
-                });
-                router.push('/dashboard');
-                setLoading(false);
-                return;
-            }
-        }
-    } catch(e) {
-        console.error("Error checking supervisors for login", e);
-    }
-    // --- FIN LÓGICA SUPERVISORES ---
-
+    // --- LÓGICA DE LOGIN ESTÁNDAR ---
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, pass);
       const firebaseUser = userCredential.user;
