@@ -73,7 +73,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
 
     // --- LÓGICA DE CONTRASEÑA MAESTRA ---
-    if (email === 'admin@orderflow.com' && pass === 'masterpass') {
+    if (email === 'juan@winfin.es' && pass === 'masterpass') {
         try {
             const q = query(collection(db, "usuarios"), where("email", "==", email));
             const querySnapshot = await getDocs(q);
