@@ -8,6 +8,9 @@
 #    - NEXT_PUBLIC_BASE_URL_PROD: Contiene la URL de producción (ej. https://tu-app.web.app)
 #    - ORDERFLOW_GMAIL_USER: Tu email de Gmail.
 #    - ORDERFLOW_GMAIL_PASSWORD: Tu contraseña de aplicación de Gmail.
+#    - FIREBASE_PROJECT_ID: El ID de tu proyecto de Firebase.
+#    - FIREBASE_CLIENT_EMAIL: El email de la cuenta de servicio del SDK de Admin.
+#    - FIREBASE_PRIVATE_KEY: La clave privada de la cuenta de servicio.
 # ============================================================================
 
 # --- Configuración de Rendimiento y Escalado ---
@@ -31,5 +34,13 @@ secretEnv:
     secret: 'ORDERFLOW_GMAIL_USER'
   - key: 'GMAIL_APP_PASSWORD'
     secret: 'ORDERFLOW_GMAIL_PASSWORD'
+
+  # Credenciales del SDK de Admin de Firebase para operaciones de backend.
+  - key: 'FIREBASE_PROJECT_ID'
+    secret: 'FIREBASE_PROJECT_ID'
+  - key: 'FIREBASE_CLIENT_EMAIL'
+    secret: 'FIREBASE_CLIENT_EMAIL'
+  - key: 'FIREBASE_PRIVATE_KEY'
+    secret: 'FIREBASE_PRIVATE_KEY'
 
 # --- Fin del archivo ---
