@@ -117,7 +117,7 @@ export type User = {
   uid: string;
   name: string | null;
   email: string | null;
-  photoURL: string | null;
+  photoURL?: string | null; // Keep optional for email/pass users
   providerId?: string;
   createdAt?: Timestamp;
   lastLoginAt?: Timestamp;

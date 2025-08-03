@@ -2,44 +2,60 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
-import { onAuthStateChanged, signInWithPopup, signOut, GoogleAuthProvider, User as FirebaseUser } from 'firebase/auth';
+import { useRouter } from 'next/navigation';
+import { 
+  onAuthStateChanged, 
+  signOut, 
+  signInWithEmailAndPassword,
+  sendPasswordResetEmail,
+  User as FirebaseUser
+} from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
-import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  signInWithGoogle: () => Promise<void>;
+  signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
+  sendPasswordReset: (email: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  signInWithGoogle: async () => {},
+  signInWithEmail: async () => {},
   logOut: async () => {},
+  sendPasswordReset: async () => {},
 });
 
 const createUserProfile = async (firebaseUser: FirebaseUser) => {
   const userRef = doc(db, 'usuarios', firebaseUser.uid);
-  
-  const userData: Partial<User> = {
-    uid: firebaseUser.uid,
-    providerId: firebaseUser.providerData[0]?.providerId || 'google.com',
-    lastLoginAt: serverTimestamp(),
-  };
+  const userSnap = await getDoc(userRef);
 
-  // Only add fields if they exist to avoid writing null/undefined to Firestore
-  if (firebaseUser.displayName) userData.name = firebaseUser.displayName;
-  if (firebaseUser.email) userData.email = firebaseUser.email;
-  if (firebaseUser.photoURL) userData.photoURL = firebaseUser.photoURL;
+  // Only create the user document if it doesn't already exist.
+  if (!userSnap.exists()) {
+    const userData: Partial<User> = {
+      uid: firebaseUser.uid,
+      providerId: firebaseUser.providerData[0]?.providerId || 'password',
+      createdAt: serverTimestamp(),
+      lastLoginAt: serverTimestamp(),
+    };
 
-  // Use set with merge to create if not exists, or update if it does.
-  await setDoc(userRef, userData, { merge: true });
+    if (firebaseUser.email) userData.email = firebaseUser.email;
+    
+    // For email/password, these fields are often null initially.
+    // They might be populated later from a user profile page.
+    if (firebaseUser.displayName) userData.name = firebaseUser.displayName;
+    if (firebaseUser.photoURL) userData.photoURL = firebaseUser.photoURL;
+
+    await setDoc(userRef, userData, { merge: true });
+  } else {
+    // If user exists, just update the last login time.
+    await setDoc(userRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+  }
 };
 
 
@@ -54,18 +70,25 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (firebaseUser) {
         try {
             await createUserProfile(firebaseUser);
-            setUser({
-              uid: firebaseUser.uid,
-              name: firebaseUser.displayName,
-              email: firebaseUser.email,
-              photoURL: firebaseUser.photoURL,
-            });
+            // Fetch the full user profile from Firestore to get all data (incl. roles, permissions etc. in future)
+            const userDoc = await getDoc(doc(db, 'usuarios', firebaseUser.uid));
+            if (userDoc.exists()) {
+                setUser(userDoc.data() as User);
+            } else {
+                // This case is unlikely if createUserProfile works, but good as a fallback
+                setUser({
+                    uid: firebaseUser.uid,
+                    name: firebaseUser.displayName,
+                    email: firebaseUser.email,
+                    photoURL: firebaseUser.photoURL,
+                });
+            }
         } catch (error) {
-            console.error("Error creating user profile in Firestore:", error);
+            console.error("Error creating/fetching user profile:", error);
             toast({
                 variant: "destructive",
                 title: "Error de perfil",
-                description: "No se pudo crear o actualizar tu perfil de usuario. Por favor, intenta iniciar sesión de nuevo."
+                description: "No se pudo cargar tu perfil de usuario. Por favor, intenta iniciar sesión de nuevo."
             });
             await signOut(auth);
             setUser(null);
@@ -79,32 +102,50 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => unsubscribe();
   }, [toast]);
 
-  const signInWithGoogle = async () => {
+  const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
-    const provider = new GoogleAuthProvider();
     try {
-      await signInWithPopup(auth, provider);
-      // The onAuthStateChanged listener will handle setting user state
-      // and we redirect here AFTER the popup is successful.
+      await signInWithEmailAndPassword(auth, email, pass);
       router.push('/dashboard');
     } catch (error: any) {
-      console.error("Error signing in with Google: ", error);
-       if (error.code === 'auth/unauthorized-domain') {
-        toast({
-            variant: "destructive",
-            title: "Dominio no autorizado",
-            description: "Este dominio no está autorizado para la autenticación. Añádelo en la configuración de Authentication de tu Firebase Console.",
-        })
-       } else if (error.code !== 'auth/popup-closed-by-user') {
-         toast({
-            variant: "destructive",
-            title: "Error de autenticación",
-            description: "No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.",
-        })
+       let title = "Error de autenticación";
+       let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
+
+       switch(error.code) {
+        case 'auth/user-not-found':
+        case 'auth/wrong-password':
+            title = 'Credenciales Incorrectas';
+            description = 'El correo o la contraseña no son correctos. Por favor, verifica tus datos.';
+            break;
+        case 'auth/invalid-email':
+            title = 'Correo Inválido';
+            description = 'El formato del correo electrónico no es válido.';
+            break;
+        case 'auth/too-many-requests':
+            title = 'Demasiados Intentos';
+            description = 'El acceso a esta cuenta ha sido temporalmente deshabilitado. Inténtalo más tarde.';
+            break;
        }
-      setLoading(false);
+       toast({ variant: "destructive", title, description });
+       setLoading(false);
     }
   };
+
+  const sendPasswordReset = async (email: string) => {
+    try {
+        await sendPasswordResetEmail(auth, email);
+        toast({
+            title: "Correo enviado",
+            description: "Se ha enviado un enlace a tu correo para restablecer la contraseña."
+        });
+    } catch (error: any) {
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "No se pudo enviar el correo de restablecimiento. Verifica la dirección."
+        });
+    }
+  }
 
   const logOut = async () => {
     setLoading(true);
@@ -119,7 +160,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithGoogle, logOut }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );

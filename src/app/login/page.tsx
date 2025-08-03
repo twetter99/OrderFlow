@@ -7,7 +7,7 @@ import Image from "next/image";
 export default function LoginPage() {
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-sm">
         <div className="flex flex-col items-center justify-center mb-8">
             <div className="mb-4">
                 <Image src="/images/logo.png" alt="OrderFlow Logo" width={240} height={240} />
