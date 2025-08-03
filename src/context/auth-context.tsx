@@ -8,6 +8,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { Loader2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 interface AuthContextType {
   user: User | null;
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+  const { toast } = useToast();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -74,8 +76,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     try {
       await signInWithPopup(auth, provider);
       // The onAuthStateChanged listener will handle the rest
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error signing in with Google: ", error);
+       if (error.code === 'auth/unauthorized-domain') {
+        toast({
+            variant: "destructive",
+            title: "Dominio no autorizado",
+            description: "Este dominio no está autorizado para la autenticación. Añádelo en la configuración de Authentication de tu Firebase Console.",
+        })
+       } else {
+         toast({
+            variant: "destructive",
+            title: "Error de autenticación",
+            description: "No se pudo iniciar sesión con Google. Por favor, inténtalo de nuevo.",
+        })
+       }
       setLoading(false);
     }
   };
