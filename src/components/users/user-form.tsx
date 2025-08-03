@@ -4,7 +4,7 @@
 import React from 'react';
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { useForm, useWatch } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -21,27 +21,32 @@ import { Checkbox } from '../ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 
 const modules = [
-    { id: 'dashboard', label: 'Panel de Control' },
-    { id: 'projects', label: 'Gestión de Proyectos' },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'projects', label: 'Gestor de Proyectos' },
     { id: 'installation-templates', label: 'Plantillas de Instalación' },
     { id: 'replan', label: 'Informes de Replanteo' },
     { id: 'resource-planning', label: 'Planificación de Recursos' },
     { id: 'travel-planning', label: 'Planificación Desplazamientos' },
-    { id: 'inventory', label: 'Inventario' },
+    { id: 'inventory', label: 'Control de Stock' },
     { id: 'locations', label: 'Almacenes' },
-    { id: 'purchasing', label: 'Compras' },
-    { id: 'suppliers', label: 'Proveedores' },
+    { id: 'receptions', label: 'Recepción de Stock' },
+    { id: 'despatches', label: 'Salidas de Material' },
+    { id: 'purchasing', label: 'Órdenes de Compra' },
+    { id: 'completed-orders', label: 'Órdenes Finalizadas' },
+    { id: 'suppliers', label: 'Directorio de Proveedores' },
+    { id: 'supplier-invoices', label: 'Gestión de Facturas' },
+    { id: 'payments', label: 'Gestión de Pagos' },
     { id: 'project-tracking', label: 'Seguimiento y Control' },
     { id: 'reports', label: 'Reportes' },
     { id: 'documentation', label: 'Documentación' },
     { id: 'ai-assistant', label: 'Asistente IA' },
-    { id: 'clients', label: 'Clientes' },
+    { id: 'clients', label: 'Directorio de Clientes' },
     { id: 'operadores', label: 'Operadores' },
     { id: 'technicians', label: 'Técnicos' },
     { id: 'supervisores', label: 'Supervisores' },
-    { id: 'users', label: 'Usuarios y Permisos' },
+    { id: 'users', label: 'Gestión de Accesos' },
     { id: 'approval-flows', label: 'Flujos de Aprobación' },
-    { id: 'settings', label: 'Configuración App' },
+    { id: 'settings', label: 'Configuración General' },
 ] as const;
 
 const formSchema = z.object({
@@ -80,6 +85,23 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  const watchedPermissions = useWatch({
+    control: form.control,
+    name: 'permissions',
+  });
+
+  const allModuleIds = modules.map(m => m.id);
+  const areAllSelected = watchedPermissions?.length === allModuleIds.length;
+
+  const handleSelectAllToggle = () => {
+    if (areAllSelected) {
+      form.setValue('permissions', [], { shouldValidate: true });
+    } else {
+      form.setValue('permissions', allModuleIds, { shouldValidate: true });
+    }
+  };
+
 
   function onSubmit(values: UserFormValues) {
     onSave(values);
@@ -139,10 +161,17 @@ export function UserForm({ user, onSave, onCancel }: UserFormProps) {
 
         <Card>
             <CardHeader>
-                <CardTitle className="text-lg">Permisos de Acceso a Módulos</CardTitle>
-                <CardDescription>
-                    Selecciona todos los módulos a los que este usuario tendrá acceso en el futuro.
-                </CardDescription>
+                <div className="flex justify-between items-center">
+                    <div>
+                        <CardTitle className="text-lg">Permisos de Acceso a Módulos</CardTitle>
+                        <CardDescription>
+                            Selecciona todos los módulos a los que este usuario tendrá acceso.
+                        </CardDescription>
+                    </div>
+                    <Button type="button" variant="outline" size="sm" onClick={handleSelectAllToggle}>
+                        {areAllSelected ? 'Deseleccionar todos' : 'Seleccionar todos'}
+                    </Button>
+                </div>
             </CardHeader>
             <CardContent>
                  <FormField
