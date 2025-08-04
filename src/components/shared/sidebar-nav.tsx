@@ -43,7 +43,7 @@ import { Button } from "../ui/button";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../ui/tooltip";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/context/auth-context";
-
+import { hasPermissionForRoute } from "@/lib/permissions";
 
 const navGroups = [
   {
@@ -163,6 +163,19 @@ export const SidebarNav = () => {
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
 
+  const filteredNavGroups = React.useMemo(() => {
+    if (!user) return [];
+    
+    return navGroups.map(group => ({
+      ...group,
+      items: group.items.map(item => ({
+        ...item,
+        subItems: item.subItems.filter(subItem => hasPermissionForRoute(user.permissions || [], subItem.href))
+      })).filter(item => item.subItems.length > 0)
+    })).filter(group => group.items.length > 0);
+
+  }, [user]);
+
   return (
     <TooltipProvider>
       <aside
@@ -219,7 +232,7 @@ export const SidebarNav = () => {
           )}
         </div>
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {navGroups.map((group) => (
+          {filteredNavGroups.map((group) => (
             <div key={group.title} className="space-y-1">
                         {group.title && (
                             <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>

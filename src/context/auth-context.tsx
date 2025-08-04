@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -10,10 +11,11 @@ import {
   User as FirebaseUser
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
-import { doc, setDoc, serverTimestamp, getDoc, query, where, getDocs, collection } from 'firebase/firestore';
+import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import { users as mockUsers } from '@/lib/data';
-import type { User, Supervisor } from '@/lib/types';
+import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import { getFirstAccessibleRoute } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -46,8 +48,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (userDoc.exists()) {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-                setUser(userDoc.data() as User);
+                const userData = userDoc.data() as User;
+                setUser(userData);
+                
+                // Redirección inteligente post-login
+                const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
+                router.push(firstRoute);
+
             } else {
+                toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
                 await signOut(auth);
                 setUser(null);
             }
@@ -63,18 +72,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
 
-    // --- LÓGICA DE CONTRASEÑA MAESTRA ---
     if (email === 'juan@winfin.es' && pass === 'masterpass') {
         const adminUser = mockUsers.find(u => u.email === 'juan@winfin.es');
         if (adminUser) {
             setUser(adminUser);
             router.push('/dashboard');
-            // Nota: No actualizamos `lastLoginAt` en Firestore para este flujo de mock.
         } else {
             toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en los datos de prueba." });
         }
@@ -82,26 +89,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         return;
     }
     
-    // --- LÓGICA DE LOGIN ESTÁNDAR ---
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      const firebaseUser = userCredential.user;
-
-      const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-
-      if (!userDoc.exists()) {
-        await signOut(auth);
-        toast({
-          variant: "destructive",
-          title: "Acceso Denegado",
-          description: "Este usuario no está autorizado para acceder al sistema."
-        });
-        setLoading(false);
-        return;
-      }
-      // La redirección ocurrirá automáticamente por el onAuthStateChanged
-      router.push('/dashboard');
+      await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged se encargará del resto.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
