@@ -1,4 +1,5 @@
 
+
 export const routePermissions = {
   // ADMINISTRACIÓN
   '/dashboard': 'dashboard',
@@ -41,6 +42,7 @@ export const routePermissions = {
   // Páginas especiales sin permiso directo
   '/unauthorized': null, 
   '/login': null,
+  '/': null, // Permitir la raíz, que redirige
 };
 
 export const pageOrder = [
@@ -54,7 +56,14 @@ export const pageOrder = [
   '/suppliers',
   '/clients',
   '/users',
-  // Añadir el resto de rutas en el orden de preferencia
+  '/operadores',
+  '/completed-orders',
+  '/installation-templates',
+  '/replan',
+  '/supplier-invoices',
+  '/payments',
+  '/reports',
+  '/settings'
 ];
 
 /**
@@ -65,11 +74,14 @@ export const pageOrder = [
  */
 export const hasPermissionForRoute = (userPermissions: string[], route: string): boolean => {
   const requiredPermission = (routePermissions as Record<string, string | null>)[route];
+  // console.log(`Checking route ${route}, requires: ${requiredPermission}, user has:`, userPermissions?.includes(requiredPermission as string));
   
   // Si la ruta no requiere un permiso (es pública o especial), se permite el acceso.
   if (requiredPermission === null) {
     return true;
   }
+  
+  if (!requiredPermission) return false; // Si la ruta no está en la lista, denegar por defecto
   
   // Si la ruta requiere un permiso, comprobamos si el usuario lo tiene.
   return userPermissions.includes(requiredPermission);
@@ -81,10 +93,13 @@ export const hasPermissionForRoute = (userPermissions: string[], route: string):
  * @returns La primera ruta accesible o '/unauthorized' si no tiene acceso a ninguna.
  */
 export const getFirstAccessibleRoute = (userPermissions: string[]): string => {
+  // console.log('Getting first accessible route for permissions:', userPermissions);
   for (const route of pageOrder) {
     if (hasPermissionForRoute(userPermissions, route)) {
+      // console.log('Found first accessible route:', route);
       return route;
     }
   }
+  // console.log('No accessible route found, redirecting to unauthorized.');
   return '/unauthorized';
 };

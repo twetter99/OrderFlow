@@ -71,23 +71,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
-
-    if (email === 'juan@winfin.es' && pass === 'masterpass') {
-        const adminUser = mockUsers.find(u => u.email === 'juan@winfin.es');
-        if (adminUser) {
-            setUser(adminUser);
-            const firstRoute = getFirstAccessibleRoute(adminUser.permissions || []);
-            router.push(firstRoute);
-        } else {
-            toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en los datos de prueba." });
-        }
-        setLoading(false);
-        return;
-    }
     
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará del resto (actualización de estado y redirección por el AuthGuard)
+      // onAuthStateChanged se encargará de la lógica de obtención de datos.
+      // AuthGuard se encargará de la redirección.
+      // Mantenemos loading en true para que AuthGuard espere a que onAuthStateChanged termine.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -109,7 +98,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             break;
        }
        toast({ variant: "destructive", title, description });
-       setLoading(false);
+       setLoading(false); // Detener la carga si el login falla
     }
   };
 

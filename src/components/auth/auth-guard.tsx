@@ -50,7 +50,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
   
   // Si hay usuario pero no tiene permiso para la ruta actual (y no es una ruta pública)
-  if (user && pathname !== '/login' && !hasPermissionForRoute(user.permissions || [], pathname)) {
+  if (user && !hasPermissionForRoute(user.permissions || [], pathname)) {
     router.push('/unauthorized'); // Redirige si no tiene permiso
      return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
