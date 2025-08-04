@@ -1,9 +1,6 @@
-
-
 "use client"
 
-import Link from "next/link"
-import Image from "next/image"
+import { useAuth } from "@/context/auth-context"
 import {
   Bell,
   Bot,
@@ -35,6 +32,8 @@ import { SidebarTrigger } from "../ui/sidebar"
 import { BackButton } from "./back-button"
 
 export function Header() {
+  const { logOut } = useAuth();
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-card px-4 lg:h-[60px] lg:px-6 sticky top-0 z-30">
       <div className="flex items-center gap-2">
@@ -63,7 +62,7 @@ export function Header() {
           <DropdownMenuItem>Configuración</DropdownMenuItem>
           <DropdownMenuItem>Soporte</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>Cerrar Sesión</DropdownMenuItem>
+          <DropdownMenuItem onClick={logOut}>Cerrar Sesión</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </header>
