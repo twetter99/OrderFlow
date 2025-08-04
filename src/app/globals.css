@@ -89,16 +89,4 @@
   body {
     @apply bg-background text-foreground;
   }
-
-  /* Fondo para la página de login */
-  html:has(div[data-page="login"]) {
-    background-image: url('/images/fondo_login.jpg');
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-  }
-  
-  body:has(div[data-page="login"]) {
-    background-color: transparent;
-  }
 }

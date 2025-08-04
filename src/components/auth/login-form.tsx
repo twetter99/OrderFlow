@@ -51,12 +51,12 @@ export function LoginForm() {
               name="email"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-black/80">Correo Electrónico</FormLabel>
+                  <FormLabel className="text-white/80">Correo Electrónico</FormLabel>
                   <FormControl>
                     <Input 
                         placeholder="tu@email.com" 
                         {...field}
-                        className="bg-white/70 border-gray-300/80 focus:ring-black/80 text-black"
+                        className="bg-white/20 border-gray-300/30 focus:ring-white/80 text-white placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -69,11 +69,11 @@ export function LoginForm() {
               render={({ field }) => (
                 <FormItem>
                   <div className="flex justify-between items-center">
-                    <FormLabel className="text-black/80">Contraseña</FormLabel>
+                    <FormLabel className="text-white/80">Contraseña</FormLabel>
                     <Button
                         type="button"
                         variant="link"
-                        className="p-0 h-auto font-normal text-xs text-gray-600 hover:text-black"
+                        className="p-0 h-auto font-normal text-xs text-gray-400 hover:text-white"
                         onClick={handleForgotPassword}
                     >
                       ¿Has olvidado tu contraseña?
@@ -84,7 +84,7 @@ export function LoginForm() {
                       {...field}
                       onValueChange={field.onChange}
                       placeholder="••••••••"
-                      className="bg-white/70 border-gray-300/80 focus:ring-black/80 text-black"
+                      className="bg-white/20 border-gray-300/30 focus:ring-white/80 text-white placeholder:text-gray-400"
                     />
                   </FormControl>
                   <FormMessage />
@@ -95,7 +95,7 @@ export function LoginForm() {
           <CardFooter className="flex-col gap-4 p-0 pt-6">
             <Button 
                 type="submit" 
-                className="w-full bg-black text-white rounded-lg hover:bg-gray-800" 
+                className="w-full bg-white text-black rounded-lg hover:bg-gray-200" 
                 disabled={loading}
             >
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
