@@ -1,4 +1,3 @@
-
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
@@ -90,6 +89,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       
       if (userDoc.exists()) {
         const userData = { uid: userDoc.id, ...userDoc.data() } as User;
+        setUser(userData);
         const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
         router.push(firstRoute);
       } else {
