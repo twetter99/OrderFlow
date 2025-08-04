@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   onAuthStateChanged, 
   signOut, 
@@ -36,6 +36,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
   const { toast } = useToast();
 
   useEffect(() => {
@@ -49,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             if (userDoc.exists()) {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                 setUser(userDoc.data() as User);
-                 if (router.pathname === '/login') {
+                 if (pathname === '/login') {
                     router.push('/dashboard');
                 }
             } else {
@@ -68,7 +69,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [pathname, router]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
