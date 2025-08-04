@@ -1,4 +1,3 @@
-
 "use client";
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
@@ -12,25 +11,13 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    if (loading) {
-      return; // No hacer nada mientras se carga
-    }
-
-    // Si no hay usuario y no estamos en la página de login, redirigir a login
-    if (!user && pathname !== '/login') {
+    // Si la carga ha terminado y no hay usuario, redirige a la página de login.
+    if (!loading && !user) {
       router.push('/login');
-      return;
     }
-
-    // Si hay usuario y está en la página de login, redirigir a la primera página accesible
-    if (user && pathname === '/login') {
-        const firstRoute = getFirstAccessibleRoute(user.permissions || []);
-        router.push(firstRoute);
-    }
-    
-  }, [user, loading, router, pathname]);
-
-  // Si está cargando, mostrar loader
+  }, [user, loading, router]);
+  
+  // Mientras se verifica el estado de autenticación, mostrar un loader.
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -39,19 +26,19 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Si no hay usuario y no estamos en login, el useEffect ya habrá redirigido,
-  // pero mostramos un loader para evitar un parpadeo de contenido no autorizado.
-  if (!user && pathname !== '/login') {
-     return (
+  // Si no hay usuario, el useEffect se encargará de redirigir.
+  // Mientras tanto, mostramos un loader para evitar mostrar contenido no autorizado.
+  if (!user) {
+    return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-  
-  // Si hay usuario pero no tiene permiso para la ruta actual (y no es una ruta pública)
+
+  // Si hay usuario, pero no tiene permiso para la ruta actual.
   if (user && !hasPermissionForRoute(user.permissions || [], pathname)) {
-    router.push('/unauthorized'); // Redirige si no tiene permiso
+    router.push('/unauthorized'); // Redirige si no tiene permiso.
      return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -59,7 +46,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-
-  // Si hay usuario y tiene permiso (o es la página de login), renderizar children
+  // Si la carga ha terminado, hay un usuario y tiene permisos, renderizar el contenido.
   return <>{children}</>;
 };
