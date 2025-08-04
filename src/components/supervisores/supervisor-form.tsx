@@ -33,14 +33,12 @@ interface SupervisorFormProps {
 }
 
 export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormProps) {
-  const defaultValues = supervisor
-    ? { ...supervisor, notes: supervisor.notes || '' }
-    : {
-        name: "",
-        email: "",
-        phone: "",
-        notes: "",
-      };
+  const defaultValues = {
+    name: supervisor?.name || "",
+    email: supervisor?.email || "",
+    phone: supervisor?.phone || "",
+    notes: supervisor?.notes || "",
+  };
 
   const form = useForm<SupervisorFormValues>({
     resolver: zodResolver(formSchema),
