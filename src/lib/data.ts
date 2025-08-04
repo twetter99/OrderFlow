@@ -188,14 +188,29 @@ const mockUsers: User[] = [
   { uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', name: 'Juan Winfin', email: 'juan@winfin.es', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'] },
   { uid: 'gH7jKlM9nBvC1xZ2a3s4d5f6g7h8', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
   { uid: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
+  { 
+    uid: 'admin-user-placeholder-uid', 
+    name: 'Admin', 
+    email: 'admin@admin.com', 
+    phone: '000-000-0000', 
+    permissions: [
+      'dashboard', 'projects', 'installation-templates', 'replan', 
+      'resource-planning', 'travel-planning', 'inventory', 'locations', 
+      'receptions', 'despatches', 'purchasing', 'completed-orders', 
+      'suppliers', 'supplier-invoices', 'payments', 'project-tracking', 
+      'reports', 'documentation', 'ai-assistant', 'clients', 
+      'operadores', 'technicians', 'supervisores', 'users', 
+      'approval-flows', 'settings'
+    ] 
+  },
 ];
 const mockSupervisores: Supervisor[] = [
-    { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.'},
-    { id: 'WF-SUPV-002', name: 'Roberto Sánchez', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.'},
+    { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.', email: 'lmartin@winfin.es'},
+    { id: 'WF-SUPV-002', name: 'Roberto Sánchez', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.', email: 'rsanchez@winfin.es'},
 ];
 const mockTechnicians: Technician[] = [
-    { id: 'WF-TECH-001', name: 'Mario García', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados' },
-    { id: 'WF-TECH-002', name: 'Laura Jimenez', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)' },
+    { id: 'WF-TECH-001', name: 'Mario García', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados', email: 'mgarcia@winfin.es' },
+    { id: 'WF-TECH-002', name: 'Laura Jimenez', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)', email: 'ljimenez@winfin.es' },
 ];
 const mockOperadores: Operador[] = [
     {
