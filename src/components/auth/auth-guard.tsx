@@ -10,14 +10,14 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
 
   useEffect(() => {
-    // Only redirect if loading is finished and there's no user.
-    // This prevents redirects while the auth state is still being determined.
+    // Solo redirigir si la carga ha terminado y no hay usuario.
+    // Esto evita redirecciones mientras el estado de autenticación aún se está determinando.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // Show a loader while the auth state is being checked.
+  // Muestra un cargador mientras el estado de autenticación se está verificando.
   if (loading || !user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -26,6 +26,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // If loading is finished and there is a user, render the children.
+  // Si la carga ha terminado y hay un usuario, renderiza los hijos.
   return <>{children}</>;
 };
