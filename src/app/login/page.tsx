@@ -6,9 +6,9 @@ import Image from "next/image";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white p-4">
+    <div data-page="login" className="flex min-h-screen items-center justify-center p-4">
       {/* Contenedor principal con efecto glassmorphism */}
-      <div className="w-full max-w-md rounded-2xl bg-white/60 p-8 shadow-lg backdrop-blur-lg border border-gray-200/50">
+      <div className="w-full max-w-md rounded-2xl bg-white/80 p-8 shadow-lg backdrop-blur-sm border border-gray-200/50">
         <div className="flex flex-col items-center justify-center mb-8">
             <div className="mb-4">
                 <Image src="/images/logo.png" alt="OrderFlow Logo" width={180} height={40} />
