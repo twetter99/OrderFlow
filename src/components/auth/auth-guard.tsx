@@ -12,12 +12,13 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
+    // This effect handles the redirection side-effect, but the rendering
+    // logic below provides the immediate UI feedback and protection.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
 
-  // 1. Muestra el loader mientras se verifica la autenticación.
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -26,19 +27,19 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 2. Si la carga ha terminado y NO hay usuario, el useEffect ya está
-  //    redirigiendo. Mantenemos el loader para evitar mostrar nada.
   if (!user) {
+    // While the useEffect is redirecting, we must prevent any content
+    // from rendering. Returning the loader is a safe way to do this.
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
-
-  // 3. Si hay usuario, pero NO tiene permisos para la ruta actual.
+  
+  // If we have a user, now we check for permissions.
   if (!hasPermissionForRoute(user.permissions || [], pathname)) {
-    router.push('/unauthorized'); // Redirige a la página de acceso denegado.
+    router.push('/unauthorized'); // Redirect to a dedicated "access denied" page
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -46,7 +47,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // 4. Si la carga ha terminado, hay un usuario y tiene permisos,
-  //    renderizar el contenido de la página.
+  // Only if all checks pass, render the children.
   return <>{children}</>;
 };
