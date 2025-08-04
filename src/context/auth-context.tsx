@@ -2,13 +2,15 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { 
   onAuthStateChanged, 
   signOut, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  User as FirebaseUser
+  User as FirebaseUser,
+  setPersistence,
+  browserSessionPersistence
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
@@ -37,49 +39,63 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
-  const pathname = usePathname();
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-            const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
+    // Set persistence to 'session' to log out on browser close.
+    setPersistence(auth, browserSessionPersistence)
+      .then(() => {
+        const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+          if (firebaseUser) {
+            try {
+                const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
+                const userDoc = await getDoc(userDocRef);
 
-            if (userDoc.exists()) {
-                await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-                const userData = { uid: userDoc.id, ...userDoc.data() } as User;
-                setUser(userData);
-                 if (pathname === '/login') {
-                    const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
-                    router.push(firstRoute);
-                 }
-            } else {
-                toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
+                if (userDoc.exists()) {
+                    await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+                    const userData = { uid: userDoc.id, ...userDoc.data() } as User;
+                    setUser(userData);
+                } else {
+                    toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
+                    await signOut(auth);
+                    setUser(null);
+                }
+            } catch (error) {
+                console.error("Error fetching user profile:", error);
                 await signOut(auth);
                 setUser(null);
             }
-        } catch (error) {
-            console.error("Error fetching user profile:", error);
-            await signOut(auth);
+          } else {
             setUser(null);
-        }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+          }
+          setLoading(false);
+        });
 
-    return () => unsubscribe();
-  }, [router, pathname]);
+        return () => unsubscribe();
+      })
+      .catch((error) => {
+        console.error("Error setting auth persistence:", error);
+        setLoading(false);
+      });
+  }, []);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
     
     try {
-      await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará de la lógica de obtención de datos y redirección.
-      // Mantenemos loading en true para que AuthGuard espere a que onAuthStateChanged termine.
+      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
+      const firebaseUser = userCredential.user;
+      
+      const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
+      const userDoc = await getDoc(userDocRef);
+      
+      if (userDoc.exists()) {
+        const userData = { uid: userDoc.id, ...userDoc.data() } as User;
+        const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
+        router.push(firstRoute);
+      } else {
+        throw new Error('auth/user-not-found-in-firestore');
+      }
+
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -88,8 +104,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'auth/user-not-found':
         case 'auth/wrong-password':
         case 'auth/invalid-credential':
+        case 'auth/user-not-found-in-firestore':
             title = 'Credenciales Incorrectas';
-            description = 'El correo o la contraseña no son correctos. Por favor, verifica tus datos.';
+            description = 'El correo o la contraseña no son correctos, o el usuario no existe en la base de datos.';
             break;
         case 'auth/invalid-email':
             title = 'Correo Inválido';
@@ -101,7 +118,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             break;
        }
        toast({ variant: "destructive", title, description });
-       setLoading(false); // Detener la carga si el login falla
+       setLoading(false);
     }
   };
 
