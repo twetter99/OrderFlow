@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -20,6 +19,7 @@ import type { Supervisor } from "@/lib/types";
 
 const formSchema = z.object({
   name: z.string().min(1, "El nombre es obligatorio."),
+  email: z.string().email("Debe ser un correo electrónico válido."),
   phone: z.string().min(1, "El teléfono es obligatorio."),
   notes: z.string().optional(),
 });
@@ -37,6 +37,7 @@ export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormP
     ? { ...supervisor, notes: supervisor.notes || '' }
     : {
         name: "",
+        email: "",
         phone: "",
         notes: "",
       };
@@ -65,6 +66,19 @@ export function SupervisorForm({ supervisor, onSave, onCancel }: SupervisorFormP
               <FormMessage />
             </FormItem>
           )}
+        />
+        <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+                <FormItem>
+                <FormLabel>Correo Electrónico</FormLabel>
+                <FormControl>
+                    <Input type="email" placeholder="p. ej., laura.martin@email.com" {...field} />
+                </FormControl>
+                <FormMessage />
+                </FormItem>
+            )}
         />
         <FormField
             control={form.control}
