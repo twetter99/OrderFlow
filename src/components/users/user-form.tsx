@@ -95,15 +95,15 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
   type UserFormValues = z.infer<typeof formSchema>;
 
   const availablePeople = React.useMemo(() => {
-    const techOptions = technicians.map(t => ({ id: `tech-${t.id}`, name: t.name, email: t.email, phone: t.phone, role: 'Técnico' }));
-    const supOptions = supervisors.map(s => ({ id: `sup-${s.id}`, name: s.name, email: s.email, phone: s.phone, role: 'Supervisor' }));
+    const techOptions = technicians.map(t => ({ id: t.id, name: t.name, email: t.email, phone: t.phone, role: 'Técnico' }));
+    const supOptions = supervisors.map(s => ({ id: s.id, name: s.name, email: s.email, phone: s.phone, role: 'Supervisor' }));
     return [...techOptions, ...supOptions];
   }, [technicians, supervisors]);
 
   const defaultValues = user
     ? { 
         ...user,
-        personId: user.uid,
+        personId: user.personId || user.uid,
         permissions: user.permissions || [],
         password: '', // La contraseña nunca se carga, solo se puede cambiar
       }
@@ -196,7 +196,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                     <FormItem>
                     <FormLabel>Nombre Completo</FormLabel>
                     <FormControl>
-                        <Input placeholder="Se rellena al vincular" {...field} disabled />
+                        <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -210,7 +210,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                             <FormItem>
                             <FormLabel>Correo Electrónico de Acceso</FormLabel>
                             <FormControl>
-                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled/>
+                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>

@@ -21,10 +21,10 @@ export async function createUser(userData: any) {
       displayName: name,
     });
 
-    // 2. Crear documento de usuario en Firestore usando la API del Admin SDK
+    // 2. Crear documento de usuario en Firestore usando la API del Admin SDK y el UID como ID del documento
     const userDocRef = db.collection("usuarios").doc(userRecord.uid);
     await userDocRef.set({
-      uid: userRecord.uid,
+      uid: userRecord.uid, // Guardamos el UID también como campo por consistencia
       personId,
       name,
       email,
@@ -110,4 +110,3 @@ export async function deleteUser(uid: string) {
         return { success: false, message };
     }
 }
-    

@@ -2,7 +2,7 @@
 "use client";
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { 
   onAuthStateChanged, 
   signOut, 
@@ -12,7 +12,6 @@ import {
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
-import { users as mockUsers } from '@/lib/data';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { getFirstAccessibleRoute } from '@/lib/permissions';
@@ -38,6 +37,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
+  const pathname = usePathname();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -48,8 +48,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
             if (userDoc.exists()) {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-                const userData = userDoc.data() as User;
+                const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                 setUser(userData);
+                 if (pathname === '/login') {
+                    const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
+                    router.push(firstRoute);
+                 }
             } else {
                 toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
                 await signOut(auth);
@@ -67,15 +71,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [router, pathname]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
     
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará de la lógica de obtención de datos.
-      // AuthGuard se encargará de la redirección.
+      // onAuthStateChanged se encargará de la lógica de obtención de datos y redirección.
       // Mantenemos loading en true para que AuthGuard espere a que onAuthStateChanged termine.
     } catch (error: any) {
        let title = "Error de autenticación";

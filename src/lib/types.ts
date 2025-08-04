@@ -1,5 +1,4 @@
 
-
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -115,8 +114,9 @@ export type Client = {
 
 export type User = {
   uid: string;
-  name: string | null;
-  email: string | null;
+  personId?: string; // Para vincular a un técnico o supervisor
+  name: string;
+  email: string;
   phone?: string | null;
   photoURL?: string | null; 
   providerId?: string;

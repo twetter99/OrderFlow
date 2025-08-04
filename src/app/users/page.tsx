@@ -70,7 +70,7 @@ export default function UsersPage() {
 
   useEffect(() => {
     const unsubUsers = onSnapshot(collection(db, "usuarios"), (snapshot) => {
-      setUsers(snapshot.docs.map(doc => ({ ...doc.data() } as User)));
+      setUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() } as User)));
       if (loading) setLoading(false);
     });
      const unsubTechs = onSnapshot(collection(db, "technicians"), (snapshot) => {
@@ -299,5 +299,3 @@ export default function UsersPage() {
     </div>
   );
 }
-
-    
