@@ -3,7 +3,7 @@ import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useEffect } from 'react';
 import { Loader2 } from 'lucide-react';
-import { hasPermissionForRoute, getFirstAccessibleRoute } from '@/lib/permissions';
+import { hasPermissionForRoute } from '@/lib/permissions';
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth();
@@ -37,7 +37,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   }
 
   // Si hay usuario, pero no tiene permiso para la ruta actual.
-  if (user && !hasPermissionForRoute(user.permissions || [], pathname)) {
+  if (!hasPermissionForRoute(user.permissions || [], pathname)) {
     router.push('/unauthorized'); // Redirige si no tiene permiso.
      return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
