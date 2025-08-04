@@ -50,11 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                 const userData = userDoc.data() as User;
                 setUser(userData);
-                
-                // Redirección inteligente post-login
-                const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
-                router.push(firstRoute);
-
             } else {
                 toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
                 await signOut(auth);
@@ -72,7 +67,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, []);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
@@ -81,7 +76,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const adminUser = mockUsers.find(u => u.email === 'juan@winfin.es');
         if (adminUser) {
             setUser(adminUser);
-            router.push('/dashboard');
+            const firstRoute = getFirstAccessibleRoute(adminUser.permissions || []);
+            router.push(firstRoute);
         } else {
             toast({ variant: "destructive", title: "Acceso Maestro Fallido", description: "El usuario administrador no se encuentra en los datos de prueba." });
         }
@@ -91,7 +87,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará del resto.
+      // onAuthStateChanged se encargará del resto (actualización de estado y redirección por el AuthGuard)
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
