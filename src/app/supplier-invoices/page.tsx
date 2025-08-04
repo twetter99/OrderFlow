@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useMemo, useEffect } from 'react';
@@ -33,6 +32,16 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { MoreHorizontal, PlusCircle, Edit, Trash2 } from "lucide-react";
 import type { SupplierInvoice, Supplier, PurchaseOrder, Project } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
@@ -42,6 +51,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn, convertTimestampsToISO } from "@/lib/utils";
 import { InvoiceForm } from '@/components/supplier-invoices/invoice-form';
+import { Checkbox } from "@/components/ui/checkbox";
+import { deleteMultipleInvoices } from "./actions";
 
 export default function SupplierInvoicesPage() {
   const { toast } = useToast();
@@ -54,6 +65,9 @@ export default function SupplierInvoicesPage() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<SupplierInvoice | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [invoiceToDelete, setInvoiceToDelete] = useState<SupplierInvoice | null>(null);
 
   useEffect(() => {
     const unsubInvoices = onSnapshot(collection(db, "supplierInvoices"), (snapshot) => {
@@ -102,10 +116,36 @@ export default function SupplierInvoicesPage() {
     setIsModalOpen(true);
   }
 
+  const handleDeleteTrigger = (invoice: SupplierInvoice) => {
+    setInvoiceToDelete(invoice);
+    setIsDeleteDialogOpen(true);
+  }
+  
+  const handleBulkDeleteClick = () => {
+    setInvoiceToDelete(null); // Ensure we are in bulk mode
+    setIsDeleteDialogOpen(true);
+  };
+  
+  const confirmDelete = async () => {
+    if (invoiceToDelete) {
+      await deleteDoc(doc(db, "supplierInvoices", invoiceToDelete.id));
+      toast({ variant: "destructive", title: "Factura eliminada" });
+    } else if (selectedRowIds.length > 0) {
+      const result = await deleteMultipleInvoices(selectedRowIds);
+      if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+      } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+      }
+    }
+    setIsDeleteDialogOpen(false);
+    setInvoiceToDelete(null);
+    setSelectedRowIds([]);
+  };
+
   const handleSave = async (values: any) => {
     const { bases, ...rest } = values;
     
-    // Calculate totals based on the array of bases
     const vatAmount = bases.reduce((acc: number, item: { baseAmount: number; vatRate: number; }) => {
         const base = Number(item.baseAmount) || 0;
         const rate = Number(item.vatRate) || 0;
@@ -171,6 +211,22 @@ export default function SupplierInvoicesPage() {
     }
   };
 
+  const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(enrichedInvoices.map(i => i.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -180,18 +236,29 @@ export default function SupplierInvoicesPage() {
             Gestiona y valida las facturas recibidas de tus proveedores.
           </p>
         </div>
-        <Button onClick={handleAddClick}>
-          <PlusCircle className="mr-2 h-4 w-4" />
-          Añadir Factura
-        </Button>
       </div>
       
       <Card>
         <CardHeader>
-          <CardTitle>Listado de Facturas</CardTitle>
-          <CardDescription>
-            Busca y gestiona todas las facturas de proveedores.
-          </CardDescription>
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>Listado de Facturas</CardTitle>
+              <CardDescription>
+                Busca y gestiona todas las facturas de proveedores.
+              </CardDescription>
+            </div>
+            {selectedRowIds.length > 0 ? (
+                <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Eliminar ({selectedRowIds.length})
+                </Button>
+            ) : (
+                <Button onClick={handleAddClick}>
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Añadir Factura
+                </Button>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           <div className="mb-4">
@@ -204,6 +271,13 @@ export default function SupplierInvoicesPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                 <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === enrichedInvoices.length && enrichedInvoices.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>Proveedor</TableHead>
                 <TableHead>Nº Factura</TableHead>
                 <TableHead>F. Factura</TableHead>
@@ -217,9 +291,16 @@ export default function SupplierInvoicesPage() {
             </TableHeader>
             <TableBody>
               {loading ? (
-                <TableRow><TableCell colSpan={9} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={10} className="text-center">Cargando...</TableCell></TableRow>
               ) : enrichedInvoices.map((invoice) => (
-                <TableRow key={invoice.id}>
+                <TableRow key={invoice.id} data-state={selectedRowIds.includes(invoice.id) && "selected"}>
+                   <TableCell>
+                     <Checkbox
+                      checked={selectedRowIds.includes(invoice.id)}
+                      onCheckedChange={() => handleRowSelect(invoice.id)}
+                      aria-label={`Seleccionar factura ${invoice.invoiceNumber}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{invoice.supplierName}</TableCell>
                   <TableCell>{invoice.invoiceNumber}</TableCell>
                   <TableCell>{new Date(invoice.emissionDate as string).toLocaleDateString()}</TableCell>
@@ -250,7 +331,7 @@ export default function SupplierInvoicesPage() {
                           Ver / Editar
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteTrigger(invoice)}>
                           <Trash2 className="mr-2 h-4 w-4" />
                           Eliminar
                         </DropdownMenuItem>
@@ -261,7 +342,7 @@ export default function SupplierInvoicesPage() {
               ))}
               {!loading && enrichedInvoices.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={9} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={10} className="text-center text-muted-foreground py-8">
                         No se encontraron facturas.
                     </TableCell>
                 </TableRow>
@@ -286,6 +367,23 @@ export default function SupplierInvoicesPage() {
           />
         </DialogContent>
       </Dialog>
+      
+      <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+               Esta acción no se puede deshacer. Se eliminará permanentemente {invoiceToDelete ? ` la factura "${invoiceToDelete.invoiceNumber}".` : `las ${selectedRowIds.length} facturas seleccionadas.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
