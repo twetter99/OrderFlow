@@ -1,4 +1,5 @@
 "use client";
+
 import { useAuth } from '@/context/auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import React, { useEffect } from 'react';
@@ -11,13 +12,12 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const pathname = usePathname();
 
   useEffect(() => {
-    // Si la carga ha terminado y no hay usuario, redirige a la página de login.
     if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);
-  
-  // Mientras se verifica el estado de autenticación, mostrar un loader.
+
+  // 1. Muestra el loader mientras se verifica la autenticación.
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -26,8 +26,8 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Si la carga ha terminado pero no hay usuario, el useEffect ya ha iniciado la redirección.
-  // Mostramos un loader para evitar mostrar contenido no autorizado mientras se completa.
+  // 2. Si la carga ha terminado y NO hay usuario, el useEffect ya está
+  //    redirigiendo. Mantenemos el loader para evitar mostrar nada.
   if (!user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
@@ -36,16 +36,17 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Si hay usuario, pero no tiene permiso para la ruta actual.
+  // 3. Si hay usuario, pero NO tiene permisos para la ruta actual.
   if (!hasPermissionForRoute(user.permissions || [], pathname)) {
-    router.push('/unauthorized'); // Redirige si no tiene permiso.
-     return (
+    router.push('/unauthorized'); // Redirige a la página de acceso denegado.
+    return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Si la carga ha terminado, hay un usuario y tiene permisos, renderizar el contenido.
+  // 4. Si la carga ha terminado, hay un usuario y tiene permisos,
+  //    renderizar el contenido de la página.
   return <>{children}</>;
 };
