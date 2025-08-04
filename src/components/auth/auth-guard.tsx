@@ -26,8 +26,8 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     );
   }
 
-  // Si no hay usuario, el useEffect se encargará de redirigir.
-  // Mientras tanto, mostramos un loader para evitar mostrar contenido no autorizado.
+  // Si la carga ha terminado pero no hay usuario, el useEffect ya ha iniciado la redirección.
+  // Mostramos un loader para evitar mostrar contenido no autorizado mientras se completa.
   if (!user) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-background">
