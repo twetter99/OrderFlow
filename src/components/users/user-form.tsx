@@ -95,8 +95,8 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
   type UserFormValues = z.infer<typeof formSchema>;
 
   const availablePeople = React.useMemo(() => {
-    const techOptions = technicians.map(t => ({ id: `tech-${t.id}`, name: t.name, email: `tech.${t.id}@winfin.es`, phone: t.phone, role: 'Técnico' }));
-    const supOptions = supervisors.map(s => ({ id: `sup-${s.id}`, name: s.name, email: `sup.${s.id}@winfin.es`, phone: s.phone, role: 'Supervisor' }));
+    const techOptions = technicians.map(t => ({ id: `tech-${t.id}`, name: t.name, email: t.email, phone: t.phone, role: 'Técnico' }));
+    const supOptions = supervisors.map(s => ({ id: `sup-${s.id}`, name: s.name, email: s.email, phone: s.phone, role: 'Supervisor' }));
     return [...techOptions, ...supOptions];
   }, [technicians, supervisors]);
 
@@ -141,7 +141,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     const selectedPerson = availablePeople.find(p => p.id === personId);
     if (selectedPerson) {
         form.setValue('name', selectedPerson.name);
-        form.setValue('email', selectedPerson.email);
+        form.setValue('email', selectedPerson.email || '');
         form.setValue('phone', selectedPerson.phone || '');
     }
   }
