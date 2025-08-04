@@ -16,22 +16,31 @@ const initializeFirebaseAdmin = (): admin.app.App => {
   }
 
   // Check for environment variables
-  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
   const projectId = process.env.FIREBASE_PROJECT_ID;
   const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY;
+  
+  console.log("Firebase Admin SDK - Project ID loaded:", !!projectId);
+  console.log("Firebase Admin SDK - Client Email loaded:", !!clientEmail);
+  console.log("Firebase Admin SDK - Private Key loaded:", !!privateKey);
+
 
   if (!projectId || !clientEmail || !privateKey) {
-    throw new Error("Las credenciales de Firebase Admin no están configuradas en las variables de entorno.");
+    let missingVars = [];
+    if (!projectId) missingVars.push("FIREBASE_PROJECT_ID");
+    if (!clientEmail) missingVars.push("FIREBASE_CLIENT_EMAIL");
+    if (!privateKey) missingVars.push("FIREBASE_PRIVATE_KEY");
+    throw new Error(`Faltan las siguientes credenciales de Firebase Admin en las variables de entorno: ${missingVars.join(', ')}`);
   }
 
   // Format the private key
   const formattedPrivateKey = privateKey.replace(/\\n/g, '\n');
 
-  const credentials: ServiceAccount = {
+  const credentials = {
     projectId,
     clientEmail,
     privateKey: formattedPrivateKey,
-  };
+  } as admin.ServiceAccount;
 
   try {
     // Initialize the app
@@ -51,7 +60,8 @@ const initializeFirebaseAdmin = (): admin.app.App => {
 const app = initializeFirebaseAdmin();
 
 // Export auth and firestore services from the initialized app
-const auth = app.auth();
-const db = app.firestore();
+const auth = admin.auth(app);
+const db = admin.firestore(app);
+
 
 export { auth, db, admin };
