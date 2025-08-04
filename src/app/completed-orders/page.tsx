@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, Printer, Eye, History, ArrowUp, ArrowDown, ArrowUpDown, Archive } from "lucide-react";
+import { MoreHorizontal, Printer, Eye, History, ArrowUp, ArrowDown, ArrowUpDown, Archive, Trash2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,16 +36,28 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import type { PurchaseOrder, Supplier, Project, Location, InventoryItem } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { collection, onSnapshot } from "firebase/firestore";
+import { collection, onSnapshot, writeBatch, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
 import { convertPurchaseOrderTimestamps } from "@/lib/utils";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
+import { Checkbox } from "@/components/ui/checkbox";
+import { deleteMultiplePurchaseOrders } from "@/app/purchasing/actions";
 
 
 type SortDescriptor = {
@@ -70,7 +82,10 @@ export default function CompletedOrdersPage() {
 
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false);
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<PurchaseOrder | null>(null);
+  const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+  const [orderToDelete, setOrderToDelete] = useState<PurchaseOrder | null>(null);
 
   const [sortDescriptor, setSortDescriptor] = useState<SortDescriptor>({
       column: 'date',
@@ -148,6 +163,41 @@ export default function CompletedOrdersPage() {
     setIsDetailsModalOpen(true);
   }
 
+  const handleDeleteTrigger = (order: PurchaseOrder) => {
+    setOrderToDelete(order);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleBulkDeleteClick = () => {
+    setOrderToDelete(null); // Ensure we are in bulk mode
+    setIsDeleteDialogOpen(true);
+  };
+
+  const confirmDelete = async () => {
+    let result;
+    if (orderToDelete) {
+        // This is a single delete, which shouldn't happen from this page, but as a fallback
+        const batch = writeBatch(db);
+        batch.delete(doc(db, "purchaseOrders", orderToDelete.id));
+        await batch.commit();
+        result = { success: true, message: "Orden eliminada."};
+    } else if (selectedRowIds.length > 0) {
+        result = await deleteMultiplePurchaseOrders(selectedRowIds);
+    } else {
+        return;
+    }
+
+    if (result.success) {
+        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+    
+    setIsDeleteDialogOpen(false);
+    setOrderToDelete(null);
+    setSelectedRowIds([]);
+  };
+
   const handlePrintClick = (order: PurchaseOrder) => {
     const projectDetails = projects.find(p => p.id === order.project);
     const supplierDetails = suppliers.find(s => s.name === order.supplier);
@@ -186,6 +236,22 @@ export default function CompletedOrdersPage() {
     return <ArrowUpDown className="ml-2 h-4 w-4 opacity-30" />;
   };
 
+   const handleSelectAll = (checked: boolean | 'indeterminate') => {
+    if (checked === true) {
+      setSelectedRowIds(completedOrders.map(o => o.id));
+    } else {
+      setSelectedRowIds([]);
+    }
+  };
+
+  const handleRowSelect = (rowId: string) => {
+    setSelectedRowIds(prev => 
+      prev.includes(rowId) 
+        ? prev.filter(id => id !== rowId) 
+        : [...prev, rowId]
+    );
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -195,6 +261,12 @@ export default function CompletedOrdersPage() {
             Consulta el historial de todas las órdenes de compra que han sido completadas y archivadas.
           </p>
         </div>
+        {selectedRowIds.length > 0 && (
+            <Button variant="destructive" onClick={handleBulkDeleteClick}>
+                <Trash2 className="mr-2 h-4 w-4" />
+                Eliminar ({selectedRowIds.length})
+            </Button>
+        )}
       </div>
       
       <Card>
@@ -221,6 +293,13 @@ export default function CompletedOrdersPage() {
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[50px]">
+                  <Checkbox
+                    checked={selectedRowIds.length === completedOrders.length && completedOrders.length > 0 ? true : (selectedRowIds.length > 0 ? 'indeterminate' : false)}
+                    onCheckedChange={(checked) => handleSelectAll(checked)}
+                    aria-label="Seleccionar todo"
+                  />
+                </TableHead>
                 <TableHead>
                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('orderNumber')}>
                         ID de Orden {getSortIcon('orderNumber')}
@@ -251,7 +330,14 @@ export default function CompletedOrdersPage() {
             </TableHeader>
             <TableBody>
               {completedOrders.map((order) => (
-                <TableRow key={order.id}>
+                <TableRow key={order.id} data-state={selectedRowIds.includes(order.id) && "selected"}>
+                   <TableCell>
+                    <Checkbox
+                      checked={selectedRowIds.includes(order.id)}
+                      onCheckedChange={() => handleRowSelect(order.id)}
+                      aria-label={`Seleccionar orden ${order.orderNumber}`}
+                    />
+                  </TableCell>
                   <TableCell className="font-medium">{order.orderNumber || order.id}</TableCell>
                   <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
@@ -282,17 +368,22 @@ export default function CompletedOrdersPage() {
                             <Printer className="mr-2 h-4 w-4"/>
                             Imprimir Orden
                           </DropdownMenuItem>
+                           <DropdownMenuSeparator />
+                           <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteTrigger(order)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Eliminar
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
                 </TableRow>
               ))}
               {loading && (
-                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
               )}
               {!loading && completedOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra completadas.
                     </TableCell>
                 </TableRow>
@@ -338,6 +429,25 @@ export default function CompletedOrdersPage() {
           />
         </DialogContent>
       </Dialog>
+      
+       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>¿Estás seguro?</AlertDialogTitle>
+            <AlertDialogDescription>
+               Esta acción no se puede deshacer. Se eliminará permanentemente {orderToDelete ? ` la orden "${orderToDelete.orderNumber}".` : `las ${selectedRowIds.length} órdenes seleccionadas.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>
+              Eliminar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
+
+    

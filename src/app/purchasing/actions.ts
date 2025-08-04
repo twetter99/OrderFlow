@@ -163,6 +163,7 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
         });
         await batch.commit();
         revalidatePath("/purchasing");
+        revalidatePath("/completed-orders");
         return { success: true, message: `${ids.length} pedidos eliminados.` };
     } catch(error) {
         console.error("Error deleting multiple orders: ", error);
@@ -185,3 +186,5 @@ export async function linkDeliveryNoteToPurchaseOrder(orderId: string, notes: De
         return { success: false, message: "No se pudo adjuntar el albarán en la base de datos." };
     }
 }
+
+    
