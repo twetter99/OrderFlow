@@ -1,17 +1,14 @@
 
 "use server"
 
-import { getFirebaseAuth, getFirestore } from "@/lib/firebase-admin";
-import * as admin from 'firebase-admin';
+import { auth, db, admin } from "@/lib/firebase-admin";
 
 // NOTA: Este archivo debe usar el SDK de Admin de Firebase
 // para poder crear usuarios sin estar autenticado.
 
 export async function createUser(userData: any) {
   const { email, password, name, phone, permissions, personId } = userData;
-  const auth = getFirebaseAuth();
-  const db = getFirestore();
-
+  
   if (!email || !password) {
     return { success: false, message: "El correo y la contraseña son obligatorios." };
   }
@@ -54,8 +51,6 @@ export async function createUser(userData: any) {
 
 export async function updateUser(uid: string, userData: any) {
   const { password, name, phone, permissions, personId } = userData;
-  const auth = getFirebaseAuth();
-  const db = getFirestore();
 
   try {
     const updateAuthData: any = {};
@@ -93,8 +88,6 @@ export async function updateUser(uid: string, userData: any) {
 }
 
 export async function deleteUser(uid: string) {
-    const auth = getFirebaseAuth();
-    const db = getFirestore();
     try {
         // 1. Eliminar de Firebase Authentication
         await auth.deleteUser(uid);
