@@ -48,6 +48,7 @@ const modules = [
     { id: 'supervisores', label: 'Supervisores' },
     { id: 'users', label: 'Gestión de Accesos' },
     { id: 'approval-flows', label: 'Flujos de Aprobación' },
+    { id: 'reminders', label: 'Recordatorios' },
     { id: 'settings', label: 'Configuración General' },
 ] as const;
 
@@ -326,4 +327,3 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
   );
 }
 
-    
