@@ -92,12 +92,26 @@ const config = {
           "0%,70%,100%": { opacity: "1" },
           "20%,50%": { opacity: "0" },
         },
+        "fade-in": {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        "pulse-once-subtle": {
+          '0%, 100%': { transform: 'scale(1)' },
+          '50%': { transform: 'scale(1.05)' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
         "caret-blink": "caret-blink 1.25s ease-out infinite",
+        "fade-in": "fade-in 0.3s ease-in-out",
+        "pulse-once-subtle": "pulse-once-subtle 0.5s cubic-bezier(0.4, 0, 0.6, 1)",
       },
+      transitionTimingFunction: {
+        'expand': 'cubic-bezier(0.4, 0.0, 0.2, 1)',
+        'collapse': 'cubic-bezier(0.0, 0.0, 0.2, 1)',
+      }
     },
   },
   plugins: [require('tailwindcss-animate')],

@@ -183,6 +183,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
+          "shadow-xl",
           hasMounted && !isExpanded ? "w-16" : "w-[280px]"
         )}
       >
@@ -232,8 +233,8 @@ export const SidebarNav = () => {
           )}
         </div>
         <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
-          {filteredNavGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
+          {filteredNavGroups.map((group, groupIndex) => (
+            <div key={group.title} className="space-y-1" style={{ transitionDelay: `${groupIndex * 50}ms`}}>
                         {group.title && (
                             <h2 className={cn("px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200", !isExpanded && "text-center opacity-0 h-0 p-0 m-0")}>{isExpanded ? group.title : ''}</h2>
               )}
@@ -249,18 +250,19 @@ export const SidebarNav = () => {
                                         <div
                                         className={cn(
                             "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-all hover:bg-white/10 hover:text-white font-medium",
+                            "group hover:animate-pulse-once-subtle",
                             isActive && "bg-white/10 text-white"
                                         )}
                                         >
                             <div className="flex items-center gap-3">
-                              <item.icon className="h-5 w-5 shrink-0" />
-                                            <span className={cn('truncate transition-opacity duration-200', !isExpanded && 'opacity-0 w-0')}>{item.label}</span>
+                              <item.icon className={cn("h-5 w-5 shrink-0 transition-transform duration-200", isExpanded && "scale-100", !isExpanded && "scale-90")} />
+                                            <span className={cn('truncate transition-opacity duration-200', !isExpanded ? 'opacity-0 w-0' : 'opacity-100 delay-150')}>{item.label}</span>
                                         </div>
                                         {isExpanded && <ChevronDown className="h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180"/>}
                             </div>
                                     </CollapsibleTrigger>
                         </TooltipTrigger>
-                                {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
+                                {!isExpanded && <TooltipContent side="right" className="animate-fade-in"><p>{item.label}</p></TooltipContent>}
                       </Tooltip>
                     {isExpanded && (
                       <CollapsibleContent>
