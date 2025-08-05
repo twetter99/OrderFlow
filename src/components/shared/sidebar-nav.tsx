@@ -185,7 +185,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "relative flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out shrink-0",
-          isExpanded ? "w-[280px]" : "w-16",
+          isExpanded ? "w-[280px]" : "w-[var(--sidebar-width-icon)]",
           hasMounted && "transition-all"
         )}
       >
