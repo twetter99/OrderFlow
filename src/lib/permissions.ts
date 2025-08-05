@@ -10,6 +10,7 @@ export const routePermissions = {
   '/users': 'users',
   '/approval-flows': 'approval-flows',
   '/settings': 'settings',
+  '/reminders': 'reminders',
 
   // OPERACIONES
   '/projects': 'projects',

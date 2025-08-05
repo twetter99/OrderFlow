@@ -194,7 +194,7 @@ const mockUsers: User[] = [
         'installation-templates', 'replan', 'resource-planning', 'travel-planning', 'locations',
         'receptions', 'despatches', 'completed-orders', 'suppliers', 'supplier-invoices',
         'payments', 'project-tracking', 'reports', 'documentation', 'ai-assistant',
-        'clients', 'operadores', 'technicians', 'approval-flows'
+        'clients', 'operadores', 'technicians', 'approval-flows', 'reminders'
     ] 
   },
   { 
