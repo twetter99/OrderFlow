@@ -17,7 +17,7 @@ export default function LoginPage() {
             Bienvenido a OrderFlow
           </h1>
           <p className="text-gray-300 text-center mt-2">
-            Inicia sesión para gestionar tu inventario y adquisiciones.
+            Accede para gestionar proyectos, inventario y operaciones.
           </p>
         </div>
         <LoginForm />
