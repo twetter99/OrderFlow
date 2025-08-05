@@ -32,7 +32,6 @@ export default function RootLayout({
           {isLoginPage ? (
             <main className="w-full">{children}</main>
           ) : (
-            <AuthGuard>
               <SidebarProvider>
                 <SidebarNav />
                 <div className="flex flex-col flex-1 h-screen overflow-hidden">
@@ -42,7 +41,6 @@ export default function RootLayout({
                   </main>
                 </div>
               </SidebarProvider>
-            </AuthGuard>
           )}
           <Toaster />
         </AuthProvider>
