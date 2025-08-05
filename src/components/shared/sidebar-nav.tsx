@@ -33,6 +33,7 @@ import {
     Pin,
     PinOff,
     LogOut,
+    Clock,
 } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
@@ -121,6 +122,7 @@ const navGroups = [
           { href: "/technicians", label: "Técnicos", icon: HardHat },
           { href: "/supervisores", label: "Supervisores", icon: ShieldCheck },
           { href: "/users", label: "Gestión de Accesos", icon: Users },
+          { href: "/reminders", label: "Recordatorios", icon: Clock },
           { href: "/approval-flows", label: "Flujos de Aprobación", icon: Network },
           { href: "/settings", label: "Configuración General", icon: Settings },
         ]
@@ -135,15 +137,15 @@ export const SidebarNav = () => {
   const { user, logOut } = useAuth();
   const [isHovered, setIsHovered] = React.useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  const [openTooltips, setOpenTooltips] = useState<Record<string, boolean>>({});
+  const [openCollapsibles, setOpenCollapsibles] = useState<Record<string, boolean>>({});
 
   useEffect(() => {
     setHasMounted(true);
   }, []);
-  
-  // Reset tooltips on route change
+
+  // Close tooltips on route change
   useEffect(() => {
-    setOpenTooltips({});
+    setOpenCollapsibles({});
   }, [pathname]);
 
   const isPinned = hasMounted ? open : false;
@@ -168,8 +170,8 @@ export const SidebarNav = () => {
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
   
-  const handleTooltipOpenChange = (label: string, isOpen: boolean) => {
-    setOpenTooltips(prev => ({ ...prev, [label]: isOpen }));
+  const handleCollapsibleOpenChange = (label: string, isOpen: boolean) => {
+    setOpenCollapsibles(prev => ({ ...prev, [label]: isOpen }));
   }
 
   const filteredNavGroups = React.useMemo(() => {
@@ -252,7 +254,7 @@ export const SidebarNav = () => {
                 
                 return (
                             <Collapsible key={uniqueKey} className="space-y-1" defaultOpen={isActive}>
-                      <Tooltip open={openTooltips[item.label]} onOpenChange={(isOpen) => handleTooltipOpenChange(item.label, isOpen)}>
+                      <Tooltip>
                         <TooltipTrigger asChild>
                                     <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
                                         <div
