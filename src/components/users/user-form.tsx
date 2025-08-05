@@ -104,6 +104,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     ? { 
         ...user,
         personId: user.personId || user.uid,
+        phone: user.phone ?? '',
         permissions: user.permissions || [],
         password: '', // La contraseña nunca se carga, solo se puede cambiar
       }
@@ -234,6 +235,21 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                         )}
                     />
                 </div>
+                 <div className="grid grid-cols-2 gap-4">
+                     <FormField
+                        control={form.control}
+                        name="phone"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Teléfono</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Se rellena al vincular" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                    />
+                </div>
             </CardContent>
         </Card>
 
@@ -309,3 +325,5 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     </Form>
   );
 }
+
+    
