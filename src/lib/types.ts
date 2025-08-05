@@ -318,3 +318,31 @@ export type Payment = {
     reference: string;
   }[];
 };
+
+export type ReminderType = 'po-approval' | 'invoice-due' | 'stock-alert';
+
+export type Reminder = {
+  id: string;
+  type: ReminderType;
+  relatedId: string; // ID del PO, factura, etc.
+  recipient: string; // email
+  status: 'Pendiente' | 'Enviado' | 'Fallido' | 'Cancelado';
+  createdAt: string | Timestamp;
+  sendAt: string | Timestamp;
+  attempts: number;
+};
+
+export type ReminderSetting = {
+  id: ReminderType;
+  isActive: boolean;
+  frequencyHours: number;
+  maxAttempts: number;
+};
+
+export type ReminderHistory = {
+  id: string;
+  reminderId: string;
+  sentAt: string | Timestamp;
+  status: 'Éxito' | 'Fallido';
+  details?: string;
+};

@@ -64,6 +64,7 @@ export const pageOrder = [
   '/supplier-invoices',
   '/payments',
   '/reports',
+  '/reminders',
   '/settings'
 ];
 
