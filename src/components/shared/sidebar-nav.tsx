@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -136,10 +135,16 @@ export const SidebarNav = () => {
   const { user, logOut } = useAuth();
   const [isHovered, setIsHovered] = React.useState(false);
   const [hasMounted, setHasMounted] = useState(false);
-  
+  const [openTooltips, setOpenTooltips] = useState<Record<string, boolean>>({});
+
   useEffect(() => {
     setHasMounted(true);
   }, []);
+  
+  // Reset tooltips on route change
+  useEffect(() => {
+    setOpenTooltips({});
+  }, [pathname]);
 
   const isPinned = hasMounted ? open : false;
   const isExpanded = hasMounted ? isPinned || isHovered : false;
@@ -162,6 +167,10 @@ export const SidebarNav = () => {
     if (!hasMounted) return false;
     return subItems.some(sub => pathname.startsWith(sub.href));
   }
+  
+  const handleTooltipOpenChange = (label: string, isOpen: boolean) => {
+    setOpenTooltips(prev => ({ ...prev, [label]: isOpen }));
+  }
 
   const filteredNavGroups = React.useMemo(() => {
     if (!user) return [];
@@ -183,7 +192,7 @@ export const SidebarNav = () => {
         onMouseLeave={handleMouseLeave}
         className={cn(
           "flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out",
-          hasMounted && !isExpanded ? "w-16" : "w-[280px]"
+          hasMounted && !isExpanded ? "w-[var(--sidebar-width-icon)]" : "w-[280px]"
         )}
       >
         {hasMounted ? (
@@ -243,7 +252,7 @@ export const SidebarNav = () => {
                 
                 return (
                             <Collapsible key={uniqueKey} className="space-y-1" defaultOpen={isActive}>
-                      <Tooltip>
+                      <Tooltip open={openTooltips[item.label]} onOpenChange={(isOpen) => handleTooltipOpenChange(item.label, isOpen)}>
                         <TooltipTrigger asChild>
                                     <CollapsibleTrigger className="w-full text-left" disabled={!isExpanded}>
                                         <div
@@ -321,7 +330,7 @@ export const SidebarNav = () => {
         </div>
             </>
         ) : (
-           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
+           <div className="h-full w-[var(--sidebar-width-icon)]" /> // Placeholder to match width and prevent layout shift
         )}
       </aside>
     </TooltipProvider>
