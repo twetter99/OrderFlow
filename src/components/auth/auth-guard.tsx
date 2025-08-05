@@ -11,10 +11,6 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // Forzamos el acceso directo sin autenticación
-  return <>{children}</>;
-
-  /*
   useEffect(() => {
     // This effect handles the redirection side-effect, but the rendering
     // logic below provides the immediate UI feedback and protection.
@@ -53,5 +49,4 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
   // Only if all checks pass, render the children.
   return <>{children}</>;
-  */
 };
