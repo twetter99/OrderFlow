@@ -184,9 +184,33 @@ const mockClients: Client[] = [
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
 const mockUsers: User[] = [
-  { uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', name: 'Juan Winfin', email: 'juan@winfin.es', phone: '111-222-3333', permissions: ['dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings'] },
-  { uid: 'gH7jKlM9nBvC1xZ2a3s4d5f6g7h8', name: 'Warehouse Staff', email: 'warehouse@orderflow.com', phone: '444-555-6666', permissions: ['inventory', 'locations', 'receptions'] },
-  { uid: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4', name: 'Solicitante Ejemplo', email: 'solicitante@orderflow.com', phone: '777-888-9999', permissions: ['purchasing'] },
+  { 
+    uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', 
+    name: 'Juan Winfin', 
+    email: 'juan@winfin.es', 
+    phone: '111-222-3333', 
+    permissions: [
+        'dashboard', 'projects', 'inventory', 'purchasing', 'users', 'supervisores', 'settings',
+        'installation-templates', 'replan', 'resource-planning', 'travel-planning', 'locations',
+        'receptions', 'despatches', 'completed-orders', 'suppliers', 'supplier-invoices',
+        'payments', 'project-tracking', 'reports', 'documentation', 'ai-assistant',
+        'clients', 'operadores', 'technicians', 'approval-flows'
+    ] 
+  },
+  { 
+    uid: 'gH7jKlM9nBvC1xZ2a3s4d5f6g7h8', 
+    name: 'Warehouse Staff', 
+    email: 'warehouse@orderflow.com', 
+    phone: '444-555-6666', 
+    permissions: ['inventory', 'locations', 'receptions'] 
+  },
+  { 
+    uid: 'a1b2c3d4e5f6g7h8i9j0k1l2m3n4', 
+    name: 'Solicitante Ejemplo', 
+    email: 'solicitante@orderflow.com', 
+    phone: '777-888-9999', 
+    permissions: ['purchasing'] 
+  },
 ];
 const mockSupervisores: Supervisor[] = [
     { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.', email: 'lmartin@winfin.es'},
