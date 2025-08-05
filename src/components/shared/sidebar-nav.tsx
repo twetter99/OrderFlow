@@ -135,12 +135,14 @@ export const SidebarNav = () => {
   const { open, setOpen } = useSidebar();
   const { user, logOut } = useAuth();
   const [isHovered, setIsHovered] = React.useState(false);
-  const [hasMounted, setHasMounted] = useState(false);
   
+  // Set a mounted state to prevent hydration issues
+  const [hasMounted, setHasMounted] = useState(false);
   useEffect(() => {
     setHasMounted(true);
   }, []);
 
+  // Determine the expanded state only on the client
   const isPinned = hasMounted ? open : false;
   const isExpanded = hasMounted ? isPinned || isHovered : false;
 
@@ -182,30 +184,24 @@ export const SidebarNav = () => {
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}
         className={cn(
-          "relative flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300",
-          "w-[280px] shrink-0", // Always full width
-          !isExpanded && "translate-x-[-216px]", // When collapsed, move left by (280 - 64) px
-          isExpanded ? "ease-expand shadow-xl" : "ease-collapse",
-          hasMounted && "transition-transform"
+          "relative flex flex-col border-r bg-secondary text-secondary-foreground transition-all duration-300 ease-in-out shrink-0",
+          isExpanded ? "w-[280px]" : "w-16",
+          hasMounted && "transition-all"
         )}
       >
-        {hasMounted ? (
-            <>
-        <div className={cn(
-          "flex items-center h-16 border-b border-white/10 px-4 shrink-0",
-        )}>
-           <Link href="/dashboard" className="flex-1">
-              <div className="w-[150px] h-10">
-                <Image 
-                  src="/images/logo_blanco.png" 
-                  alt="OrderFlow Logo" 
-                  width={150} 
-                  height={40}
-                  priority
-                  className="object-contain w-full h-full"
-                />
-              </div>
+        <div className="flex items-center h-16 border-b border-white/10 px-4 shrink-0">
+          <Link href="/dashboard" className="flex-1">
+            <div className="w-[150px]">
+              <Image 
+                src="/images/logo_blanco.png" 
+                alt="OrderFlow Logo" 
+                width={150} 
+                height={40}
+                priority
+              />
+            </div>
           </Link>
+          <div className={cn("transition-opacity duration-200", !isExpanded && "opacity-0")}>
             <Tooltip>
               <TooltipTrigger asChild>
                   <Button variant="ghost" size="icon" onClick={handlePinToggle} className="text-white/70 hover:text-white hover:bg-white/10 h-8 w-8">
@@ -216,12 +212,20 @@ export const SidebarNav = () => {
                 <p>{isPinned ? 'Desanclar barra lateral' : 'Anclar barra lateral'}</p>
               </TooltipContent>
             </Tooltip>
+          </div>
         </div>
-        <nav className="flex-1 p-2 space-y-1 overflow-y-auto overflow-x-hidden">
-          {filteredNavGroups.map((group, groupIndex) => (
-            <div key={group.title} className={cn("space-y-1 transition-opacity duration-300", isExpanded ? "opacity-100" : "opacity-0")} style={{ transitionDelay: isExpanded ? `${groupIndex * 50 + 100}ms` : '0ms'}}>
+        <nav className="flex-1 p-2 space-y-1 overflow-y-auto">
+          {filteredNavGroups.map((group) => (
+            <div key={group.title} className="space-y-1">
               {group.title && (
-                  <h2 className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50">{group.title}</h2>
+                <h2
+                  className={cn(
+                    "px-3 py-2 text-xs font-semibold uppercase tracking-wider text-white/50 transition-opacity duration-200",
+                    !isExpanded && "text-center"
+                  )}
+                >
+                  <span className={cn(isExpanded ? "inline" : "hidden")}>{group.title}</span>
+                </h2>
               )}
               {group.items.map((item) => {
                 const uniqueKey = `${item.label}`;
@@ -235,19 +239,19 @@ export const SidebarNav = () => {
                             <div
                             className={cn(
                                 "flex items-center justify-between gap-3 rounded-md px-3 py-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white font-medium",
-                                "group",
+                                !isExpanded && "justify-center",
                                 isActive && "bg-white/10 text-white"
                             )}
                             >
                               <div className="flex items-center gap-3">
-                                <item.icon className={cn("h-5 w-5 shrink-0 transition-transform duration-200 group-hover:animate-pulse-once-subtle", isExpanded ? "scale-100" : "scale-90")} />
-                                <span className={cn('truncate transition-opacity duration-200', !isExpanded ? 'opacity-0' : 'opacity-100 delay-150')}>{item.label}</span>
+                                <item.icon className="h-5 w-5 shrink-0" />
+                                <span className={cn(!isExpanded && "hidden")}>{item.label}</span>
                               </div>
-                              <ChevronDown className={cn("h-4 w-4 shrink-0 transition-all duration-200 [&[data-state=open]]:-rotate-180", !isExpanded && "opacity-0")}/>
+                              <ChevronDown className={cn("h-4 w-4 shrink-0 transition-transform duration-200 [&[data-state=open]]:-rotate-180", !isExpanded && "hidden")}/>
                             </div>
                           </CollapsibleTrigger>
                         </TooltipTrigger>
-                        {!isExpanded && <TooltipContent side="right" className="animate-fade-in"><p>{item.label}</p></TooltipContent>}
+                        {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
                       </Tooltip>
                     
                       <CollapsibleContent>
@@ -280,12 +284,12 @@ export const SidebarNav = () => {
         </nav>
         {/* User Block Footer */}
         <div className="mt-auto p-2 border-t border-white/10 shrink-0">
-          <div className={cn("flex items-center gap-3 rounded-md transition-all p-2")}>
+          <div className={cn("flex items-center gap-3 rounded-md transition-all", isExpanded ? "p-2" : "p-0 justify-center")}>
               <Avatar className="h-9 w-9">
                   <AvatarImage src={user?.photoURL || undefined} alt={user?.name || ''} />
                   <AvatarFallback>{user ? user.name?.charAt(0).toUpperCase() : 'S'}</AvatarFallback>
               </Avatar>
-              <div className={cn("flex-1 overflow-hidden transition-opacity duration-200", !isExpanded && "opacity-0")}>
+              <div className={cn("flex-1 overflow-hidden", !isExpanded && "hidden")}>
                   <p className="text-sm font-semibold truncate">{user?.name || 'Simulación'}</p>
                   <p className="text-xs text-white/60 truncate">{user?.email || 'sin usuario definido'}</p>
               </div>
@@ -303,10 +307,6 @@ export const SidebarNav = () => {
                </Tooltip>
           </div>
         </div>
-            </>
-        ) : (
-           <div className="h-full w-16" /> // Placeholder to match width and prevent layout shift
-        )}
       </aside>
     </TooltipProvider>
   );
