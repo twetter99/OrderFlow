@@ -46,6 +46,9 @@ export const routePermissions = {
   '/': null, // Permitir la raíz, que redirige
 };
 
+export const allPermissions = Object.values(routePermissions).filter(p => p !== null) as string[];
+
+
 export const pageOrder = [
   '/dashboard',
   '/projects',
@@ -75,7 +78,9 @@ export const pageOrder = [
  * @returns `true` si el usuario tiene permiso, `false` en caso contrario.
  */
 export const hasPermissionForRoute = (userPermissions: string[], route: string): boolean => {
-  const requiredPermission = (routePermissions as Record<string, string | null>)[route];
+  // Encuentra la ruta base (p. ej., de '/purchasing/abc' a '/purchasing')
+  const baseRoute = Object.keys(routePermissions).find(r => route.startsWith(r) && r !== '/');
+  const requiredPermission = (routePermissions as Record<string, string | null>)[baseRoute || route];
   
   if (requiredPermission === undefined) {
     // Si la ruta no está definida, denegar por defecto por seguridad.

@@ -16,7 +16,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute } from '@/lib/permissions';
+import { getFirstAccessibleRoute, allPermissions } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -24,6 +24,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  signInAsAdminDev: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -32,6 +33,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
+  signInAsAdminDev: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -39,7 +41,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
-  const hasRedirected = useRef(false);
 
   useEffect(() => {
     setPersistence(auth, browserSessionPersistence)
@@ -66,7 +67,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           } else {
             setUser(null);
-            hasRedirected.current = false;
           }
           setLoading(false);
         });
@@ -84,6 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged will handle the rest
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -111,6 +112,23 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
        toast({ variant: "destructive", title, description });
        setLoading(false);
     }
+  };
+
+  const signInAsAdminDev = () => {
+    setLoading(true);
+    const adminUser: User = {
+      uid: 'dev-admin-user',
+      name: 'Admin (Dev Mode)',
+      email: 'dev@orderflow.app',
+      permissions: allPermissions,
+      role: 'Administrador',
+    };
+    setUser(adminUser);
+    setLoading(false);
+    toast({
+        title: "Acceso de Desarrollador",
+        description: "Has iniciado sesión como Administrador. Esta función solo está disponible en modo de desarrollo.",
+    });
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -143,7 +161,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
       {children}
     </AuthContext.Provider>
   );
