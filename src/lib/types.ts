@@ -76,7 +76,8 @@ export type DeliveryNoteAttachment = {
 export type PurchaseOrder = {
   id: string;
   orderNumber?: string;
-  project: string;
+  project: string; // ID del proyecto
+  projectName?: string; // Nombre del proyecto (desnormalizado)
   supplier: string;
   deliveryLocationId: string;
   status: 'Pendiente de Aprobación' | 'Aprobada' | 'Enviada al Proveedor' | 'Recibida' | 'Recibida Parcialmente' | 'Rechazado';
