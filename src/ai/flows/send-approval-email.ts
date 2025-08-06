@@ -17,6 +17,7 @@ const SendApprovalEmailInputSchema = z.object({
   orderAmount: z.number().describe('The total amount of the purchase order.'),
   approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
   orderDate: z.string().describe("The date the order was created in ISO format."),
+  isReminder: z.boolean().optional().default(false).describe("Whether this email is a reminder."),
 });
 
 // Infer the type from the local schema.
@@ -91,10 +92,18 @@ const sendApprovalEmailFlow = ai.defineFlow(
     console.log("Starting DIRECT sendApprovalEmailFlow with input:", input);
     
     // 1. Construct the email content directly. No AI needed.
-    const subject = `Solicitud de Aprobación: Orden de Compra ${input.orderNumber}`;
+    const subject = input.isReminder 
+        ? `Recordatorio de Aprobación: Orden de Compra ${input.orderNumber}`
+        : `Solicitud de Aprobación: Orden de Compra ${input.orderNumber}`;
+
+    const reminderHeader = input.isReminder 
+        ? `<p style="color: #d97706;"><strong>RECORDATORIO:</strong> La siguiente solicitud de compra sigue pendiente de tu aprobación.</p>` 
+        : '';
+        
     const body = `
       <div style="font-family: sans-serif; padding: 20px;">
         <h2>Solicitud de Aprobación de Orden de Compra</h2>
+        ${reminderHeader}
         <p>Hola,</p>
         <p>Se ha generado una nueva orden de compra que requiere tu aprobación:</p>
         <ul>
@@ -154,4 +163,26 @@ export async function sendApprovalEmail(input: SendApprovalEmailInput): Promise<
       error: error instanceof Error ? error.message : "Failed to execute send approval email flow" 
     };
   }
+}
+
+// Flow específico para enviar recordatorios
+const sendReminderEmailFlow = ai.defineFlow(
+    {
+      name: 'sendReminderEmailFlow',
+      inputSchema: SendApprovalEmailInputSchema,
+      outputSchema: z.object({
+          success: z.boolean(),
+          error: z.string().optional(),
+      }),
+    },
+    async (input) => {
+        // Llama al flujo principal, pero forzando el flag de recordatorio
+        return sendApprovalEmailFlow({ ...input, isReminder: true });
+    }
+);
+
+// Función exportada para ser llamada desde server actions o futuras Cloud Functions
+export async function sendReminderEmail(input: SendApprovalEmailInput): Promise<{ success: boolean; error?: string }> {
+    console.log("sendReminderEmail called with:", input);
+    return sendReminderEmailFlow(input);
 }
