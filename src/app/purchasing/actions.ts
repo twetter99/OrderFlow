@@ -58,7 +58,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               orderAmount: orderData.total || 0,
               approvalUrl: approvalUrl,
               orderDate: orderDate.toISOString(), 
-              projectName: projectName || orderData.project,
+              projectName: projectName, // Se envía el nombre del proyecto o undefined
           });
 
           console.log("Received result from sendApprovalEmail flow:", emailResult);
