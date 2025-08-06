@@ -92,6 +92,7 @@ export type PurchaseOrder = {
   deliveryNotes?: DeliveryNoteAttachment[]; // Albaranes adjuntos en Base64
   hasDeliveryNotes?: boolean;
   lastDeliveryNoteUpload?: string | Timestamp;
+  invoicingStatus?: 'Facturada' | 'Pendiente de facturar';
 };
 
 export type Supplier = {

@@ -46,7 +46,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type { PurchaseOrder, Supplier, Project, Location, InventoryItem } from "@/lib/types";
+import type { PurchaseOrder, Supplier, Project, Location, InventoryItem, SupplierInvoice } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Input } from "@/components/ui/input";
@@ -54,7 +54,7 @@ import { Label } from "@/components/ui/label";
 import { collection, onSnapshot, writeBatch, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
-import { convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { convertPurchaseOrderTimestamps, convertTimestampsToISO } from "@/lib/utils";
 import { PurchasingForm } from "@/components/purchasing/purchasing-form";
 import { Checkbox } from "@/components/ui/checkbox";
 import { deleteMultiplePurchaseOrders } from "@/app/purchasing/actions";
@@ -72,6 +72,7 @@ export default function CompletedOrdersPage() {
   const [suppliers, setSuppliers] = useState<Supplier[]>([]);
   const [locations, setLocations] = useState<Location[]>([]);
   const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [invoices, setInvoices] = useState<SupplierInvoice[]>([]);
   const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
@@ -96,12 +97,15 @@ export default function CompletedOrdersPage() {
     const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
         const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
         setPurchaseOrders(ordersData);
-        setLoading(false);
+        if (loading) setLoading(false);
     });
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
     const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier))));
     const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location))));
     const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
+    const unsubInvoices = onSnapshot(collection(db, "supplierInvoices"), (snapshot) => {
+      setInvoices(snapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as SupplierInvoice));
+    });
 
     return () => {
         unsubPO();
@@ -109,17 +113,22 @@ export default function CompletedOrdersPage() {
         unsubSuppliers();
         unsubLocations();
         unsubInventory();
+        unsubInvoices();
     };
-  }, []);
+  }, [loading]);
 
   const completedOrders = useMemo(() => {
+    if (loading) return [];
+    
     const projectMap = new Map(projects.map(p => [p.id, p.name]));
+    const invoicedPoIds = new Set(invoices.flatMap(inv => inv.purchaseOrderIds));
     
     let filteredOrders = purchaseOrders
         .filter(order => order.status === 'Recibida')
         .map(order => ({
             ...order,
             projectName: projectMap.get(order.project) || order.project,
+            invoicingStatus: invoicedPoIds.has(order.id) ? 'Facturada' : 'Pendiente de facturar',
         }))
         .filter(order => {
             return (
@@ -146,7 +155,7 @@ export default function CompletedOrdersPage() {
 
         return sortDescriptor.direction === 'descending' ? -cmp : cmp;
     });
-  }, [purchaseOrders, projects, sortDescriptor, filters]);
+  }, [purchaseOrders, projects, invoices, sortDescriptor, filters, loading]);
 
 
   const handleFilterChange = (filterName: keyof typeof filters, value: string) => {
@@ -320,6 +329,9 @@ export default function CompletedOrdersPage() {
                         Proyecto {getSortIcon('projectName')}
                     </Button>
                 </TableHead>
+                 <TableHead>
+                    Estado Facturación
+                </TableHead>
                 <TableHead className="text-right">
                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('total')}>
                         Total {getSortIcon('total')}
@@ -342,6 +354,17 @@ export default function CompletedOrdersPage() {
                   <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.projectName}</TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={order.invoicingStatus === 'Facturada' ? 'default' : 'secondary'}
+                      className={cn(
+                        order.invoicingStatus === 'Facturada' && 'bg-green-100 text-green-800',
+                        order.invoicingStatus === 'Pendiente de facturar' && 'bg-orange-100 text-orange-800'
+                      )}
+                    >
+                      {order.invoicingStatus}
+                    </Badge>
+                  </TableCell>
                   <TableCell className="text-right">
                     {new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(order.total)}
                   </TableCell>
@@ -379,11 +402,11 @@ export default function CompletedOrdersPage() {
                 </TableRow>
               ))}
               {loading && (
-                <TableRow><TableCell colSpan={7} className="text-center">Cargando...</TableCell></TableRow>
+                <TableRow><TableCell colSpan={8} className="text-center">Cargando...</TableCell></TableRow>
               )}
               {!loading && completedOrders.length === 0 && (
                 <TableRow>
-                    <TableCell colSpan={7} className="text-center text-muted-foreground py-8">
+                    <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         No se encontraron órdenes de compra completadas.
                     </TableCell>
                 </TableRow>
@@ -449,5 +472,3 @@ export default function CompletedOrdersPage() {
     </div>
   )
 }
-
-    
