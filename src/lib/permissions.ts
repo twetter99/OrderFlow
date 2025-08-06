@@ -75,18 +75,25 @@ export const pageOrder = [
  * @returns `true` si el usuario tiene permiso, `false` en caso contrario.
  */
 export const hasPermissionForRoute = (userPermissions: string[], route: string): boolean => {
-  const requiredPermission = (routePermissions as Record<string, string | null>)[route];
-  // console.log(`Checking route ${route}, requires: ${requiredPermission}, user has:`, userPermissions?.includes(requiredPermission as string));
-  
-  // Si la ruta no requiere un permiso (es pública o especial), se permite el acceso.
-  if (requiredPermission === null) {
-    return true;
+  // First, check for an exact match.
+  if (route in routePermissions) {
+    const requiredPermission = (routePermissions as Record<string, string | null>)[route];
+    return requiredPermission === null || userPermissions.includes(requiredPermission);
   }
-  
-  if (!requiredPermission) return false; // Si la ruta no está en la lista, denegar por defecto
-  
-  // Si la ruta requiere un permiso, comprobamos si el usuario lo tiene.
-  return userPermissions.includes(requiredPermission);
+
+  // If no exact match, check for dynamic routes (e.g., /suppliers/[id])
+  const routeParts = route.split('/').filter(Boolean);
+  if (routeParts.length > 1) {
+    // Check for parent route (e.g., /suppliers for /suppliers/some-id)
+    const parentRoute = `/${routeParts[0]}`;
+    if (parentRoute in routePermissions) {
+       const requiredPermission = (routePermissions as Record<string, string | null>)[parentRoute];
+       return requiredPermission === null || userPermissions.includes(requiredPermission);
+    }
+  }
+
+  // If no specific permission is found, deny access by default for safety.
+  return false;
 }
 
 /**
@@ -95,13 +102,10 @@ export const hasPermissionForRoute = (userPermissions: string[], route: string):
  * @returns La primera ruta accesible o '/unauthorized' si no tiene acceso a ninguna.
  */
 export const getFirstAccessibleRoute = (userPermissions: string[]): string => {
-  // console.log('Getting first accessible route for permissions:', userPermissions);
   for (const route of pageOrder) {
     if (hasPermissionForRoute(userPermissions, route)) {
-      // console.log('Found first accessible route:', route);
       return route;
     }
   }
-  // console.log('No accessible route found, redirecting to unauthorized.');
   return '/unauthorized';
 };

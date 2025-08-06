@@ -81,21 +81,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, pass);
-      const firebaseUser = userCredential.user;
-      
-      const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
-      const userDoc = await getDoc(userDocRef);
-      
-      if (userDoc.exists()) {
-        const userData = { uid: userDoc.id, ...userDoc.data() } as User;
-        setUser(userData);
-        const firstRoute = getFirstAccessibleRoute(userData.permissions || []);
-        router.push(firstRoute);
-      } else {
-        throw new Error('auth/user-not-found-in-firestore');
-      }
-
+      await signInWithEmailAndPassword(auth, email, pass);
+      // Redirection is now handled by the AuthGuard after the user state is updated.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -104,9 +91,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         case 'auth/user-not-found':
         case 'auth/wrong-password':
         case 'auth/invalid-credential':
-        case 'auth/user-not-found-in-firestore':
             title = 'Credenciales Incorrectas';
-            description = 'El correo o la contraseña no son correctos, o el usuario no existe en la base de datos.';
+            description = 'El correo o la contraseña no son correctos.';
+            break;
+        case 'auth/user-disabled':
+            title = 'Usuario Deshabilitado';
+            description = 'Esta cuenta ha sido deshabilitada por un administrador.';
             break;
         case 'auth/invalid-email':
             title = 'Correo Inválido';
