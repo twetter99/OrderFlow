@@ -89,11 +89,14 @@ export default function ProjectsPage() {
   }, []);
 
   const filteredProjects = useMemo(() => {
-    return projects.filter(project =>
-      project.name.toLowerCase().includes(filter.toLowerCase()) ||
-      project.client.toLowerCase().includes(filter.toLowerCase())
-    );
-  }, [projects, filter]);
+    const clientMap = new Map(clients.map(c => [c.id, c.name]));
+    return projects
+      .map(p => ({ ...p, clientName: clientMap.get(p.clientId) || 'Cliente Desconocido' }))
+      .filter(project =>
+        project.name.toLowerCase().includes(filter.toLowerCase()) ||
+        project.clientName.toLowerCase().includes(filter.toLowerCase())
+      );
+  }, [projects, filter, clients]);
 
   const handleAddClick = () => {
     setSelectedProject(null);
@@ -133,15 +136,23 @@ export default function ProjectsPage() {
 
   const handleSave = async (values: any) => {
     try {
+      const dataToSave = { ...values };
+
+      // Firestore does not accept 'undefined' values.
+      // If no project manager is selected, remove the key before saving.
+      if (!dataToSave.responsable_proyecto_id) {
+        delete dataToSave.responsable_proyecto_id;
+      }
+
       if (selectedProject) {
         const docRef = doc(db, "projects", selectedProject.id);
-        await updateDoc(docRef, values);
+        await updateDoc(docRef, dataToSave);
         toast({
           title: "Proyecto actualizado",
           description: `El proyecto "${values.name}" se ha actualizado correctamente.`,
         });
       } else {
-        await addDoc(collection(db, "projects"), values);
+        await addDoc(collection(db, "projects"), dataToSave);
         toast({
           title: "Proyecto creado",
           description: `El proyecto "${values.name}" se ha creado correctamente.`,
@@ -204,7 +215,7 @@ export default function ProjectsPage() {
               ) : filteredProjects.map((project) => (
                 <TableRow key={project.id}>
                   <TableCell className="font-medium">{project.name}</TableCell>
-                  <TableCell>{project.client}</TableCell>
+                  <TableCell>{(project as any).clientName}</TableCell>
                   <TableCell>
                     <Badge variant={project.status === 'Completado' ? 'default' : (project.status === 'En Progreso' ? 'secondary' : 'outline')}>
                       {project.status}

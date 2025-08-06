@@ -88,8 +88,9 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
   const defaultValues = project
     ? {
         ...project,
-        startDate: new Date(project.startDate),
-        endDate: new Date(project.endDate),
+        clientId: project.clientId || '',
+        startDate: project.startDate ? new Date(project.startDate) : new Date(),
+        endDate: project.endDate ? new Date(project.endDate) : new Date(),
         margen_previsto: project.margen_previsto ? project.margen_previsto * 100 : 0, // Convert to percentage for display
         equipo_tecnico_ids: project.equipo_tecnico_ids ?? [],
         operador_ids: project.operador_ids ?? [],
@@ -192,7 +193,7 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                             </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                                {projectManagers.map(u => <SelectItem key={u.id} value={u.id}>{u.name}</SelectItem>)}
+                                {projectManagers.map(u => <SelectItem key={u.uid} value={u.uid}>{u.name}</SelectItem>)}
                             </SelectContent>
                         </Select>
                         <FormMessage />
@@ -436,5 +437,3 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
     </Form>
   );
 }
-
-    
