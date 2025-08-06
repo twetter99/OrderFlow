@@ -196,7 +196,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     }
   };
 
-  const selectedProject = projects.find(p => p.id === watchedProjectId);
+  const projectName = projects.find(p => p.id === watchedProjectId)?.name;
 
   return (
     <Form {...form}>
@@ -234,7 +234,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                       <FormControl>
                       <SelectTrigger>
                           <SelectValue placeholder="Selecciona un proyecto">
-                              {selectedProject?.name || "Selecciona un proyecto"}
+                              {projectName || "Selecciona un proyecto"}
                           </SelectValue>
                       </SelectTrigger>
                       </FormControl>
