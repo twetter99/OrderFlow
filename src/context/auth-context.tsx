@@ -127,8 +127,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(false);
     toast({
         title: "Acceso de Desarrollador",
-        description: "Has iniciado sesión como Administrador. Esta función solo está disponible en modo de desarrollo.",
+        description: "Has iniciado sesión como Administrador.",
     });
+    router.push('/dashboard'); // Redirección explícita
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -151,11 +152,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       await signOut(auth);
+      setUser(null); // Clear user state immediately
       router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
     } finally {
-        setUser(null);
         setLoading(false);
     }
   };

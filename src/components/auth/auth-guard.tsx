@@ -14,16 +14,18 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading) {
-      return; // Wait for loading to complete
+      return; // Wait for the auth state to be determined
     }
 
     if (!user && pathname !== '/login') {
       router.push('/login');
     } else if (user) {
+      const isAllowed = hasPermissionForRoute(user.permissions || [], pathname);
+      
       if (pathname === '/login' || pathname === '/') {
         const firstRoute = getFirstAccessibleRoute(user.permissions || []);
         router.push(firstRoute);
-      } else if (!hasPermissionForRoute(user.permissions || [], pathname)) {
+      } else if (!isAllowed) {
         router.push('/unauthorized');
       }
     }
@@ -37,12 +39,14 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Only render children if user exists and has permission for the current route
-  // Or if we are on the login page (and user is null)
-  if ((user && hasPermissionForRoute(user.permissions || [], pathname)) || pathname === '/login') {
+  // Determine if the content should be rendered
+  const isLoginPage = pathname === '/login';
+  const hasAccess = user && hasPermissionForRoute(user.permissions || [], pathname);
+
+  if (isLoginPage || hasAccess) {
     return <>{children}</>;
   }
 
-  // Otherwise, return null to prevent rendering protected content during redirects
+  // In other cases (like redirecting), render nothing to avoid content flashes
   return null;
 };
