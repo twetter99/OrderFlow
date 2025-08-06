@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import { z } from "zod";
@@ -153,7 +152,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const status = useWatch({ control: form.control, name: "status" });
   const watchedItems = useWatch({ control: form.control, name: "items" });
   const watchedSupplier = useWatch({ control: form.control, name: "supplier" });
-  const watchedProjectId = useWatch({ control: form.control, name: "project" });
 
   
   const total = React.useMemo(() => {
@@ -196,8 +194,6 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     }
   };
 
-  const projectName = projects.find(p => p.id === watchedProjectId)?.name;
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -229,20 +225,18 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
             name="project"
             render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Proyecto</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
-                      <FormControl>
-                      <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un proyecto">
-                              {projectName || "Selecciona un proyecto"}
-                          </SelectValue>
-                      </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                      {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
-                      </SelectContent>
-                  </Select>
-                  <FormMessage />
+                <FormLabel>Proyecto</FormLabel>
+                <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Selecciona un proyecto" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    </SelectContent>
+                </Select>
+                <FormMessage />
                 </FormItem>
             )}
            />

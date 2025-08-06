@@ -75,25 +75,19 @@ export const pageOrder = [
  * @returns `true` si el usuario tiene permiso, `false` en caso contrario.
  */
 export const hasPermissionForRoute = (userPermissions: string[], route: string): boolean => {
-  // First, check for an exact match.
-  if (route in routePermissions) {
-    const requiredPermission = (routePermissions as Record<string, string | null>)[route];
-    return requiredPermission === null || userPermissions.includes(requiredPermission);
+  const requiredPermission = (routePermissions as Record<string, string | null>)[route];
+  
+  if (requiredPermission === undefined) {
+    // Si la ruta no está definida, denegar por defecto por seguridad.
+    return false;
   }
-
-  // If no exact match, check for dynamic routes (e.g., /suppliers/[id])
-  const routeParts = route.split('/').filter(Boolean);
-  if (routeParts.length > 1) {
-    // Check for parent route (e.g., /suppliers for /suppliers/some-id)
-    const parentRoute = `/${routeParts[0]}`;
-    if (parentRoute in routePermissions) {
-       const requiredPermission = (routePermissions as Record<string, string | null>)[parentRoute];
-       return requiredPermission === null || userPermissions.includes(requiredPermission);
-    }
+  
+  if (requiredPermission === null) {
+    // Si la ruta no requiere permiso (p.ej. /login), permitir siempre.
+    return true;
   }
-
-  // If no specific permission is found, deny access by default for safety.
-  return false;
+  
+  return userPermissions.includes(requiredPermission);
 }
 
 /**

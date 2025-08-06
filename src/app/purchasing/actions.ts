@@ -1,11 +1,10 @@
 
-
 "use server";
 
 import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
-import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment, Project } from "@/lib/types";
+import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
 
 // The Input type is now defined and used locally within the `send-approval-email.ts` flow.
@@ -23,22 +22,12 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
         comment: 'Pedido creado'
     };
     
-    // Obtener el nombre del proyecto
-    let projectName: string | undefined = undefined;
-    if (orderData.project) {
-        const projectDoc = await getDoc(doc(db, "projects", orderData.project));
-        if (projectDoc.exists()) {
-            projectName = (projectDoc.data() as Project).name;
-        }
-    }
-
     docRef = await addDoc(collection(db, "purchaseOrders"), {
       ...orderData,
       orderNumber: newOrderNumber,
       date: orderDate,
-      estimatedDeliveryDate: orderData.estimatedDeliveryDate, 
-      statusHistory: [historyEntry],
-      projectName: projectName, // Guardar el nombre del proyecto
+      estimatedDeliveryDate: orderData.estimatedDeliveryDate, // Firestore will convert to Timestamp
+      statusHistory: [historyEntry]
     });
     
   } catch (error) {
@@ -52,14 +41,6 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           const baseUrl = 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
-          let projectNameForEmail: string | undefined = orderData.projectName;
-          if (!projectNameForEmail && orderData.project) {
-              const projectDoc = await getDoc(doc(db, "projects", orderData.project));
-              if (projectDoc.exists()) {
-                  projectNameForEmail = (projectDoc.data() as Project).name;
-              }
-          }
-          
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
           const emailResult = await sendApprovalEmail({
               to: 'juan@winfin.es',
@@ -68,7 +49,6 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               orderAmount: orderData.total || 0,
               approvalUrl: approvalUrl,
               orderDate: orderDate.toISOString(), 
-              projectName: projectNameForEmail, 
           });
 
           console.log("Received result from sendApprovalEmail flow:", emailResult);

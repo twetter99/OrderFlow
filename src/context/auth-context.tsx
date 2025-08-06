@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   onAuthStateChanged, 
@@ -39,9 +39,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
+  const hasRedirected = useRef(false);
 
   useEffect(() => {
-    // Set persistence to 'session' to log out on browser close.
     setPersistence(auth, browserSessionPersistence)
       .then(() => {
         const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -66,6 +66,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             }
           } else {
             setUser(null);
+            hasRedirected.current = false;
           }
           setLoading(false);
         });
@@ -83,8 +84,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // Redirection is now handled by the AuthGuard after the user state is updated.
-      // onAuthStateChanged will set loading to false.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
