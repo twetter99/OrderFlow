@@ -145,7 +145,9 @@ export const SidebarNav = () => {
 
   // Close tooltips on route change
   useEffect(() => {
-    setOpenCollapsibles({});
+    if (openCollapsibles) {
+      setOpenCollapsibles({});
+    }
   }, [pathname]);
 
   const isPinned = hasMounted ? open : false;
@@ -271,7 +273,7 @@ export const SidebarNav = () => {
                             </div>
                                     </CollapsibleTrigger>
                         </TooltipTrigger>
-                                {!isExpanded && <TooltipContent side="right"><p>{item.label}</p></TooltipContent>}
+                                <TooltipContent side="right" hidden={isExpanded}><p>{item.label}</p></TooltipContent>
                       </Tooltip>
                     {isExpanded && (
                       <CollapsibleContent>
