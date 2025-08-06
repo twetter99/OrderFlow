@@ -42,6 +42,14 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           const baseUrl = 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
+          let projectName: string | undefined = undefined;
+          if (orderData.project) {
+              const projectDoc = await getDoc(doc(db, "projects", orderData.project));
+              if (projectDoc.exists()) {
+                  projectName = projectDoc.data().name;
+              }
+          }
+          
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
           const emailResult = await sendApprovalEmail({
               to: 'juan@winfin.es',
@@ -50,6 +58,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               orderAmount: orderData.total || 0,
               approvalUrl: approvalUrl,
               orderDate: orderDate.toISOString(), 
+              projectName: projectName || orderData.project,
           });
 
           console.log("Received result from sendApprovalEmail flow:", emailResult);

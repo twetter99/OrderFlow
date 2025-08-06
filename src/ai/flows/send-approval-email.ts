@@ -18,6 +18,7 @@ const SendApprovalEmailInputSchema = z.object({
   approvalUrl: z.string().url().describe('The secure URL to approve the purchase order.'),
   orderDate: z.string().describe("The date the order was created in ISO format."),
   isReminder: z.boolean().optional().default(false).describe("Whether this email is a reminder."),
+  projectName: z.string().optional().describe("The descriptive name of the project."),
 });
 
 // Infer the type from the local schema.
@@ -108,6 +109,7 @@ const sendApprovalEmailFlow = ai.defineFlow(
         <p>Se ha generado una nueva orden de compra que requiere tu aprobación:</p>
         <ul>
           <li><strong>Número de Orden:</strong> ${input.orderNumber}</li>
+          <li><strong>Proyecto:</strong> ${input.projectName || 'No especificado'}</li>
           <li><strong>Importe Total:</strong> ${new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(input.orderAmount)}</li>
           <li><strong>Fecha de Orden:</strong> ${new Date(input.orderDate).toLocaleDateString('es-ES')}</li>
         </ul>
