@@ -61,7 +61,7 @@ import { deleteMultiplePurchaseOrders } from "@/app/purchasing/actions";
 
 
 type SortDescriptor = {
-    column: keyof PurchaseOrder | 'projectName';
+    column: keyof PurchaseOrder | 'projectName' | 'invoicingStatus';
     direction: 'ascending' | 'descending';
 };
 
@@ -330,7 +330,9 @@ export default function CompletedOrdersPage() {
                     </Button>
                 </TableHead>
                  <TableHead>
-                    Estado Facturación
+                    <Button variant="ghost" className="px-1" onClick={() => onSortChange('invoicingStatus')}>
+                      Estado Facturación {getSortIcon('invoicingStatus')}
+                    </Button>
                 </TableHead>
                 <TableHead className="text-right">
                     <Button variant="ghost" className="px-1" onClick={() => onSortChange('total')}>
