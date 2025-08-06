@@ -235,7 +235,7 @@ export function InventoryClientPage() {
     try {
         await batch.commit();
         toast({
-            variant: "destructive",
+            variant: "success",
             title: "Artículo(s) eliminado(s)",
             description: `Se han eliminado ${itemsToDelete.length} artículo(s).`,
         });

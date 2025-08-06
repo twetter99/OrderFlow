@@ -105,7 +105,7 @@ export default function ClientsPage() {
         try {
             await deleteDoc(doc(db, "clients", clientToDelete.id));
             toast({
-                variant: "destructive",
+                variant: "success",
                 title: "Cliente eliminado",
                 description: `El cliente "${clientToDelete.name}" ha sido eliminado.`,
             });
@@ -121,7 +121,7 @@ export default function ClientsPage() {
         try {
             await batch.commit();
             toast({
-                variant: "destructive",
+                variant: "success",
                 title: "Clientes eliminados",
                 description: `Se eliminaron ${selectedRowIds.length} clientes.`,
             });

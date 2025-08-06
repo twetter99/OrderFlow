@@ -105,7 +105,7 @@ export default function SuppliersPage() {
         try {
             await deleteDoc(doc(db, "suppliers", supplierToDelete.id));
             toast({
-                variant: "destructive",
+                variant: "success",
                 title: "Proveedor eliminado",
                 description: `El proveedor "${supplierToDelete.name}" ha sido eliminado.`,
             });
@@ -122,7 +122,7 @@ export default function SuppliersPage() {
         try {
             await batch.commit();
             toast({
-                variant: "destructive",
+                variant: "success",
                 title: "Proveedores eliminados",
                 description: `Se eliminaron ${selectedRowIds.length} proveedores.`,
             });

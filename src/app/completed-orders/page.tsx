@@ -197,7 +197,7 @@ export default function CompletedOrdersPage() {
     }
 
     if (result.success) {
-        toast({ variant: "destructive", title: "Eliminación exitosa", description: result.message });
+        toast({ variant: "success", title: "Eliminación exitosa", description: result.message });
     } else {
         toast({ variant: "destructive", title: "Error", description: result.message });
     }

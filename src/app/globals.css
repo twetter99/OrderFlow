@@ -29,7 +29,8 @@
     --destructive: 0 100% 50%; /* Red */
     --destructive-foreground: 0 0% 98%;
 
-    --success: 120 100% 33.3%; /* Green */
+    --success: 145 63% 42%; /* Green */
+    --success-foreground: 0 0% 98%;
     
     --border: 0 0% 89.8%;
     --input: 0 0% 89.8%;
@@ -68,7 +69,8 @@
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
     
-    --success: 120 100% 33.3%;
+    --success: 145 63% 42%;
+    --success-foreground: 0 0% 98%;
     
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;

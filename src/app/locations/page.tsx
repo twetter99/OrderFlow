@@ -158,7 +158,7 @@ export default function LocationsPage() {
     try {
         await batch.commit();
         toast({
-            variant: "destructive",
+            variant: "success",
             title: "Almacén(es) eliminado(s)",
             description: `Se han eliminado ${locationsToDelete.length} almacén(es).`,
         });
