@@ -153,6 +153,8 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
   const status = useWatch({ control: form.control, name: "status" });
   const watchedItems = useWatch({ control: form.control, name: "items" });
   const watchedSupplier = useWatch({ control: form.control, name: "supplier" });
+  const watchedProjectId = useWatch({ control: form.control, name: "project" });
+
   
   const total = React.useMemo(() => {
     return watchedItems.reduce((acc, item) => acc + (item.quantity * item.price), 0);
@@ -194,6 +196,8 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
     }
   };
 
+  const selectedProject = projects.find(p => p.id === watchedProjectId);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
@@ -229,11 +233,13 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                   <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isReadOnly}>
                       <FormControl>
                       <SelectTrigger>
-                          <SelectValue placeholder="Selecciona un proyecto" />
+                          <SelectValue placeholder="Selecciona un proyecto">
+                              {selectedProject?.name || "Selecciona un proyecto"}
+                          </SelectValue>
                       </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                      {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name} ({p.id})</SelectItem>)}
+                      {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
                       </SelectContent>
                   </Select>
                   <FormMessage />
