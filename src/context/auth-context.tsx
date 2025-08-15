@@ -41,26 +41,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     
     // --- MODO DESARROLLADOR CON ACCESO DIRECTO ---
     if (process.env.NODE_ENV === 'development') {
-      const handleDevLogin = async () => {
-        try {
-          // Iniciar sesión con credenciales de desarrollo para obtener una sesión real
-          await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
-          // El listener onAuthStateChanged se encargará del resto
-        } catch (error) {
-          console.error("Error en el inicio de sesión automático de desarrollo:", error);
-          toast({ 
-            variant: "destructive", 
-            title: "Error de Desarrollo", 
-            description: "No se pudo iniciar sesión automáticamente. Revisa las credenciales en auth-context.tsx o las reglas de seguridad de Firebase." 
-          });
-          setLoading(false);
-        }
+      console.log("Modo desarrollador detectado. Creando usuario mock...");
+      const devUser: User = {
+        uid: 'dev-admin-uid',
+        personId: 'dev-admin-person-id',
+        name: 'Dev Admin',
+        email: 'dev@orderflow.test',
+        phone: '600000000',
+        permissions: allPermissions,
+        role: 'Administrador'
       };
-      
-      handleDevLogin();
+      setUser(devUser);
+      setLoading(false);
+      return; // Detenemos la ejecución aquí para no registrar el listener de Auth
     }
 
-    // --- Listener de autenticación normal ---
+    // --- Listener de autenticación normal para PRODUCCIÓN ---
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -72,18 +68,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                 setUser(userData);
             } else {
-                console.warn(`Usuario con UID ${firebaseUser.uid} no encontrado en Firestore. Usando datos de dev.`);
-                // Si el usuario no existe en Firestore (común en el primer login de dev), creamos un mock
-                const devUser: User = {
-                    uid: firebaseUser.uid,
-                    personId: 'dev-admin',
-                    name: 'Dev Admin',
-                    email: 'dev@orderflow.test',
-                    phone: '600000000',
-                    permissions: allPermissions,
-                    role: 'Administrador'
-                };
-                setUser(devUser);
+                console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore.`);
+                // Forzar cierre de sesión si el perfil no existe en la BD para evitar inconsistencias.
+                await signOut(auth);
+                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
@@ -128,9 +116,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logOut = async () => {
     setLoading(true);
-    await signOut(auth);
-    setUser(null);
-    router.push('/login');
+    // Para el modo desarrollo, simplemente reseteamos el estado.
+    if (process.env.NODE_ENV === 'development') {
+      setUser(null);
+      router.push('/login');
+    } else {
+      await signOut(auth);
+      setUser(null);
+      router.push('/login');
+    }
     setLoading(false);
   };
 
