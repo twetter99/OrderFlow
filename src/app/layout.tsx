@@ -21,8 +21,8 @@ function AppLayout({ children }: { children: React.ReactNode }) {
     const pathname = usePathname();
     const { user } = useAuth();
     
-    // No mostrar layout principal en la página de login o si no hay usuario
-    if (pathname === '/login' || !user) {
+    // No mostrar layout principal en la página de login si no hay un usuario real o de desarrollo
+    if (pathname === '/login' && !user) {
         return <>{children}</>;
     }
 

@@ -178,6 +178,7 @@ export const clients: Client[] = [
 export const users: User[] = [
   { 
     uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', 
+    personId: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2',
     name: 'Juan Winfin', 
     email: 'juan@winfin.es', 
     phone: '111-222-3333', 
@@ -205,6 +206,7 @@ export const users: User[] = [
   },
 ];
 export const supervisors: Supervisor[] = [
+    { id: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', name: 'Juan Winfin', phone: '600-111-222', notes: 'Supervisor general.', email: 'juan@winfin.es'},
     { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.', email: 'lmartin@winfin.es'},
     { id: 'WF-SUPV-002', name: 'Roberto Sánchez', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.', email: 'rsanchez@winfin.es'},
 ];
@@ -339,6 +341,29 @@ export const payments: Payment[] = [
     { id: 'PAY-004', invoiceId: 'INV-004', invoiceNumber: 'MW-INV-991', supplierName: 'MetalWorks Ltd.', dueDate: sub(today, {days: 2}).toISOString(), amountDue: 1089, paymentMethod: 'Transferencia', status: 'Pendiente' },
     { id: 'PAY-005', invoiceId: 'INV-005', invoiceNumber: 'FACT-TECH-512', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 5}).toISOString(), amountDue: 5000, paymentMethod: 'Transferencia', status: 'Pagado parcialmente', paymentHistory: [{ date: sub(today, {days: 1}).toISOString(), amount: 2500, reference: 'TR-2024-5911' }] },
 ];
+
+/**
+ * Función para obtener datos de una colección de Firestore.
+ * Si la colección está vacía o hay un error, devuelve datos de prueba.
+ * @param collectionName El nombre de la colección en Firestore.
+ * @param mockData Los datos de prueba a devolver en caso de fallo.
+ * @returns Una promesa que se resuelve con los datos de la colección o los datos de prueba.
+ */
+export async function getData<T>(collectionName: string, mockData: T[]): Promise<T[]> {
+  try {
+    const querySnapshot = await getDocs(collection(db, collectionName));
+    if (querySnapshot.empty) {
+      console.warn(`Firestore collection '${collectionName}' is empty. Using mock data.`);
+      return mockData;
+    }
+    const data = querySnapshot.docs.map(doc => convertTimestampsToISO({ id: doc.id, ...doc.data() }) as T);
+    return data;
+  } catch (error) {
+    console.error(`Error fetching data from '${collectionName}':`, error);
+    console.log(`Falling back to mock data for '${collectionName}'.`);
+    return mockData;
+  }
+}
 
 
 // Generador de notificaciones dinámicas

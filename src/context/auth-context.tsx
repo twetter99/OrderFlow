@@ -13,7 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute } from '@/lib/permissions';
+import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -21,6 +21,7 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  signInAsAdminDev: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -29,6 +30,7 @@ const AuthContext = createContext<AuthContextType>({
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
+  signInAsAdminDev: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -59,13 +61,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setUser(null);
         }
       } else {
-        setUser(null);
+        // En desarrollo, si no hay usuario, simulamos uno para acceso directo.
+        if (process.env.NODE_ENV === 'development') {
+           signInAsAdminDev();
+        } else {
+           setUser(null);
+        }
       }
       setLoading(false);
     });
 
     return () => unsubscribe();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
+  
+  const signInAsAdminDev = () => {
+    console.log("Entering developer mode.");
+    toast({
+        title: "Modo Desarrollador Activado",
+        description: "Has accedido como Administrador.",
+        variant: "default"
+    });
+    setUser({
+        uid: 'DEV-ADMIN',
+        name: 'Admin (Dev)',
+        email: 'dev@orderflow.com',
+        permissions: allPermissions,
+        role: 'Administrador',
+    });
+    router.push('/dashboard');
+  }
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
@@ -94,12 +119,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    await signOut(auth);
-    // onAuthStateChanged will handle setting user to null and router will redirect via AuthGuard
+    if (user?.uid === 'DEV-ADMIN') {
+        setUser(null);
+        router.push('/login');
+    } else {
+        await signOut(auth);
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
       {children}
     </AuthContext.Provider>
   );

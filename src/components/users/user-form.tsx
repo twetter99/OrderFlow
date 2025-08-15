@@ -198,7 +198,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                     <FormItem>
                     <FormLabel>Nombre Completo</FormLabel>
                     <FormControl>
-                        <Input placeholder="Se rellena al vincular" {...field} disabled={!isEditing} />
+                        <Input placeholder="Se rellena al vincular" {...field} disabled={true} />
                     </FormControl>
                     <FormMessage />
                     </FormItem>
@@ -212,7 +212,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                             <FormItem>
                             <FormLabel>Correo Electrónico de Acceso</FormLabel>
                             <FormControl>
-                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={!isEditing}/>
+                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={true}/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>
@@ -326,4 +326,3 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
     </Form>
   );
 }
-
