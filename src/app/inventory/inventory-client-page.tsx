@@ -418,7 +418,7 @@ export function InventoryClientPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {loading || authLoading ? (
                 <TableRow><TableCell colSpan={8} className="text-center">Cargando...</TableCell></TableRow>
               ) : sortedInventory.map((item) => {
                 const itemSuppliers = item.suppliers
@@ -506,7 +506,7 @@ export function InventoryClientPage() {
                   </TableCell>
                 </TableRow>
               )})}
-               {!loading && sortedInventory.length === 0 && (
+               {!loading && !authLoading && sortedInventory.length === 0 && (
                  <TableRow>
                     <TableCell colSpan={8} className="text-center text-muted-foreground py-8">
                         {filter ? "No se han encontrado artículos que coincidan con tu búsqueda." : "No se encontraron artículos."}

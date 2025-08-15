@@ -13,7 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute, allPermissions } from '@/lib/permissions';
+import { getFirstAccessibleRoute } from '@/lib/permissions';
 
 const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
 
@@ -41,31 +41,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (isDevMode) {
-      // 1. Crear usuario mock inmediatamente para la UI
-      const devUser: User = {
-        uid: 'dev-admin-uid',
-        personId: 'dev-admin-person-id',
-        name: 'Dev Admin',
-        email: 'dev@orderflow.test',
-        phone: '600000000',
-        permissions: allPermissions,
-        role: 'Administrador'
-      };
-      setUser(devUser);
-      setLoading(false);
-      
-      // 2. Login real con Firebase en segundo plano para Firestore
-      signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx')
-        .then(() => console.log('%c✅ Sesión de Firebase para Firestore establecida en segundo plano.', 'color: green;'))
-        .catch(error => console.error('%c❌ Error en la autenticación de Firebase en segundo plano:', 'color: red;', error));
-      
-      return; // No configurar el listener de onAuthStateChanged en modo dev
-    }
-
-    // --- Lógica para producción ---
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
+    const handleUserSession = async (firebaseUser: any) => {
         try {
             const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
             const userDoc = await getDoc(userDocRef);
@@ -74,7 +50,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                 const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                 setUser(userData);
-                if (window.location.pathname === '/login' || window.location.pathname === '/') {
+                 if (window.location.pathname === '/login' || window.location.pathname === '/') {
                   const targetRoute = getFirstAccessibleRoute(userData.permissions || []);
                   router.push(targetRoute);
                 }
@@ -87,20 +63,43 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error fetching user profile:", error);
             await signOut(auth);
             setUser(null);
+        } finally {
+            setLoading(false);
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
-
-    return () => unsubscribe();
-  }, [router]);
+    };
+    
+    if (isDevMode) {
+      const handleDevLogin = async () => {
+        try {
+          const userCredential = await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
+          console.log('%c✅ Sesión de desarrollo establecida.', 'color: green;');
+          await handleUserSession(userCredential.user);
+        } catch (error) {
+          console.error('%c❌ Error en la autenticación de desarrollo:', 'color: red;', error);
+          setLoading(false);
+          setUser(null);
+          toast({ variant: 'destructive', title: 'Error Modo Desarrollo', description: 'No se pudo iniciar sesión con las credenciales de desarrollo. Revisa la configuración.'});
+        }
+      };
+      handleDevLogin();
+    } else {
+        const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+            if (firebaseUser) {
+                handleUserSession(firebaseUser);
+            } else {
+                setUser(null);
+                setLoading(false);
+            }
+        });
+        return () => unsubscribe();
+    }
+  }, [router, toast]);
   
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged will handle the rest
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";

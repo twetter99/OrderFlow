@@ -1,21 +1,27 @@
 
 'use client';
 
-import { useRouter, redirect } from 'next/navigation';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import React, { useEffect } from 'react';
+import React from 'react';
 
 export default function LoginPage() {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
+  
+  // Si el usuario ya está autenticado (incluso en segundo plano), redirigir
+  React.useEffect(() => {
+    if (!loading && user) {
+        router.push('/dashboard');
+    }
+  }, [user, loading, router]);
 
-  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-    redirect('/dashboard');
-  }
 
+  // Muestra un loader general si el contexto de autenticación aún está procesando
+  // para evitar mostrar el login innecesariamente.
   if (loading) {
     return (
       <div className="flex h-screen w-full items-center justify-center bg-black">
@@ -24,6 +30,7 @@ export default function LoginPage() {
     );
   }
 
+  // Solo muestra el formulario de login si la carga ha terminado y NO hay usuario.
   return (
     <div data-page="login" className="flex min-h-screen items-center justify-center p-4 bg-black">
       <div className="w-full max-w-md rounded-2xl bg-white/10 p-8 shadow-lg backdrop-blur-sm border border-gray-200/20">

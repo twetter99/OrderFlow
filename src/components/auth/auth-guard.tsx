@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useEffect } from 'react';
+import React from 'react';
 import { useAuth } from '@/context/auth-context';
 import { useRouter } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
@@ -10,17 +10,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
 
-  // En modo desarrollo, siempre permitir el acceso para evitar bloqueos.
-  // La autenticación se manejará en segundo plano por el AuthContext.
-  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-    return <>{children}</>;
-  }
-
-  // Lógica para producción
-  useEffect(() => {
-    if (loading) return;
-
-    if (!user) {
+  React.useEffect(() => {
+    if (!loading && !user) {
       router.push('/login');
     }
   }, [user, loading, router]);

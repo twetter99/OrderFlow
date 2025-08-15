@@ -252,7 +252,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading ? (
+              {loading || authLoading ? (
                 <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
               ) : filteredClients.map((client) => (
                 <TableRow key={client.id} data-state={selectedRowIds.includes(client.id) && "selected"}>
@@ -294,7 +294,7 @@ export default function ClientsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {!loading && filteredClients.length === 0 && (
+              {!loading && !authLoading && filteredClients.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se encontraron clientes.
