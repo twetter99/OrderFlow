@@ -1,4 +1,5 @@
 
+
 import { Timestamp } from "firebase/firestore";
 
 export type Project = {
@@ -125,6 +126,7 @@ export type User = {
   lastLoginAt?: Timestamp | null;
   role?: 'Administrador' | 'Empleado' | 'Almacén';
   permissions?: string[]; 
+  isDev?: boolean;
 };
 
 export type Supervisor = {

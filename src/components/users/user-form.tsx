@@ -212,7 +212,7 @@ export function UserForm({ user, technicians, supervisors, onSave, onCancel }: U
                             <FormItem>
                             <FormLabel>Correo Electrónico de Acceso</FormLabel>
                             <FormControl>
-                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={true}/>
+                                <Input type="email" placeholder="Se rellena al vincular" {...field} disabled={isEditing}/>
                             </FormControl>
                             <FormMessage />
                             </FormItem>

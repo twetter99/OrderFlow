@@ -13,25 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
-
-
-// --- Lógica de inicialización síncrona para el modo de desarrollo ---
-const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
-
-let devUser: User | null = null;
-if (isDevMode) {
-  devUser = {
-    uid: 'dev-admin-uid',
-    personId: 'dev-admin-person-id',
-    name: 'Dev Admin',
-    email: 'dev@orderflow.test',
-    phone: '600000000',
-    permissions: allPermissions,
-    role: 'Administrador'
-  };
-}
-// --- Fin de la lógica de inicialización ---
+import { getFirstAccessibleRoute } from '@/lib/permissions';
 
 
 interface AuthContextType {
@@ -50,63 +32,80 @@ const AuthContext = createContext<AuthContextType>({
   sendPasswordReset: async () => {},
 });
 
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(isDevMode ? devUser : null);
-  const [loading, setLoading] = useState<boolean>(!isDevMode);
+  const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Este efecto SÓLO se ejecuta en producción (o cualquier entorno que no sea 'development')
-    if (!isDevMode) {
-      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        if (firebaseUser) {
-          try {
-              const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
-              const userDoc = await getDoc(userDocRef);
-
-              if (userDoc.exists()) {
-                  await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-                  const userData = { uid: userDoc.id, ...userDoc.data() } as User;
-                  setUser(userData);
-                  // Redirigir al usuario a su primera ruta accesible después del login
-                  if (window.location.pathname === '/login' || window.location.pathname === '/') {
-                      const targetRoute = getFirstAccessibleRoute(userData.permissions || []);
-                      router.push(targetRoute);
-                  }
-              } else {
-                  console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore.`);
-                  await signOut(auth);
-                  setUser(null);
-              }
-          } catch (error) {
-              console.error("Error fetching user profile:", error);
-              await signOut(auth);
-              setUser(null);
-          }
-        } else {
-          setUser(null);
+    // Modo de desarrollo con autenticación real automática
+    if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+      const handleDevLogin = async () => {
+        try {
+          // Iniciar sesión con las credenciales de desarrollo
+          await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
+          // onAuthStateChanged se encargará del resto (leer datos de Firestore, etc.)
+        } catch (error) {
+          console.error("Error en el login automático de desarrollo:", error);
+          toast({
+            variant: "destructive",
+            title: "Error de Desarrollo",
+            description: "No se pudo iniciar sesión con las credenciales de desarrollo. Revisa que el usuario exista y la contraseña sea correcta.",
+          });
+          setLoading(false); // Detener la carga para no quedar en un bucle
         }
-        setLoading(false);
-      });
-
-      return () => unsubscribe();
+      };
+      
+      // Solo intentar el login de desarrollo si no hay ya un usuario
+      if (!auth.currentUser) {
+        handleDevLogin();
+      }
     }
-  }, [isDevMode, router]);
+
+    // Listener de estado de autenticación normal (se ejecuta también después del login de desarrollo)
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        try {
+            const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
+            const userDoc = await getDoc(userDocRef);
+
+            if (userDoc.exists()) {
+                await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+                const userData = { uid: userDoc.id, ...userDoc.data() } as User;
+                setUser(userData);
+                
+                // Redirigir al usuario si está en la página de login
+                if (window.location.pathname === '/login' || window.location.pathname === '/') {
+                    const targetRoute = getFirstAccessibleRoute(userData.permissions || []);
+                    router.push(targetRoute);
+                }
+            } else {
+                // Si el usuario existe en Auth pero no en Firestore, es un estado inconsistente.
+                console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore. Se cerrará la sesión.`);
+                await signOut(auth); // Forzar cierre de sesión
+                setUser(null);
+            }
+        } catch (error) {
+            console.error("Error fetching user profile:", error);
+            await signOut(auth);
+            setUser(null);
+        }
+      } else {
+        setUser(null);
+      }
+      // Marcar la carga como finalizada solo después de que onAuthStateChanged haya resuelto
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [router]);
   
-
   const signInWithEmail = async (email: string, pass: string) => {
-    if (isDevMode) {
-      console.log("Login no es necesario en modo desarrollador.");
-      return;
-    }
-
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará del resto, incluida la redirección.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -129,15 +128,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    if (isDevMode) {
-      console.log("Logout no aplica en modo desarrollador. Refresca la página para salir del modo (si se implementa con localStorage).");
-      return;
-    }
     setLoading(true);
-    await signOut(auth);
-    setUser(null);
-    router.push('/login');
-    setLoading(false);
+    try {
+        await signOut(auth);
+        setUser(null);
+        router.push('/login');
+    } catch (error) {
+        console.error("Error signing out:", error);
+    } finally {
+        setLoading(false);
+    }
   };
 
   return (
