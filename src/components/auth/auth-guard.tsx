@@ -15,25 +15,25 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (loading || hasRedirected.current) return;
-    
+
+    // Si no hay usuario y no estamos ya en la página de login, redirigir
     if (!user && pathname !== '/login') {
-      console.log('AuthGuard: No user, redirecting to /login');
       hasRedirected.current = true;
       router.push('/login');
       return;
     }
 
     if (user) {
+      // Si el usuario está en la página de login, redirigirlo a su primera ruta accesible
       if (pathname === '/login' || pathname === '/') {
         const targetRoute = getFirstAccessibleRoute(user.permissions || []);
-        console.log(`AuthGuard: User logged in, redirecting from login page to ${targetRoute}`);
         hasRedirected.current = true;
         router.push(targetRoute);
         return;
       }
 
+      // Comprobar si el usuario tiene permiso para la ruta actual
       if (!hasPermissionForRoute(user.permissions || [], pathname)) {
-        console.log(`AuthGuard: No permission for ${pathname}, redirecting to /unauthorized`);
         hasRedirected.current = true;
         router.push('/unauthorized');
         return;
@@ -41,7 +41,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, pathname, router]);
 
-  // Reset redirect flag on route change
+  // Resetear el flag de redirección si cambia la ruta
   useEffect(() => {
     hasRedirected.current = false;
   }, [pathname]);
@@ -54,13 +54,12 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Render children only if user is loaded and on an allowed path
-  // or if it's the public login page being accessed while not logged in.
+  // Si hay un usuario o estamos en una ruta pública (como /login), renderizar el contenido
   if (user || pathname === '/login') {
     return <>{children}</>;
   }
 
-  // Otherwise, continue showing a loader while redirects happen.
+  // Mientras se gestionan las redirecciones, mostrar un loader
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

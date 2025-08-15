@@ -8,12 +8,13 @@ import {
   signOut, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
+  signInAnonymously,
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute } from '@/lib/permissions';
+import { getFirstAccessibleRoute, allPermissions } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -38,6 +39,36 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
+    // --- MODO DESARROLLADOR CON ACCESO DIRECTO ---
+    if (process.env.NODE_ENV === 'development') {
+      const handleDevLogin = async () => {
+        try {
+          const userCredential = await signInAnonymously(auth);
+          const firebaseUser = userCredential.user;
+          // Creamos un usuario mock con los datos de admin pero el UID real del usuario anónimo
+          const devUser: User = {
+            uid: firebaseUser.uid,
+            personId: 'dev-admin',
+            name: 'Dev Admin',
+            email: 'dev@orderflow.test',
+            phone: '600000000',
+            permissions: allPermissions,
+            role: 'Administrador'
+          };
+          setUser(devUser);
+        } catch (error) {
+          console.error("Error en el inicio de sesión anónimo de desarrollo:", error);
+          toast({ variant: "destructive", title: "Error de Desarrollo", description: "No se pudo iniciar la sesión anónima." });
+        } finally {
+            setLoading(false);
+        }
+      };
+      
+      handleDevLogin();
+      return; // Detenemos la ejecución para no registrar el listener normal
+    }
+
+    // --- MODO PRODUCCIÓN (O NO-DESARROLLO) ---
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -61,19 +92,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             setLoading(false);
         }
       } else {
-         if (process.env.NODE_ENV === 'development') {
-            console.log("Development mode: attempting auto-login...");
-            // Usamos credenciales reales para desarrollo
-            signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx')
-                .catch(err => {
-                    console.error("Dev auto-login failed. You might need to sign in manually.", err.message);
-                    // Si el login automático falla, nos aseguramos de que no quede en estado de carga.
-                    setLoading(false);
-                });
-        } else {
-            setUser(null);
-            setLoading(false);
-        }
+        setUser(null);
+        setLoading(false);
       }
     });
 
@@ -108,9 +128,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
+    setLoading(true);
     await signOut(auth);
     setUser(null);
     router.push('/login');
+    setLoading(false);
   };
 
   return (
