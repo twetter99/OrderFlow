@@ -64,7 +64,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
          if (process.env.NODE_ENV === 'development') {
             console.log("Development mode: attempting auto-login...");
             // Usamos credenciales reales para desarrollo
-            signInWithEmailAndPassword(auth, 'juan@winfin.es', 'winfin1234')
+            signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx')
                 .catch(err => {
                     console.error("Dev auto-login failed. You might need to sign in manually.", err.message);
                     // Si el login automático falla, nos aseguramos de que no quede en estado de carga.
