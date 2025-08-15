@@ -3,19 +3,11 @@ import { db } from './firebase';
 import { collection, getDocs } from 'firebase/firestore';
 import type { Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, DeliveryNote, InventoryLocation, Notification, PlantillaInstalacion, Replanteo, Technician, Operador, Supervisor, SupplierInvoice, Payment } from './types';
 import { add, sub } from 'date-fns';
+import { convertTimestampsToISO } from './utils';
 
 const today = new Date();
 
-// Helper to convert date objects to ISO strings for mock data
-const convertMockDates = (order: Omit<PurchaseOrder, 'date' | 'estimatedDeliveryDate' | 'id'> & { date: Date, estimatedDeliveryDate: Date }): Omit<PurchaseOrder, 'id'> => {
-  return {
-    ...order,
-    date: order.date.toISOString(),
-    estimatedDeliveryDate: order.estimatedDeliveryDate.toISOString(),
-  };
-};
-
-// --- Default Mock Data (used as fallback) ---
+// --- Default Mock Data ---
 
 export const productFamilies = [
     { name: 'Cableado', description: 'Todo tipo de cables eléctricos, datos UTP, coaxiales, etc.' },
@@ -35,7 +27,7 @@ export const productFamilies = [
     { name: 'Varios', description: 'Materiales diversos y consumibles no categorizados en las familias anteriores.' },
 ];
 
-const mockProjects: Project[] = [
+export const projects: Project[] = [
   {
     id: 'WF-PROJ-001',
     codigo_proyecto: 'P24-FLOTA-A-MAD',
@@ -134,7 +126,7 @@ const mockProjects: Project[] = [
     equipo_tecnico_ids: ['WF-TECH-002']
   },
 ];
-const mockInventory: InventoryItem[] = [
+export const inventory: InventoryItem[] = [
   { id: 'ITEM-001', sku: 'CPU-45', name: 'Unidad Central de Procesamiento v4.5', family: 'Equipos', unitCost: 350, unit: 'ud', suppliers: ['WF-SUP-001'], type: 'simple', observations: 'Componente principal para la mayoría de kits.' },
   { id: 'ITEM-002', sku: 'BRKT-SML', name: 'Soporte de Montaje Pequeño', family: 'Herrajes', unitCost: 15.50, unit: 'ud', suppliers: ['WF-SUP-002'], type: 'simple' },
   { id: 'ITEM-003', sku: 'CONN-PLT-01', name: 'Placa de Conexión Principal', family: 'Herrajes', unitCost: 45, unit: 'ud', suppliers: ['WF-SUP-002'], type: 'simple' },
@@ -157,20 +149,20 @@ const mockInventory: InventoryItem[] = [
     ]
   },
 ];
-const mockPurchaseOrders: PurchaseOrder[] = [
-    { id: 'WF-PO-2024-001', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibida', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) })},
-    { id: 'WF-PO-2024-002', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: new Date('2024-07-12'), total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }) })},
-    { id: 'WF-PO-2024-003', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: new Date('2024-07-15'), total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }) })},
-    { id: 'WF-PO-2024-004', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: new Date('2024-07-18'), total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }) })},
-    { id: 'WF-PO-2024-005', ...convertMockDates({ project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobada', date: new Date('2024-07-20'), total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }) })},
-    { id: 'WF-PO-2024-006', ...convertMockDates({ project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Recibida', date: new Date('2024-07-21'), total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }) })},
-    { id: 'WF-PO-2024-007', ...convertMockDates({ project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobada', date: new Date('2024-07-22'), total: 875, items: [
+export const purchaseOrders: PurchaseOrder[] = [
+    { id: 'WF-PO-2024-001', ...convertTimestampsToISO({ project: 'WF-PROJ-001', supplier: 'TechParts Inc.', status: 'Recibida', date: new Date('2024-07-10'), total: 3500, items: [{ itemId: 'ITEM-001', itemName: 'Unidad Central de Procesamiento v4.5', quantity: 10, price: 350, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 5 }) })},
+    { id: 'WF-PO-2024-002', ...convertTimestampsToISO({ project: 'WF-PROJ-002', supplier: 'MetalWorks Ltd.', status: 'Enviada al Proveedor', date: new Date('2024-07-12'), total: 775, items: [{ itemId: 'ITEM-002', itemName: 'Soporte de Montaje Pequeño', quantity: 50, price: 15.50, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 2 }) })},
+    { id: 'WF-PO-2024-003', ...convertTimestampsToISO({ project: 'WF-PROJ-001', supplier: 'Global Nav', status: 'Pendiente de Aprobación', date: new Date('2024-07-15'), total: 1200, items: [{ itemId: 'ITEM-005', itemName: 'Módulo GPS v2', quantity: 10, price: 120, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 10 }) })},
+    { id: 'WF-PO-2024-004', ...convertTimestampsToISO({ project: 'WF-PROJ-002', supplier: 'Soluciones de Ferretería', status: 'Rechazado', date: new Date('2024-07-18'), total: 160, items: [{ itemId: 'ITEM-004', itemName: 'Paquete de Tornillos M5 (100ct)', quantity: 20, price: 8, unit: 'ud', type: 'Material' }], rejectionReason: 'El precio es superior al acordado en el presupuesto.', estimatedDeliveryDate: sub(today, { days: 1 }) })},
+    { id: 'WF-PO-2024-005', ...convertTimestampsToISO({ project: 'WF-PROJ-003', supplier: 'TechParts Inc.', status: 'Aprobada', date: new Date('2024-07-20'), total: 2550, items: [{ itemId: 'ITEM-006', itemName: 'Cámara de Seguridad HD', quantity: 30, price: 85, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: add(today, { days: 20 }) })},
+    { id: 'WF-PO-2024-006', ...convertTimestampsToISO({ project: 'WF-PROJ-001', supplier: 'MetalWorks Ltd.', status: 'Recibida', date: new Date('2024-07-21'), total: 900, items: [{ itemId: 'ITEM-003', itemName: 'Placa de Conexión Principal', quantity: 20, price: 45, unit: 'ud', type: 'Material' }], estimatedDeliveryDate: sub(today, { days: 2 }) })},
+    { id: 'WF-PO-2024-007', ...convertTimestampsToISO({ project: 'WF-PROJ-002', supplier: 'Viajes Corporativos', status: 'Aprobada', date: new Date('2024-07-22'), total: 875, items: [
       { itemName: 'Vuelo Ida y Vuelta Madrid-Barcelona Técnico', quantity: 1, price: 250, unit: 'viaje', type: 'Servicio' },
       { itemName: 'Hotel 2 noches en Barcelona', quantity: 2, price: 150, unit: 'noche', type: 'Servicio' },
       { itemName: 'Alquiler de coche 3 días', quantity: 1, price: 325, unit: 'ud', type: 'Servicio' },
     ], estimatedDeliveryDate: new Date() })},
 ];
-const mockSuppliers: Supplier[] = [
+export const suppliers: Supplier[] = [
   { id: 'WF-SUP-001', name: 'TechParts Inc.', contactPerson: 'Jane Doe', email: 'sales@techparts.com', phone: '123-456-7890', deliveryRating: 4.5, qualityRating: 4.8 },
   { id: 'WF-SUP-002', name: 'MetalWorks Ltd.', contactPerson: 'John Smith', email: 'contact@metalworks.com', phone: '987-654-3210', deliveryRating: 4.2, qualityRating: 4.5 },
   { id: 'WF-SUP-003', name: 'Soluciones de Ferretería', contactPerson: 'Peter Jones', email: 'orders@hardwaresolutions.com', phone: '555-123-4567', deliveryRating: 4.8, qualityRating: 4.3 },
@@ -178,12 +170,12 @@ const mockSuppliers: Supplier[] = [
   { id: 'WF-SUP-005', name: 'Ensamblado Interno', contactPerson: 'N/A', email: 'N/A', phone: 'N/A', deliveryRating: 5.0, qualityRating: 5.0 },
   { id: 'WF-SUP-006', name: 'Viajes Corporativos', contactPerson: 'Agencia de Viajes', email: 'reservas@viajescorp.com', phone: '555-555-5555', deliveryRating: 5.0, qualityRating: 5.0 },
 ];
-const mockClients: Client[] = [
+export const clients: Client[] = [
     { id: 'WF-CLI-001', name: 'Tránsito de la Ciudad', contactPerson: 'Carlos Ruiz', email: 'c.ruiz@transitociudad.gov', phone: '611-222-3333' },
     { id: 'WF-CLI-002', name: 'Compañía de Turismo', contactPerson: 'Ana Torres', email: 'ana.torres@turismo.com', phone: '622-333-4444' },
     { id: 'WF-CLI-003', name: 'Junta Escolar del Distrito', contactPerson: 'Maria Lopez', email: 'm.lopez@juntaescolar.edu', phone: '633-444-5555' },
 ];
-const mockUsers: User[] = [
+export const users: User[] = [
   { 
     uid: 'hstmO2zM2JQDRnbrvjJHPz3i3nj2', 
     name: 'Juan Winfin', 
@@ -212,15 +204,15 @@ const mockUsers: User[] = [
     permissions: ['purchasing'] 
   },
 ];
-const mockSupervisores: Supervisor[] = [
+export const supervisors: Supervisor[] = [
     { id: 'WF-SUPV-001', name: 'Laura Martín', phone: '600-111-222', notes: 'Supervisora de zona centro.', email: 'lmartin@winfin.es'},
     { id: 'WF-SUPV-002', name: 'Roberto Sánchez', phone: '600-333-444', notes: 'Supervisor de grandes cuentas.', email: 'rsanchez@winfin.es'},
 ];
-const mockTechnicians: Technician[] = [
+export const technicians: Technician[] = [
     { id: 'WF-TECH-001', name: 'Mario García', phone: '655-444-333', specialty: 'Electrónica', category: 'Técnico Integrador de Sistemas Embarcados', email: 'mgarcia@winfin.es' },
     { id: 'WF-TECH-002', name: 'Laura Jimenez', phone: '655-111-222', specialty: 'GPS y Comunicaciones', category: 'Técnico de SAT (Servicio de Asistencia Técnica)', email: 'ljimenez@winfin.es' },
 ];
-const mockOperadores: Operador[] = [
+export const operadores: Operador[] = [
     {
       id: 'WF-OP-001',
       name: 'Instalaciones Electrónicas Avanzadas S.L.',
@@ -235,12 +227,12 @@ const mockOperadores: Operador[] = [
       ]
     },
 ];
-const mockLocations: Location[] = [
+export const locations: Location[] = [
     { id: 'LOC-001', name: 'Almacén Principal', description: 'Almacén principal para componentes generales.' },
     { id: 'LOC-002', name: 'Almacén Secundario', description: 'Almacén para componentes electrónicos sensibles.' },
     { id: 'LOC-003', name: 'Zona de Recepción', description: 'Mercancía pendiente de clasificar.' },
 ];
-const mockInventoryLocations: InventoryLocation[] = [
+export const inventoryLocations: InventoryLocation[] = [
     { id: 'INVLOC-001', itemId: 'ITEM-001', locationId: 'LOC-002', quantity: 15 },
     { id: 'INVLOC-002', itemId: 'ITEM-001', locationId: 'LOC-003', quantity: 10 },
     { id: 'INVLOC-003', itemId: 'ITEM-002', locationId: 'LOC-001', quantity: 8 },
@@ -250,11 +242,11 @@ const mockInventoryLocations: InventoryLocation[] = [
     { id: 'INVLOC-007', itemId: 'ITEM-006', locationId: 'LOC-002', quantity: 30 },
     { id: 'INVLOC-008', itemId: 'ITEM-007', locationId: 'LOC-001', quantity: 150 },
 ];
-const mockDeliveryNotes: DeliveryNote[] = [
+export const deliveryNotes: DeliveryNote[] = [
     { id: 'WF-DN-2024-0001', clientId: 'WF-CLI-001', projectId: 'WF-PROJ-001', date: '2024-07-20', status: 'Completado', locationId: 'LOC-002', items: [{itemId: 'ITEM-001', quantity: 5}, {itemId: 'ITEM-004', quantity: 10}] },
     { id: 'WF-DN-2024-0002', clientId: 'WF-CLI-002', projectId: 'WF-PROJ-002', date: '2024-07-22', status: 'Completado', locationId: 'LOC-001', items: [{itemId: 'ITEM-002', quantity: 20}, {itemId: 'ITEM-003', quantity: 15}] },
 ]
-const mockInstallationTemplates: PlantillaInstalacion[] = [
+export const installationTemplates: PlantillaInstalacion[] = [
   {
     id: 'TPL-001',
     nombre: 'Instalación Básica GPS Autobús Urbano',
@@ -295,7 +287,7 @@ const mockInstallationTemplates: PlantillaInstalacion[] = [
     ],
   },
 ];
-const mockReplanteos: Replanteo[] = [
+export const replanteos: Replanteo[] = [
   {
     id: 'RE-001',
     proyecto_id: 'WF-PROJ-001',
@@ -334,13 +326,13 @@ const mockReplanteos: Replanteo[] = [
     imagenes: []
   }
 ];
-const mockSupplierInvoices: SupplierInvoice[] = [
+export const supplierInvoices: SupplierInvoice[] = [
   { id: 'INV-001', purchaseOrderIds: ['WF-PO-2024-001'], invoiceNumber: 'FACT-TECH-501', supplierId: 'WF-SUP-001', emissionDate: '2024-07-11', dueDate: '2024-08-10', bases: [{baseAmount: 3500, vatRate: 0.21}], vatAmount: 735, totalAmount: 4235, status: 'Pagada', totalAmountDifference: 0},
   { id: 'INV-002', purchaseOrderIds: ['WF-PO-2024-002'], invoiceNumber: 'MW-INV-982', supplierId: 'WF-SUP-002', emissionDate: '2024-07-15', dueDate: '2024-08-14', bases: [{baseAmount: 775, vatRate: 0.21}], vatAmount: 162.75, totalAmount: 937.75, status: 'Pendiente de pago', totalAmountDifference: 0 },
   { id: 'INV-003', purchaseOrderIds: ['WF-PO-2024-005'], invoiceNumber: 'FACT-TECH-508', supplierId: 'WF-SUP-001', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 2550, vatRate: 0.21}], vatAmount: 535.50, totalAmount: 3085.50, status: 'Validada', totalAmountDifference: 0},
   { id: 'INV-004', purchaseOrderIds: ['WF-PO-2024-006'], invoiceNumber: 'MW-INV-991', supplierId: 'WF-SUP-002', emissionDate: '2024-07-22', dueDate: '2024-08-21', bases: [{baseAmount: 900, vatRate: 0.21}], vatAmount: 189, totalAmount: 1089, status: 'Pendiente de validar', totalAmountDifference: 0 },
 ];
-const mockPayments: Payment[] = [
+export const payments: Payment[] = [
     { id: 'PAY-001', invoiceId: 'INV-001', invoiceNumber: 'FACT-TECH-501', supplierName: 'TechParts Inc.', dueDate: sub(today, {days: 15}).toISOString(), amountDue: 4235, paymentMethod: 'Transferencia', status: 'Pagado total', paymentHistory: [{ date: sub(today, {days: 15}).toISOString(), amount: 4235, reference: 'TR-2024-5821' }] },
     { id: 'PAY-002', invoiceId: 'INV-002', invoiceNumber: 'MW-INV-982', supplierName: 'MetalWorks Ltd.', dueDate: add(today, {days: 12}).toISOString(), amountDue: 937.75, paymentMethod: 'Transferencia', status: 'Pendiente' },
     { id: 'PAY-003', invoiceId: 'INV-003', invoiceNumber: 'FACT-TECH-508', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 35}).toISOString(), amountDue: 3085.50, paymentMethod: 'Confirming', status: 'Pendiente' },
@@ -348,71 +340,13 @@ const mockPayments: Payment[] = [
     { id: 'PAY-005', invoiceId: 'INV-005', invoiceNumber: 'FACT-TECH-512', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 5}).toISOString(), amountDue: 5000, paymentMethod: 'Transferencia', status: 'Pagado parcialmente', paymentHistory: [{ date: sub(today, {days: 1}).toISOString(), amount: 2500, reference: 'TR-2024-5911' }] },
 ];
 
-const mockDataMap: Record<string, any[]> = {
-    'projects': mockProjects,
-    'inventory': mockInventory,
-    'purchaseOrders': mockPurchaseOrders,
-    'suppliers': mockSuppliers,
-    'clients': mockClients,
-    'users': mockUsers,
-    'supervisores': mockSupervisores,
-    'technicians': mockTechnicians,
-    'operadores': mockOperadores,
-    'locations': mockLocations,
-    'inventoryLocations': mockInventoryLocations,
-    'deliveryNotes': mockDeliveryNotes,
-    'installationTemplates': mockInstallationTemplates,
-    'replanteos': mockReplanteos,
-    'supplierInvoices': mockSupplierInvoices,
-    'payments': mockPayments
-};
-
-// --- Firestore Data Fetching Logic ---
-
-export async function getData<T>(collectionName: string, mockData: T[]): Promise<T[]> {
-  try {
-    const querySnapshot = await getDocs(collection(db, collectionName));
-    if (querySnapshot.empty) {
-      console.warn(`Firestore collection '${collectionName}' is empty. Using mock data.`);
-      return mockDataMap[collectionName] || mockData;
-    }
-    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
-  } catch (error) {
-    console.error(`Error fetching from Firestore collection '${collectionName}':`, error);
-    console.warn(`Falling back to mock data for '${collectionName}'.`);
-    return mockDataMap[collectionName] || mockData;
-  }
-}
-
-// --- Exported Data ---
-// For now, we export the mock data directly. 
-// Once you have data in Firestore, you can switch to the `getData` function.
-
-export const projects: Project[] = mockProjects;
-export const inventory: InventoryItem[] = mockInventory;
-export const purchaseOrders: PurchaseOrder[] = mockPurchaseOrders;
-export const suppliers: Supplier[] = mockSuppliers;
-export const clients: Client[] = mockClients;
-export const users: User[] = mockUsers;
-export const supervisors: Supervisor[] = mockSupervisores;
-export const technicians: Technician[] = mockTechnicians;
-export const operadores: Operador[] = mockOperadores;
-export const locations: Location[] = mockLocations;
-export const inventoryLocations: InventoryLocation[] = mockInventoryLocations;
-export const deliveryNotes: DeliveryNote[] = mockDeliveryNotes;
-export const installationTemplates: PlantillaInstalacion[] = mockInstallationTemplates;
-export const replanteos: Replanteo[] = mockReplanteos;
-export const supplierInvoices: SupplierInvoice[] = mockSupplierInvoices;
-export const payments: Payment[] = mockPayments;
-
 
 // Generador de notificaciones dinámicas
 export const getNotifications = (): Notification[] => {
     const notifications: Notification[] = [];
 
     // Notificaciones de aprobación de PO
-    const pendingPOs = purchaseOrders.filter(po => po.status === 'Pendiente de Aprobación');
-    pendingPOs.forEach(po => {
+    purchaseOrders.filter(po => po.status === 'Pendiente de Aprobación').forEach(po => {
         notifications.push({
             id: `notif-po-${po.id}`,
             title: 'Aprobación Requerida',
@@ -424,17 +358,13 @@ export const getNotifications = (): Notification[] => {
     });
 
     // Notificaciones de stock bajo
-    const lowStockItems = inventory.filter(item => {
+    inventory.filter(item => {
         if (item.type === 'composite') return false; // Por ahora, solo items simples
-        
-        // Calcular la cantidad total de todas las ubicaciones
         const totalQuantity = inventoryLocations
           .filter(loc => loc.itemId === item.id)
           .reduce((sum, loc) => sum + loc.quantity, 0);
-
         return totalQuantity < (item.minThreshold || 0);
-    });
-    lowStockItems.forEach(item => {
+    }).forEach(item => {
         notifications.push({
             id: `notif-stock-${item.id}`,
             title: 'Stock Bajo',

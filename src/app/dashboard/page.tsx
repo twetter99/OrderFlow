@@ -1,63 +1,32 @@
 
 "use client";
 
-import { useState, useEffect } from 'react';
-import type { Project, PurchaseOrder, InventoryItem, InventoryLocation } from "@/lib/types";
+import { useMemo } from 'react';
+import { useData } from "@/context/data-context";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
-import { Package, FolderKanban, AlertTriangle, BadgeDollarSign } from 'lucide-react';
-import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import { convertPurchaseOrderTimestamps } from '@/lib/utils';
-
+import { Package, FolderKanban, AlertTriangle, BadgeDollarSign, Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
-    const [stats, setStats] = useState({
-        inventoryValue: 0,
-        activeProjects: 0,
-        lowStockAlerts: 0,
-        pendingPOsValue: 0,
-    });
-    
-    const [liveProjects, setLiveProjects] = useState<Project[]>([]);
-    const [livePurchaseOrders, setLivePurchaseOrders] = useState<PurchaseOrder[]>([]);
-    const [liveInventory, setLiveInventory] = useState<InventoryItem[]>([]);
-    const [liveInventoryLocations, setLiveInventoryLocations] = useState<InventoryLocation[]>([]);
+    const { 
+        projects: liveProjects, 
+        purchaseOrders: livePurchaseOrders, 
+        inventory: liveInventory, 
+        inventoryLocations: liveInventoryLocations,
+        loading 
+    } = useData();
 
-    useEffect(() => {
-        
-        const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
-            setLiveProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
-        }, (error) => console.error("Error fetching projects: ", error));
-        
-        const unsubPOs = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-             const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
-            setLivePurchaseOrders(ordersData);
-        }, (error) => console.error("Error fetching purchase orders: ", error));
+    const stats = useMemo(() => {
+        if (loading) return {
+            inventoryValue: 0,
+            activeProjects: 0,
+            lowStockAlerts: 0,
+            pendingPOsValue: 0,
+        };
 
-        const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
-            setLiveInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
-        }, (error) => console.error("Error fetching inventory: ", error));
-
-        const unsubInvLocations = onSnapshot(collection(db, "inventoryLocations"), (snapshot) => {
-            setLiveInventoryLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
-        }, (error) => console.error("Error fetching inventory locations: ", error));
-
-
-        return () => {
-            unsubProjects();
-            unsubPOs();
-            unsubInventory();
-            unsubInvLocations();
-        }
-
-    }, []);
-
-    useEffect(() => {
-        // Correct calculation for inventory value
         const totalInventoryValue = liveInventory.reduce((acc, item) => {
-            if (item.type === 'service') return acc; // Exclude services from value calculation
+            if (item.type === 'service') return acc;
             const totalStock = liveInventoryLocations
                 .filter(loc => loc.itemId === item.id)
                 .reduce((sum, loc) => sum + loc.quantity, 0);
@@ -65,6 +34,7 @@ export default function DashboardPage() {
         }, 0);
 
         const activeProjectsCount = liveProjects.filter(p => p.status === 'En Progreso').length;
+        
         const lowStockCount = liveInventory.filter(item => {
              if (item.type !== 'simple') return false;
              const totalStock = liveInventoryLocations
@@ -77,15 +47,23 @@ export default function DashboardPage() {
             .filter(p => p.status === 'Pendiente de Aprobación')
             .reduce((acc, p) => acc + p.total, 0);
 
-        setStats({
+        return {
             inventoryValue: totalInventoryValue,
             activeProjects: activeProjectsCount,
             lowStockAlerts: lowStockCount,
             pendingPOsValue: pendingValue,
-        });
-    }, [liveProjects, livePurchaseOrders, liveInventory, liveInventoryLocations]);
+        };
+    }, [liveProjects, livePurchaseOrders, liveInventory, liveInventoryLocations, loading]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
+
+    if (loading) {
+        return (
+            <div className="flex h-[80vh] w-full items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        );
+    }
 
     return (
         <div className="flex flex-col gap-8">

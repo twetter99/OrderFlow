@@ -1,14 +1,13 @@
 
 "use client";
 
-import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { 
   onAuthStateChanged, 
   signOut, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  User as FirebaseUser,
   setPersistence,
   browserSessionPersistence
 } from 'firebase/auth';
@@ -16,11 +15,12 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute, allPermissions } from '@/lib/permissions';
+import { allPermissions } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isDevMode: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -30,6 +30,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isDevMode: false,
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
@@ -39,6 +40,7 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDevMode, setIsDevMode] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
@@ -55,6 +57,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                     const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                     setUser(userData);
+                    setIsDevMode(false); // Real user, not dev mode
                 } else {
                     toast({ variant: "destructive", title: "Acceso Denegado", description: "Tu cuenta no está registrada en el sistema." });
                     await signOut(auth);
@@ -66,7 +69,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 setUser(null);
             }
           } else {
-            setUser(null);
+            // Si no hay usuario de Firebase, y no estamos en dev mode, limpiar el usuario.
+            if (!isDevMode) {
+              setUser(null);
+            }
           }
           setLoading(false);
         });
@@ -77,14 +83,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         console.error("Error setting auth persistence:", error);
         setLoading(false);
       });
-  }, []);
+  }, [isDevMode]); // Depender de isDevMode para re-evaluar
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
-    
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle the rest
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -116,6 +120,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const signInAsAdminDev = () => {
     setLoading(true);
+    setIsDevMode(true);
     const adminUser: User = {
       uid: 'dev-admin-user',
       name: 'Admin (Dev Mode)',
@@ -129,7 +134,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         title: "Acceso de Desarrollador",
         description: "Has iniciado sesión como Administrador.",
     });
-    router.push('/dashboard'); // Redirección explícita
+    router.push('/dashboard');
   };
 
   const sendPasswordReset = async (email: string) => {
@@ -151,8 +156,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logOut = async () => {
     setLoading(true);
     try {
-      await signOut(auth);
-      setUser(null); // Clear user state immediately
+      // Si estamos en modo dev, solo limpiamos el estado local
+      if (isDevMode) {
+        setIsDevMode(false);
+        setUser(null);
+      } else {
+        await signOut(auth);
+      }
       router.push('/login');
     } catch (error) {
       console.error("Error signing out: ", error);
@@ -162,7 +172,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
+    <AuthContext.Provider value={{ user, loading, isDevMode, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
       {children}
     </AuthContext.Provider>
   );
