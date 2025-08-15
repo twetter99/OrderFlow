@@ -50,10 +50,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                 const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                 setUser(userData);
-                 if (window.location.pathname === '/login' || window.location.pathname === '/') {
-                  const targetRoute = getFirstAccessibleRoute(userData.permissions || []);
-                  router.push(targetRoute);
-                }
             } else {
                 console.warn(`No se encontró un perfil en Firestore para el UID: ${firebaseUser.uid}. Cerrando sesión.`);
                 await signOut(auth);
@@ -71,17 +67,26 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     if (isDevMode) {
       const handleDevLogin = async () => {
         try {
-          const userCredential = await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
+          await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
+          // onAuthStateChanged will handle the session and data fetching
           console.log('%c✅ Sesión de desarrollo establecida.', 'color: green;');
-          await handleUserSession(userCredential.user);
         } catch (error) {
           console.error('%c❌ Error en la autenticación de desarrollo:', 'color: red;', error);
           setLoading(false);
           setUser(null);
-          toast({ variant: 'destructive', title: 'Error Modo Desarrollo', description: 'No se pudo iniciar sesión con las credenciales de desarrollo. Revisa la configuración.'});
+          toast({ variant: 'destructive', title: 'Error Modo Desarrollo', description: 'No se pudo iniciar sesión. Revisa las credenciales o las reglas de seguridad.'});
         }
       };
-      handleDevLogin();
+      
+      onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          await handleUserSession(firebaseUser);
+        } else {
+          // If no user is logged in (initial state), attempt dev login
+          await handleDevLogin();
+        }
+      });
+
     } else {
         const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
             if (firebaseUser) {
