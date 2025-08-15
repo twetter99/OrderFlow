@@ -2,8 +2,7 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { inventory, projects, purchaseOrders, inventoryLocations } from "@/lib/data";
-import type { Project, PurchaseOrder } from "@/lib/types";
+import type { Project, PurchaseOrder, InventoryItem, InventoryLocation } from "@/lib/types";
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
@@ -21,29 +20,60 @@ export default function DashboardPage() {
         pendingPOsValue: 0,
     });
     
-    const [liveProjects, setLiveProjects] = useState<Project[]>(projects);
-    const [livePurchaseOrders, setLivePurchaseOrders] = useState<PurchaseOrder[]>(purchaseOrders);
+    const [liveProjects, setLiveProjects] = useState<Project[]>([]);
+    const [livePurchaseOrders, setLivePurchaseOrders] = useState<PurchaseOrder[]>([]);
+    const [liveInventory, setLiveInventory] = useState<InventoryItem[]>([]);
+    const [liveInventoryLocations, setLiveInventoryLocations] = useState<InventoryLocation[]>([]);
+
+    useEffect(() => {
+        
+        const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
+            setLiveProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
+        }, (error) => console.error("Error fetching projects: ", error));
+        
+        const unsubPOs = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
+             const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
+            setLivePurchaseOrders(ordersData);
+        }, (error) => console.error("Error fetching purchase orders: ", error));
+
+        const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
+            setLiveInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
+        }, (error) => console.error("Error fetching inventory: ", error));
+
+        const unsubInvLocations = onSnapshot(collection(db, "inventoryLocations"), (snapshot) => {
+            setLiveInventoryLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
+        }, (error) => console.error("Error fetching inventory locations: ", error));
+
+
+        return () => {
+            unsubProjects();
+            unsubPOs();
+            unsubInventory();
+            unsubInvLocations();
+        }
+
+    }, []);
 
     useEffect(() => {
         // Correct calculation for inventory value
-        const totalInventoryValue = inventory.reduce((acc, item) => {
+        const totalInventoryValue = liveInventory.reduce((acc, item) => {
             if (item.type === 'service') return acc; // Exclude services from value calculation
-            const totalStock = inventoryLocations
+            const totalStock = liveInventoryLocations
                 .filter(loc => loc.itemId === item.id)
                 .reduce((sum, loc) => sum + loc.quantity, 0);
             return acc + (totalStock * (item.unitCost || 0));
         }, 0);
 
-        const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
-        const lowStockCount = inventory.filter(item => {
+        const activeProjectsCount = liveProjects.filter(p => p.status === 'En Progreso').length;
+        const lowStockCount = liveInventory.filter(item => {
              if (item.type !== 'simple') return false;
-             const totalStock = inventoryLocations
+             const totalStock = liveInventoryLocations
                 .filter(loc => loc.itemId === item.id)
                 .reduce((sum, loc) => sum + loc.quantity, 0);
             return item.minThreshold && totalStock < item.minThreshold;
         }).length;
 
-        const pendingValue = purchaseOrders
+        const pendingValue = livePurchaseOrders
             .filter(p => p.status === 'Pendiente de Aprobación')
             .reduce((acc, p) => acc + p.total, 0);
 
@@ -53,23 +83,7 @@ export default function DashboardPage() {
             lowStockAlerts: lowStockCount,
             pendingPOsValue: pendingValue,
         });
-
-        // En una app real, aquí irían los listeners de Firestore
-        const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
-            setLiveProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)));
-        });
-        
-        const unsubPOs = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-             const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
-            setLivePurchaseOrders(ordersData);
-        });
-
-        return () => {
-            unsubProjects();
-            unsubPOs();
-        }
-
-    }, []);
+    }, [liveProjects, livePurchaseOrders, liveInventory, liveInventoryLocations]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 

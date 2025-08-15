@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Table,
     TableBody,
@@ -10,10 +11,20 @@ import {
     TableRow,
   } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { inventory } from "@/lib/data";
 import { Badge } from "../ui/badge";
+import { getData } from "@/lib/data";
+import type { InventoryItem } from "@/lib/types";
 
 export function InventoryAnalysisReport() {
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getData<InventoryItem>('inventory', []);
+            setInventory(data);
+        }
+        fetchData();
+    }, []);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
@@ -21,8 +32,8 @@ export function InventoryAnalysisReport() {
         .filter(item => item.type === 'simple') // Solo analizamos items simples por ahora
         .map(item => ({
             ...item,
-            totalValue: item.quantity * item.unitCost,
-            isLowStock: item.quantity < item.minThreshold,
+            totalValue: (item.quantity ?? 0) * item.unitCost,
+            isLowStock: (item.quantity ?? 0) < (item.minThreshold ?? 0),
         }))
         .sort((a, b) => b.totalValue - a.totalValue);
 

@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Table,
     TableBody,
@@ -11,20 +12,37 @@ import {
   } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { projects, purchaseOrders } from "@/lib/data";
 import { cn } from "@/lib/utils";
 import { Progress } from "../ui/progress";
 import { Badge } from "../ui/badge";
+import { getData } from "@/lib/data";
+import type { Project, PurchaseOrder } from "@/lib/types";
   
 export function ProjectCostReport() {
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+    
+    useEffect(() => {
+        const fetchData = async () => {
+            const [projData, poData] = await Promise.all([
+                getData<Project>('projects', []),
+                getData<PurchaseOrder>('purchaseOrders', [])
+            ]);
+            setProjects(projData);
+            setPurchaseOrders(poData);
+        }
+        fetchData();
+    }, []);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
     const projectsWithDetails = projects.map(p => {
-        const variance = p.budget - p.spent;
-        const progress = p.budget > 0 ? Math.round((p.spent / p.budget) * 100) : 0;
+        const spent = p.spent || 0;
+        const budget = p.budget || 0;
+        const variance = budget - spent;
+        const progress = budget > 0 ? Math.round((spent / budget) * 100) : 0;
         const relatedPOs = purchaseOrders.filter(po => po.project === p.id);
-        return { ...p, variance, progress, relatedPOs };
+        return { ...p, variance, progress, relatedPOs, spent, budget };
     });
 
     return (

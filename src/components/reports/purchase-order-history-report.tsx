@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Table,
     TableBody,
@@ -10,16 +11,26 @@ import {
     TableRow,
   } from "@/components/ui/table";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { purchaseOrders } from "@/lib/data";
 import { Badge } from "../ui/badge";
 import { cn } from "@/lib/utils";
+import { getData } from "@/lib/data";
+import type { PurchaseOrder } from "@/lib/types";
   
 export function PurchaseOrderHistoryReport() {
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const data = await getData<PurchaseOrder>('purchaseOrders', []);
+            setPurchaseOrders(data);
+        }
+        fetchData();
+    }, []);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
     // Sort by most recent date
-    const sortedOrders = [...purchaseOrders].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    const sortedOrders = [...purchaseOrders].sort((a, b) => new Date(b.date as string).getTime() - new Date(a.date as string).getTime());
 
     return (
       <Card>
@@ -43,7 +54,7 @@ export function PurchaseOrderHistoryReport() {
               {sortedOrders.map((order) => (
                 <TableRow key={order.id}>
                   <TableCell className="font-medium">{order.id}</TableCell>
-                  <TableCell>{new Date(order.date).toLocaleDateString()}</TableCell>
+                  <TableCell>{new Date(order.date as string).toLocaleDateString()}</TableCell>
                   <TableCell>{order.supplier}</TableCell>
                   <TableCell>{order.project}</TableCell>
                   <TableCell>

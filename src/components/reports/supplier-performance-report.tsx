@@ -1,6 +1,7 @@
 
 "use client";
 
+import { useState, useEffect } from "react";
 import {
     Table,
     TableBody,
@@ -11,11 +12,26 @@ import {
   } from "@/components/ui/table";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { suppliers, purchaseOrders } from "@/lib/data";
 import { Star } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { getData } from "@/lib/data";
+import type { Supplier, PurchaseOrder } from "@/lib/types";
 
 export function SupplierPerformanceReport() {
+    const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            const [supData, poData] = await Promise.all([
+                getData<Supplier>('suppliers', []),
+                getData<PurchaseOrder>('purchaseOrders', [])
+            ]);
+            setSuppliers(supData);
+            setPurchaseOrders(poData);
+        }
+        fetchData();
+    }, []);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
@@ -79,7 +95,7 @@ export function SupplierPerformanceReport() {
                                         {supplier.relatedPOs.map(po => (
                                             <TableRow key={po.id}>
                                                 <TableCell>{po.id}</TableCell>
-                                                <TableCell>{new Date(po.date).toLocaleDateString()}</TableCell>
+                                                <TableCell>{new Date(po.date as string).toLocaleDateString()}</TableCell>
                                                 <TableCell><Badge variant="outline">{po.status}</Badge></TableCell>
                                                 <TableCell className="text-right">{formatCurrency(po.total)}</TableCell>
                                             </TableRow>

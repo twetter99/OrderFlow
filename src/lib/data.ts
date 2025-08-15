@@ -348,20 +348,39 @@ const mockPayments: Payment[] = [
     { id: 'PAY-005', invoiceId: 'INV-005', invoiceNumber: 'FACT-TECH-512', supplierName: 'TechParts Inc.', dueDate: add(today, {days: 5}).toISOString(), amountDue: 5000, paymentMethod: 'Transferencia', status: 'Pagado parcialmente', paymentHistory: [{ date: sub(today, {days: 1}).toISOString(), amount: 2500, reference: 'TR-2024-5911' }] },
 ];
 
+const mockDataMap: Record<string, any[]> = {
+    'projects': mockProjects,
+    'inventory': mockInventory,
+    'purchaseOrders': mockPurchaseOrders,
+    'suppliers': mockSuppliers,
+    'clients': mockClients,
+    'users': mockUsers,
+    'supervisores': mockSupervisores,
+    'technicians': mockTechnicians,
+    'operadores': mockOperadores,
+    'locations': mockLocations,
+    'inventoryLocations': mockInventoryLocations,
+    'deliveryNotes': mockDeliveryNotes,
+    'installationTemplates': mockInstallationTemplates,
+    'replanteos': mockReplanteos,
+    'supplierInvoices': mockSupplierInvoices,
+    'payments': mockPayments
+};
+
 // --- Firestore Data Fetching Logic ---
 
-async function getData<T>(collectionName: string, mockData: T[]): Promise<T[]> {
+export async function getData<T>(collectionName: string, mockData: T[]): Promise<T[]> {
   try {
     const querySnapshot = await getDocs(collection(db, collectionName));
     if (querySnapshot.empty) {
       console.warn(`Firestore collection '${collectionName}' is empty. Using mock data.`);
-      return mockData;
+      return mockDataMap[collectionName] || mockData;
     }
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as T));
   } catch (error) {
     console.error(`Error fetching from Firestore collection '${collectionName}':`, error);
     console.warn(`Falling back to mock data for '${collectionName}'.`);
-    return mockData;
+    return mockDataMap[collectionName] || mockData;
   }
 }
 
@@ -428,5 +447,3 @@ export const getNotifications = (): Notification[] => {
     
     return notifications;
 }
-
-    

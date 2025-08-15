@@ -4,11 +4,14 @@
 import { useParams } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { deliveryNotes, clients, projects, inventory, locations } from '@/lib/data';
 import type { DeliveryNote, Client, Project, InventoryItem, Location } from '@/lib/types';
 import { Printer, Building, User, FolderKanban } from 'lucide-react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import Image from 'next/image';
+import { doc, getDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import { convertTimestampsToISO } from '@/lib/utils';
+import { getData } from '@/lib/data';
 
 interface EnrichedDeliveryNote extends DeliveryNote {
   client?: Client;
@@ -27,22 +30,38 @@ export default function DespatchPrintPage() {
   const [note, setNote] = useState<EnrichedDeliveryNote | null>(null);
 
   useEffect(() => {
-    const foundNote = deliveryNotes.find((n) => n.id === id);
-    if (foundNote) {
-      const client = clients.find((c) => c.id === foundNote.clientId);
-      const project = projects.find((p) => p.id === foundNote.projectId);
-      const location = locations.find((l) => l.id === foundNote.locationId);
-      const enrichedItems = foundNote.items.map(item => {
-        const inventoryItem = inventory.find(i => i.id === item.itemId);
-        return {
-          name: inventoryItem?.name || 'Artículo Desconocido',
-          sku: inventoryItem?.sku || 'N/A',
-          quantity: item.quantity
-        };
-      });
+    const fetchNote = async () => {
+        if (!id) return;
 
-      setNote({ ...foundNote, client, project, location, enrichedItems });
+        const noteRef = doc(db, 'deliveryNotes', id);
+        const noteSnap = await getDoc(noteRef);
+        
+        if (!noteSnap.exists()) return;
+        
+        const foundNote = convertTimestampsToISO({ id: noteSnap.id, ...noteSnap.data() }) as DeliveryNote;
+
+        const [clients, projects, inventory, locations] = await Promise.all([
+            getData<Client>('clients', []),
+            getData<Project>('projects', []),
+            getData<InventoryItem>('inventory', []),
+            getData<Location>('locations', []),
+        ]);
+        
+        const client = clients.find((c) => c.id === foundNote.clientId);
+        const project = projects.find((p) => p.id === foundNote.projectId);
+        const location = locations.find((l) => l.id === foundNote.locationId);
+        const enrichedItems = foundNote.items.map(item => {
+            const inventoryItem = inventory.find(i => i.id === item.itemId);
+            return {
+            name: inventoryItem?.name || 'Artículo Desconocido',
+            sku: inventoryItem?.sku || 'N/A',
+            quantity: item.quantity
+            };
+        });
+
+        setNote({ ...foundNote, client, project, location, enrichedItems });
     }
+    fetchNote();
   }, [id]);
 
   useEffect(() => {
