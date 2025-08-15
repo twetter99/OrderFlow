@@ -59,8 +59,6 @@ import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
-import { collection, onSnapshot, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
@@ -381,7 +379,7 @@ export function PurchasingClientPage() {
       toast({ 
           title: result.warning ? "Operación con Advertencia" : (selectedOrder && 'id' in selectedOrder ? "Pedido actualizado" : "Pedido creado"),
           description: result.message,
-          variant: result.warning ? "default" : "default", // Shadcn doesn't have a 'warning' variant by default
+          variant: result.warning ? "default" : "success",
       });
       setIsModalOpen(false);
     } else {

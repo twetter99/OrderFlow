@@ -56,6 +56,7 @@ import { Input } from "@/components/ui/input";
 import { AddStockForm } from "./add-stock-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useData } from "@/context/data-context";
 
 type SortableColumn = keyof InventoryItem | 'totalStock' | 'supplierName';
 type SortDescriptor = {
@@ -66,12 +67,7 @@ type SortDescriptor = {
 
 export function InventoryClientPage() {
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
-  
-  const [loading, setLoading] = useState(true);
+  const { inventory, suppliers, locations, inventoryLocations, loading } = useData();
   const [filter, setFilter] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -87,29 +83,6 @@ export function InventoryClientPage() {
       column: 'name',
       direction: 'ascending',
   });
-
-  useEffect(() => {
-    const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => {
-      setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
-      setLoading(false);
-    });
-    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => {
-      setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)));
-    });
-    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => {
-      setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location)));
-    });
-     const unsubInvLocations = onSnapshot(collection(db, "inventoryLocations"), (snapshot) => {
-      setInventoryLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
-    });
-
-    return () => {
-      unsubInventory();
-      unsubSuppliers();
-      unsubLocations();
-      unsubInvLocations();
-    };
-  }, []);
 
   const getItemTotalStock = (itemId: string) => {
     return inventoryLocations
