@@ -13,7 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { getFirstAccessibleRoute, allPermissions } from '@/lib/permissions';
+import { allPermissions } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -31,61 +31,66 @@ const AuthContext = createContext<AuthContextType>({
   sendPasswordReset: async () => {},
 });
 
+
+// --- Lógica de inicialización síncrona para el modo de desarrollo ---
+const isDevMode = process.env.NODE_ENV === 'development';
+
+let devUser: User | null = null;
+if (isDevMode) {
+  console.log("Modo desarrollador detectado. Creando usuario mock síncrono...");
+  devUser = {
+    uid: 'dev-admin-uid',
+    personId: 'dev-admin-person-id',
+    name: 'Dev Admin',
+    email: 'dev@orderflow.test',
+    phone: '600000000',
+    permissions: allPermissions,
+    role: 'Administrador'
+  };
+}
+// --- Fin de la lógica de inicialización ---
+
+
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
+  // El estado se inicializa de forma síncrona basado en el entorno
+  const [user, setUser] = useState<User | null>(isDevMode ? devUser : null);
+  const [loading, setLoading] = useState<boolean>(!isDevMode);
+  
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    
-    // --- MODO DESARROLLADOR CON ACCESO DIRECTO ---
-    if (process.env.NODE_ENV === 'development') {
-      console.log("Modo desarrollador detectado. Creando usuario mock...");
-      const devUser: User = {
-        uid: 'dev-admin-uid',
-        personId: 'dev-admin-person-id',
-        name: 'Dev Admin',
-        email: 'dev@orderflow.test',
-        phone: '600000000',
-        permissions: allPermissions,
-        role: 'Administrador'
-      };
-      setUser(devUser);
-      setLoading(false);
-      return; // Detenemos la ejecución aquí para no registrar el listener de Auth
-    }
+    // Este efecto SÓLO se ejecuta en producción (o cualquier entorno que no sea 'development')
+    if (!isDevMode) {
+      const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+        if (firebaseUser) {
+          try {
+              const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
+              const userDoc = await getDoc(userDocRef);
 
-    // --- Listener de autenticación normal para PRODUCCIÓN ---
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      if (firebaseUser) {
-        try {
-            const userDocRef = doc(db, 'usuarios', firebaseUser.uid);
-            const userDoc = await getDoc(userDocRef);
-
-            if (userDoc.exists()) {
-                await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
-                const userData = { uid: userDoc.id, ...userDoc.data() } as User;
-                setUser(userData);
-            } else {
-                console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore.`);
-                // Forzar cierre de sesión si el perfil no existe en la BD para evitar inconsistencias.
-                await signOut(auth);
-                setUser(null);
-            }
-        } catch (error) {
-            console.error("Error fetching user profile:", error);
-            await signOut(auth);
-            setUser(null);
+              if (userDoc.exists()) {
+                  await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
+                  const userData = { uid: userDoc.id, ...userDoc.data() } as User;
+                  setUser(userData);
+              } else {
+                  console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore.`);
+                  await signOut(auth);
+                  setUser(null);
+              }
+          } catch (error) {
+              console.error("Error fetching user profile:", error);
+              await signOut(auth);
+              setUser(null);
+          }
+        } else {
+          setUser(null);
         }
-      } else {
-        setUser(null);
-      }
-      setLoading(false);
-    });
+        setLoading(false);
+      });
 
-    return () => unsubscribe();
-  }, [toast]);
+      return () => unsubscribe();
+    }
+  }, [isDevMode]);
   
 
   const signInWithEmail = async (email: string, pass: string) => {
@@ -115,16 +120,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    setLoading(true);
-    // Para el modo desarrollo, simplemente reseteamos el estado.
-    if (process.env.NODE_ENV === 'development') {
-      setUser(null);
-      router.push('/login');
-    } else {
-      await signOut(auth);
-      setUser(null);
-      router.push('/login');
+    if (isDevMode) {
+      // En dev, no hacemos nada o podríamos redirigir si fuera necesario,
+      // pero el usuario mock persistirá mientras la página esté abierta.
+      console.log("Logout no aplica en modo desarrollador.");
+      return;
     }
+    setLoading(true);
+    await signOut(auth);
+    setUser(null);
+    router.push('/login');
     setLoading(false);
   };
 
