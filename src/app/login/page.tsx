@@ -1,15 +1,25 @@
 
 'use client';
 
-import { useRouter } from 'next/navigation';
+import { useRouter, redirect } from 'next/navigation';
 import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/auth-context';
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export default function LoginPage() {
   const { loading } = useAuth();
+  const router = useRouter();
+
+  // En modo desarrollo, no deberíamos llegar aquí, pero si lo hacemos,
+  // redirigimos inmediatamente para evitar mostrar la pantalla de login.
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+      router.push('/dashboard');
+    }
+  }, [router]);
+
 
   if (loading) {
     return (
