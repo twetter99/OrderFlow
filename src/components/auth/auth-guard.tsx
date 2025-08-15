@@ -11,10 +11,15 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
 
-  useEffect(() => {
-    if (loading) return; // Espera a que el contexto de autenticación termine de cargar
+  // Si estamos en modo desarrollo, no necesitamos hacer nada. El AuthProvider ya nos da un usuario.
+  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+    return <>{children}</>;
+  }
 
-    // Si no hay usuario y no estamos ya en la página de login, redirigir
+  useEffect(() => {
+    // Esta lógica solo se ejecuta en "producción" (cuando DEV_MODE no es true)
+    if (loading) return;
+
     if (!user && pathname !== '/login') {
       router.push('/login');
     }
