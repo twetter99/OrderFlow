@@ -50,11 +50,14 @@ import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch }
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useData } from "@/context/data-context";
+import { useAuth } from "@/context/auth-context";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const { clients, loading } = useData();
+  const { user, loading: authLoading } = useAuth();
+  const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [filter, setFilter] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,6 +66,25 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!user || authLoading) {
+      if (!authLoading) setLoading(false);
+      return;
+    };
+
+    const unsubscribe = onSnapshot(collection(db, "clients"), (snapshot) => {
+        setClients(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
+        setLoading(false);
+    }, (error) => {
+        console.error("Error fetching clients:", error);
+        toast({ variant: "destructive", title: "Error de Carga", description: "No se pudieron cargar los clientes." });
+        setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, [user, authLoading, toast]);
+
 
   const filteredClients = useMemo(() => {
     return clients.filter(client =>

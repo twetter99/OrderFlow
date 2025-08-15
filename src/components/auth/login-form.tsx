@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React from 'react';
@@ -11,7 +10,7 @@ import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { useAuth } from '@/context/auth-context';
-import { Loader2, ShieldAlert } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { PasswordInput } from '../shared/password-input';
 
 const formSchema = z.object({
@@ -22,7 +21,7 @@ const formSchema = z.object({
 type LoginFormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
-  const { signInWithEmail, sendPasswordReset, loading, signInAsAdminDev } = useAuth();
+  const { signInWithEmail, sendPasswordReset, loading } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -102,23 +101,6 @@ export function LoginForm() {
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Verificando..." : "Acceder"}
             </Button>
-             {process.env.NODE_ENV === 'development' && (
-              <>
-                <div className="relative w-full text-center my-2">
-                  <span className="text-xs text-gray-400 bg-black px-2 z-10 relative">o</span>
-                  <div className="absolute left-0 top-1/2 w-full h-px bg-gray-600"></div>
-                </div>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  className="w-full"
-                  onClick={signInAsAdminDev}
-                >
-                  <ShieldAlert className="mr-2 h-4 w-4 text-yellow-400" />
-                  Acceso directo (modo desarrollador)
-                </Button>
-              </>
-            )}
           </CardFooter>
         </form>
       </Form>

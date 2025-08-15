@@ -9,7 +9,6 @@ import { SidebarNav } from '@/components/shared/sidebar-nav';
 import { Header } from '@/components/shared/header';
 import { SidebarProvider } from '@/components/ui/sidebar';
 import { AuthProvider, useAuth } from '@/context/auth-context';
-import { DataProvider } from '@/context/data-context';
 import { AuthGuard } from '@/components/auth/auth-guard';
 
 const exo2 = Exo_2({
@@ -52,10 +51,8 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       <body className={`${exo2.variable} font-sans antialiased flex bg-background`}>
         <AuthProvider>
-          <DataProvider>
-              <AppLayout>{children}</AppLayout>
-              <Toaster />
-          </DataProvider>
+            <AppLayout>{children}</AppLayout>
+            <Toaster />
         </AuthProvider>
       </body>
     </html>

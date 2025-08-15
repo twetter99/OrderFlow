@@ -56,7 +56,7 @@ import { Input } from "@/components/ui/input";
 import { AddStockForm } from "./add-stock-form";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useData } from "@/context/data-context";
+import { useAuth } from "@/context/auth-context";
 
 type SortableColumn = keyof InventoryItem | 'totalStock' | 'supplierName';
 type SortDescriptor = {
@@ -67,7 +67,14 @@ type SortDescriptor = {
 
 export function InventoryClientPage() {
   const { toast } = useToast();
-  const { inventory, suppliers, locations, inventoryLocations, loading } = useData();
+  const { user, loading: authLoading } = useAuth();
+  
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const [filter, setFilter] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -83,6 +90,25 @@ export function InventoryClientPage() {
       column: 'name',
       direction: 'ascending',
   });
+
+  useEffect(() => {
+    if (!user || authLoading) {
+      if (!authLoading) setLoading(false);
+      return;
+    }
+    
+    const unsubs: (() => void)[] = [];
+    unsubs.push(onSnapshot(collection(db, "inventory"), (snap) => {
+        setInventory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)));
+        if (loading) setLoading(false);
+    }));
+    unsubs.push(onSnapshot(collection(db, "suppliers"), (snap) => setSuppliers(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)))));
+    unsubs.push(onSnapshot(collection(db, "locations"), (snap) => setLocations(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location)))));
+    unsubs.push(onSnapshot(collection(db, "inventoryLocations"), (snap) => setInventoryLocations(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)))));
+
+    return () => unsubs.forEach(unsub => unsub());
+
+  }, [user, authLoading, loading]);
 
   const getItemTotalStock = (itemId: string) => {
     return inventoryLocations

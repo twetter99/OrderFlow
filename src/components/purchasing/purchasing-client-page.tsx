@@ -1,5 +1,4 @@
 
-
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -21,7 +20,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle, Copy } from "lucide-react";
 import {
   DropdownMenu,
@@ -59,6 +58,8 @@ import { generatePurchaseOrder } from "@/ai/flows/generate-purchase-order";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { differenceInDays, isPast, isToday } from "date-fns";
+import { collection, onSnapshot, Timestamp } from "firebase/firestore";
+import { db } from "@/lib/firebase";
 import { addPurchaseOrder, updatePurchaseOrder, deletePurchaseOrder, updatePurchaseOrderStatus, deleteMultiplePurchaseOrders, linkDeliveryNoteToPurchaseOrder } from "@/app/purchasing/actions";
 import { Checkbox } from "@/components/ui/checkbox";
 import { OrderStatusHistory } from "@/components/purchasing/order-status-history";
@@ -71,7 +72,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
-import { useData } from "@/context/data-context";
+import { useAuth } from "@/context/auth-context";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -97,15 +98,15 @@ export function PurchasingClientPage() {
   const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const { 
-    purchaseOrders, 
-    suppliers, 
-    inventory, 
-    projects, 
-    users, 
-    locations, 
-    loading 
-  } = useData();
+  const { user, loading: authLoading } = useAuth();
+  
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
+  const [locations, setLocations] = useState<Location[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [filters, setFilters] = useState({
     orderNumber: '',
@@ -142,6 +143,27 @@ export function PurchasingClientPage() {
       direction: 'descending',
   });
   
+  useEffect(() => {
+    if (!user || authLoading) {
+        if (!authLoading) setLoading(false);
+        return;
+    }
+
+    const unsubs: (() => void)[] = [];
+    unsubs.push(onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
+        setPurchaseOrders(snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() })));
+        if (loading) setLoading(false);
+    }));
+    unsubs.push(onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier)))));
+    unsubs.push(onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)))));
+    unsubs.push(onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)))));
+    unsubs.push(onSnapshot(collection(db, "users"), (snapshot) => setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User)))));
+    unsubs.push(onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location)))));
+
+    return () => unsubs.forEach(unsub => unsub());
+
+  }, [user, authLoading, loading]);
+
   const { orderedSuppliers, recentSupplierIds } = useMemo(() => {
     if (suppliers.length === 0 || purchaseOrders.length === 0) {
       return { orderedSuppliers: suppliers.sort((a,b) => a.name.localeCompare(b.name)), recentSupplierIds: [] };

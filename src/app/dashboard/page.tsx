@@ -1,21 +1,42 @@
 
 "use client";
 
-import { useMemo } from 'react';
-import { useData } from "@/context/data-context";
+import { useMemo, useState, useEffect } from 'react';
 import { StatsCard } from "@/components/dashboard/stats-card";
 import { ActiveProjectsList } from "@/components/dashboard/active-projects-list";
 import { RecentOrdersTable } from "@/components/dashboard/recent-orders-table";
 import { Package, FolderKanban, AlertTriangle, BadgeDollarSign, Loader2 } from 'lucide-react';
+import { collection, onSnapshot } from 'firebase/firestore';
+import { db } from '@/lib/firebase';
+import type { Project, PurchaseOrder, InventoryItem, InventoryLocation } from '@/lib/types';
+import { useAuth } from '@/context/auth-context';
 
 export default function DashboardPage() {
-    const { 
-        projects, 
-        purchaseOrders, 
-        inventory, 
-        inventoryLocations,
-        loading 
-    } = useData();
+    const { user, loading: authLoading } = useAuth();
+    const [loading, setLoading] = useState(true);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+    const [inventory, setInventory] = useState<InventoryItem[]>([]);
+    const [inventoryLocations, setInventoryLocations] = useState<InventoryLocation[]>([]);
+
+    useEffect(() => {
+        if (!user || authLoading) {
+          if (!authLoading) setLoading(false);
+          return;
+        };
+
+        const unsubs: (() => void)[] = [];
+        unsubs.push(onSnapshot(collection(db, "projects"), (snap) => setProjects(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project)))));
+        unsubs.push(onSnapshot(collection(db, "purchaseOrders"), (snap) => setPurchaseOrders(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as PurchaseOrder)))));
+        unsubs.push(onSnapshot(collection(db, "inventory"), (snap) => setInventory(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem)))));
+        unsubs.push(onSnapshot(collection(db, "inventoryLocations"), (snap) => {
+            setInventoryLocations(snap.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryLocation)));
+            setLoading(false);
+        }));
+
+        return () => unsubs.forEach(unsub => unsub());
+
+    }, [user, authLoading]);
 
     const stats = useMemo(() => {
         if (loading) return {

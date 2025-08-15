@@ -13,42 +13,31 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
+import { getFirstAccessibleRoute } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  isDevMode: boolean; // Explicitly track dev mode
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  signInAsAdminDev: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  isDevMode: false,
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
-  signInAsAdminDev: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDevMode, setIsDevMode] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    // If in dev mode, we don't need the Firebase listener
-    if (isDevMode) {
-      setLoading(false);
-      return;
-    }
-    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -76,7 +65,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, [isDevMode]); // Rerun if we exit dev mode
+  }, [toast]);
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
@@ -93,25 +82,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
        setLoading(false);
     }
   };
-  
-  const signInAsAdminDev = () => {
-    if (process.env.NODE_ENV === 'development') {
-      setIsDevMode(true);
-      const adminUser: User = {
-        uid: 'dev-admin-user',
-        name: 'Admin (Dev Mode)',
-        email: 'dev@orderflow.app',
-        permissions: allPermissions,
-        role: 'Administrador',
-      };
-      setUser(adminUser);
-      setLoading(false);
-      toast({ title: "Modo Desarrollador Activado", description: "Has iniciado sesión como Administrador."});
-      router.push(getFirstAccessibleRoute(adminUser.permissions || []));
-    } else {
-       toast({ variant: "destructive", title: "Error", description: "El acceso directo solo está disponible en desarrollo." });
-    }
-  };
 
   const sendPasswordReset = async (email: string) => {
      try {
@@ -124,19 +94,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    if (isDevMode) {
-      setIsDevMode(false);
-      setUser(null);
-      setLoading(true); // Set loading to true to re-trigger auth checks
-      router.push('/login');
-    } else {
-      await signOut(auth);
-      // onAuthStateChanged will handle setting user to null
-    }
+    await signOut(auth);
+    // onAuthStateChanged will handle setting user to null and router will redirect via AuthGuard
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDevMode, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );
