@@ -41,25 +41,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const { toast } = useToast();
 
   useEffect(() => {
-    const handleDevLogin = async () => {
-      try {
-        await signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx');
-        // onAuthStateChanged se encargará del resto
-      } catch (error) {
-        console.error("Error en el login automático de desarrollo:", error);
-        toast({
-          variant: "destructive",
-          title: "Error de Acceso en Desarrollo",
-          description: "No se pudo iniciar sesión con las credenciales de desarrollo. Revisa que el usuario exista y la contraseña sea correcta."
-        });
-        setLoading(false); // Detener la carga si el login falla para no bloquear la app
-      }
-    };
-
-    if (isDevMode && !auth.currentUser) {
-      handleDevLogin();
+    if (isDevMode) {
+      // 1. Crear usuario mock inmediatamente para la UI
+      const devUser: User = {
+        uid: 'dev-admin-uid',
+        personId: 'dev-admin-person-id',
+        name: 'Dev Admin',
+        email: 'dev@orderflow.test',
+        phone: '600000000',
+        permissions: allPermissions,
+        role: 'Administrador'
+      };
+      setUser(devUser);
+      setLoading(false);
+      
+      // 2. Login real con Firebase en segundo plano para Firestore
+      signInWithEmailAndPassword(auth, 'juan@winfin.es', 'h8QJsx')
+        .then(() => console.log('%c✅ Sesión de Firebase para Firestore establecida en segundo plano.', 'color: green;'))
+        .catch(error => console.error('%c❌ Error en la autenticación de Firebase en segundo plano:', 'color: red;', error));
+      
+      return; // No configurar el listener de onAuthStateChanged en modo dev
     }
 
+    // --- Lógica para producción ---
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -75,18 +79,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   router.push(targetRoute);
                 }
             } else {
-                const devUser: User = {
-                  uid: firebaseUser.uid,
-                  personId: firebaseUser.uid,
-                  name: 'Dev Admin',
-                  email: firebaseUser.email || 'dev@orderflow.com',
-                  permissions: allPermissions,
-                  isDev: true,
-                };
-                setUser(devUser);
-                if (window.location.pathname === '/login' || window.location.pathname === '/') {
-                    router.push('/dashboard');
-                }
+                console.warn(`No se encontró un perfil en Firestore para el UID: ${firebaseUser.uid}. Cerrando sesión.`);
+                await signOut(auth);
+                setUser(null);
             }
         } catch (error) {
             console.error("Error fetching user profile:", error);
@@ -99,12 +94,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setLoading(false);
     });
 
-    if (!isDevMode) {
-      return () => unsubscribe();
-    }
-    // Para dev, el listener se queda activo.
     return () => unsubscribe();
-  }, [router, toast]);
+  }, [router]);
   
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);

@@ -12,14 +12,9 @@ export default function LoginPage() {
   const { loading } = useAuth();
   const router = useRouter();
 
-  // En modo desarrollo, no deberíamos llegar aquí, pero si lo hacemos,
-  // redirigimos inmediatamente para evitar mostrar la pantalla de login.
-  useEffect(() => {
-    if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
-      router.push('/dashboard');
-    }
-  }, [router]);
-
+  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+    redirect('/dashboard');
+  }
 
   if (loading) {
     return (

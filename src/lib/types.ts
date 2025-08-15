@@ -124,7 +124,7 @@ export type User = {
   providerId?: string;
   createdAt?: Timestamp;
   lastLoginAt?: Timestamp | null;
-  role?: 'Administrador' | 'Empleado' | 'Almacén';
+  role?: 'Administrador' | 'Empleado' | 'Almacén' | 'Técnico' | 'Supervisor';
   permissions?: string[]; 
   isDev?: boolean;
 };
