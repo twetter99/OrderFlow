@@ -13,7 +13,26 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { allPermissions } from '@/lib/permissions';
+import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
+
+
+// --- Lógica de inicialización síncrona para el modo de desarrollo ---
+const isDevMode = process.env.NEXT_PUBLIC_DEV_MODE === 'true';
+
+let devUser: User | null = null;
+if (isDevMode) {
+  devUser = {
+    uid: 'dev-admin-uid',
+    personId: 'dev-admin-person-id',
+    name: 'Dev Admin',
+    email: 'dev@orderflow.test',
+    phone: '600000000',
+    permissions: allPermissions,
+    role: 'Administrador'
+  };
+}
+// --- Fin de la lógica de inicialización ---
+
 
 interface AuthContextType {
   user: User | null;
@@ -32,27 +51,7 @@ const AuthContext = createContext<AuthContextType>({
 });
 
 
-// --- Lógica de inicialización síncrona para el modo de desarrollo ---
-const isDevMode = process.env.NODE_ENV === 'development';
-
-let devUser: User | null = null;
-if (isDevMode) {
-  console.log("Modo desarrollador detectado. Creando usuario mock síncrono...");
-  devUser = {
-    uid: 'dev-admin-uid',
-    personId: 'dev-admin-person-id',
-    name: 'Dev Admin',
-    email: 'dev@orderflow.test',
-    phone: '600000000',
-    permissions: allPermissions,
-    role: 'Administrador'
-  };
-}
-// --- Fin de la lógica de inicialización ---
-
-
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  // El estado se inicializa de forma síncrona basado en el entorno
   const [user, setUser] = useState<User | null>(isDevMode ? devUser : null);
   const [loading, setLoading] = useState<boolean>(!isDevMode);
   
@@ -72,6 +71,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                   await setDoc(userDocRef, { lastLoginAt: serverTimestamp() }, { merge: true });
                   const userData = { uid: userDoc.id, ...userDoc.data() } as User;
                   setUser(userData);
+                  // Redirigir al usuario a su primera ruta accesible después del login
+                  if (window.location.pathname === '/login' || window.location.pathname === '/') {
+                      const targetRoute = getFirstAccessibleRoute(userData.permissions || []);
+                      router.push(targetRoute);
+                  }
               } else {
                   console.error(`Usuario con UID ${firebaseUser.uid} autenticado pero no encontrado en Firestore.`);
                   await signOut(auth);
@@ -90,14 +94,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
       return () => unsubscribe();
     }
-  }, [isDevMode]);
+  }, [isDevMode, router]);
   
 
   const signInWithEmail = async (email: string, pass: string) => {
+    if (isDevMode) {
+      console.log("Login no es necesario en modo desarrollador.");
+      return;
+    }
+
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged se encargará del resto
+      // onAuthStateChanged se encargará del resto, incluida la redirección.
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -121,9 +130,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const logOut = async () => {
     if (isDevMode) {
-      // En dev, no hacemos nada o podríamos redirigir si fuera necesario,
-      // pero el usuario mock persistirá mientras la página esté abierta.
-      console.log("Logout no aplica en modo desarrollador.");
+      console.log("Logout no aplica en modo desarrollador. Refresca la página para salir del modo (si se implementa con localStorage).");
       return;
     }
     setLoading(true);

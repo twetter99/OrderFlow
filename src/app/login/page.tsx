@@ -1,10 +1,30 @@
 
 'use client';
 
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { LoginForm } from "@/components/auth/login-form";
 import Image from "next/image";
 
 export default function LoginPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    // Si estamos en modo desarrollador, redirigir inmediatamente al dashboard.
+    if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+      router.replace('/dashboard');
+    }
+  }, [router]);
+
+  // En modo desarrollador, renderizar un loader para evitar el parpadeo del formulario de login.
+  if (process.env.NEXT_PUBLIC_DEV_MODE === 'true') {
+    return (
+      <div className="flex min-h-screen items-center justify-center p-4 bg-black">
+        <p className="text-white">Redirigiendo al dashboard...</p>
+      </div>
+    );
+  }
+
   return (
     <div data-page="login" className="flex min-h-screen items-center justify-center p-4 bg-black">
       {/* Contenedor principal con efecto glassmorphism */}
