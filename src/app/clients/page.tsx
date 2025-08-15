@@ -50,11 +50,11 @@ import { collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, writeBatch }
 import { db } from "@/lib/firebase";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useData } from "@/context/data-context";
 
 export default function ClientsPage() {
   const { toast } = useToast();
-  const [clients, setClients] = useState<Client[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { clients, loading } = useData();
   const [filter, setFilter] = useState('');
 
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -63,14 +63,6 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
   const [clientToDelete, setClientToDelete] = useState<Client | null>(null);
   const [selectedRowIds, setSelectedRowIds] = useState<string[]>([]);
-
-  useEffect(() => {
-    const unsubClients = onSnapshot(collection(db, "clients"), (snapshot) => {
-      setClients(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Client)));
-      setLoading(false);
-    });
-    return () => unsubClients();
-  }, []);
 
   const filteredClients = useMemo(() => {
     return clients.filter(client =>

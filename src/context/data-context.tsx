@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { useAuth } from './auth-context';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { convertTimestampsToISO } from '@/lib/utils';
+import { convertTimestampsToISO, convertPurchaseOrderTimestamps } from '@/lib/utils';
 import * as mockData from '@/lib/data';
 import type { 
     Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, 
@@ -58,7 +58,7 @@ const DataContext = createContext<DataContextType>({
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-    const { isDevMode } = useAuth();
+    const { isDevMode, loading: authLoading } = useAuth();
     const [data, setData] = useState<Omit<DataContextType, 'loading'>>({
         projects: [], inventory: [], purchaseOrders: [], suppliers: [], users: [],
         clients: [], locations: [], deliveryNotes: [], inventoryLocations: [],
@@ -68,11 +68,16 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        if (authLoading) {
+            // Wait for auth to be ready before deciding data source
+            return;
+        }
+
         if (isDevMode) {
             setData({
                 projects: mockData.projects,
                 inventory: mockData.inventory,
-                purchaseOrders: mockData.purchaseOrders,
+                purchaseOrders: mockData.purchaseOrders.map(convertPurchaseOrderTimestamps),
                 suppliers: mockData.suppliers,
                 users: mockData.users,
                 clients: mockData.clients,
@@ -85,27 +90,39 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
                 technicians: mockData.technicians,
                 operadores: mockData.operadores,
                 supervisors: mockData.supervisors,
-                supplierInvoices: mockData.supplierInvoices,
-                payments: mockData.payments,
+                supplierInvoices: mockData.supplierInvoices.map(convertTimestampsToISO),
+                payments: mockData.payments.map(convertTimestampsToISO),
             });
             setLoading(false);
-            return;
+            return () => {}; // No-op cleanup
         }
 
-        const collections: (keyof Omit<DataContextType, 'loading' | 'notifications'>)[] = [
-            'projects', 'inventory', 'purchaseOrders', 'suppliers', 'usuarios', 
-            'clients', 'locations', 'deliveryNotes', 'inventoryLocations', 
-            'installationTemplates', 'replanteos', 'technicians', 'operadores', 
-            'supervisores', 'supplierInvoices', 'payments'
+        const collections: { name: keyof Omit<DataContextType, 'loading' | 'notifications'>; firestoreName: string }[] = [
+            { name: 'projects', firestoreName: 'projects' },
+            { name: 'inventory', firestoreName: 'inventory' },
+            { name: 'purchaseOrders', firestoreName: 'purchaseOrders' },
+            { name: 'suppliers', firestoreName: 'suppliers' },
+            { name: 'users', firestoreName: 'usuarios' },
+            { name: 'clients', firestoreName: 'clients' },
+            { name: 'locations', firestoreName: 'locations' },
+            { name: 'deliveryNotes', firestoreName: 'deliveryNotes' },
+            { name: 'inventoryLocations', firestoreName: 'inventoryLocations' },
+            { name: 'installationTemplates', firestoreName: 'installationTemplates' },
+            { name: 'replanteos', firestoreName: 'replanteos' },
+            { name: 'technicians', firestoreName: 'technicians' },
+            { name: 'operadores', firestoreName: 'operadores' },
+            { name: 'supervisors', firestoreName: 'supervisores' },
+            { name: 'supplierInvoices', firestoreName: 'supplierInvoices' },
+            { name: 'payments', firestoreName: 'payments' }
         ];
         
-        const unsubscribes = collections.map(name => {
-            const collectionName = name === 'usuarios' ? 'usuarios' : name;
-            return onSnapshot(collection(db, collectionName), 
+        const unsubscribes = collections.map(col => {
+            return onSnapshot(collection(db, col.firestoreName), 
               (snapshot) => {
                 const docs = snapshot.docs.map(doc => {
                     const docData = { id: doc.id, ...doc.data() };
-                    if (name === 'purchaseOrders' || name === 'supplierInvoices' || name === 'payments' || name === 'projects') {
+                    // Apply timestamp conversion for specific collections
+                    if (['purchaseOrders', 'supplierInvoices', 'payments', 'projects'].includes(col.name)) {
                         return convertTimestampsToISO(docData);
                     }
                     return docData;
@@ -113,18 +130,18 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
                 setData(prevData => ({
                     ...prevData,
-                    [name === 'usuarios' ? 'users' : name]: docs
+                    [col.name]: docs
                 }));
                 setLoading(false);
               },
               (error) => {
-                console.error(`Error fetching ${name}:`, error);
+                console.error(`Error fetching ${col.name}:`, error);
                 setLoading(false);
               }
             );
         });
 
-        // Set notifications separately
+        // Set notifications separately as they are derived data
         setData(prevData => ({
             ...prevData,
             notifications: mockData.getNotifications()
@@ -132,17 +149,15 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
         return () => unsubscribes.forEach(unsub => unsub());
 
-    }, [isDevMode]);
+    }, [isDevMode, authLoading]);
     
-    // Recalculate notifications if dependencies change
+    // Recalculate derived notifications if dependencies change
     useEffect(() => {
-        if (isDevMode) {
-            setData(prev => ({
-                ...prev,
-                notifications: mockData.getNotifications()
-            }));
-        }
-    }, [data.purchaseOrders, data.inventory, data.inventoryLocations, isDevMode]);
+        setData(prev => ({
+            ...prev,
+            notifications: mockData.getNotifications()
+        }));
+    }, [data.purchaseOrders, data.inventory, data.inventoryLocations]);
 
 
     return (

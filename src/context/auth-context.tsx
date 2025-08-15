@@ -18,6 +18,7 @@ import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  isDevMode: boolean; // Explicitly track dev mode
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
@@ -27,6 +28,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  isDevMode: false,
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
@@ -36,10 +38,17 @@ const AuthContext = createContext<AuthContextType>({
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isDevMode, setIsDevMode] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
+    // If in dev mode, we don't need the Firebase listener
+    if (isDevMode) {
+      setLoading(false);
+      return;
+    }
+    
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -67,7 +76,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [isDevMode]); // Rerun if we exit dev mode
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
@@ -87,6 +96,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   
   const signInAsAdminDev = () => {
     if (process.env.NODE_ENV === 'development') {
+      setIsDevMode(true);
       const adminUser: User = {
         uid: 'dev-admin-user',
         name: 'Admin (Dev Mode)',
@@ -114,9 +124,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    if (user?.uid === 'dev-admin-user') {
-      // Handle dev mode logout
+    if (isDevMode) {
+      setIsDevMode(false);
       setUser(null);
+      setLoading(true); // Set loading to true to re-trigger auth checks
       router.push('/login');
     } else {
       await signOut(auth);
@@ -125,7 +136,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
+    <AuthContext.Provider value={{ user, loading, isDevMode, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
       {children}
     </AuthContext.Provider>
   );

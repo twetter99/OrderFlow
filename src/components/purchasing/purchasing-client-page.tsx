@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { cn, convertPurchaseOrderTimestamps } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import { MoreHorizontal, PlusCircle, MessageSquareWarning, Bot, Loader2, Wand2, Mail, Printer, Eye, ChevronRight, Trash2, History, ArrowUp, ArrowDown, ArrowUpDown, Anchor, Edit, Link2, AlertCircle, Copy } from "lucide-react";
 import {
   DropdownMenu,
@@ -73,6 +73,7 @@ import {
 import { REGEXP_ONLY_DIGITS } from "input-otp";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { useData } from "@/context/data-context";
 
 const LOGGED_IN_USER_ID = 'WF-USER-001'; // Simula el Admin
 const APPROVAL_PIN = '0707';
@@ -98,13 +99,15 @@ export function PurchasingClientPage() {
   const router = useRouter();
   const { toast } = useToast();
   const searchParams = useSearchParams();
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
-  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
-  const [inventory, setInventory] = useState<InventoryItem[]>([]);
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [users, setUsers] = useState<User[]>([]);
-  const [locations, setLocations] = useState<Location[]>([]);
-  const [loading, setLoading] = useState(true);
+  const { 
+    purchaseOrders, 
+    suppliers, 
+    inventory, 
+    projects, 
+    users, 
+    locations, 
+    loading 
+  } = useData();
 
   const [filters, setFilters] = useState({
     orderNumber: '',
@@ -141,28 +144,6 @@ export function PurchasingClientPage() {
       direction: 'descending',
   });
   
-  useEffect(() => {
-    const unsubPO = onSnapshot(collection(db, "purchaseOrders"), (snapshot) => {
-        const ordersData = snapshot.docs.map(doc => convertPurchaseOrderTimestamps({ id: doc.id, ...doc.data() }));
-        setPurchaseOrders(ordersData);
-        setLoading(false);
-    });
-    const unsubSuppliers = onSnapshot(collection(db, "suppliers"), (snapshot) => setSuppliers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Supplier))));
-    const unsubInventory = onSnapshot(collection(db, "inventory"), (snapshot) => setInventory(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as InventoryItem))));
-    const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => setProjects(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project))));
-    const unsubUsers = onSnapshot(collection(db, "users"), (snapshot) => setUsers(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as User))));
-    const unsubLocations = onSnapshot(collection(db, "locations"), (snapshot) => setLocations(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Location))));
-
-    return () => {
-        unsubPO();
-        unsubSuppliers();
-        unsubInventory();
-        unsubProjects();
-        unsubUsers();
-        unsubLocations();
-    };
-  }, []);
-
   const { orderedSuppliers, recentSupplierIds } = useMemo(() => {
     if (suppliers.length === 0 || purchaseOrders.length === 0) {
       return { orderedSuppliers: suppliers.sort((a,b) => a.name.localeCompare(b.name)), recentSupplierIds: [] };
@@ -230,7 +211,7 @@ export function PurchasingClientPage() {
   }, [purchaseOrders, projects, sortDescriptor, filters]);
 
 
-  const currentUser = users.find(u => u.id === LOGGED_IN_USER_ID);
+  const currentUser = users.find(u => u.uid === LOGGED_IN_USER_ID);
   const canApprove = currentUser?.role === 'Administrador';
 
   useEffect(() => {
