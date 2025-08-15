@@ -8,57 +8,38 @@ import {
   signOut, 
   signInWithEmailAndPassword,
   sendPasswordResetEmail,
-  setPersistence,
-  browserSessionPersistence
 } from 'firebase/auth';
 import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { allPermissions } from '@/lib/permissions';
+import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  isDevMode: boolean;
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  signInAsAdminDev: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
-  isDevMode: false,
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
+  signInAsAdminDev: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isDevMode, setIsDevMode] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    // Modo de desarrollo: Iniciar sesión automáticamente como administrador
-    if (process.env.NODE_ENV === 'development') {
-      setIsDevMode(true);
-      const adminUser: User = {
-        uid: 'dev-admin-user',
-        name: 'Admin (Dev Mode)',
-        email: 'dev@orderflow.app',
-        permissions: allPermissions,
-        role: 'Administrador',
-      };
-      setUser(adminUser);
-      setLoading(false);
-      return; // Salir temprano en modo desarrollo
-    }
-
-    // Lógica para producción
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         try {
@@ -92,27 +73,59 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
+      // onAuthStateChanged will handle setting the user and loading state
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
-       // ... (manejo de errores)
+       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+          description = 'El correo electrónico o la contraseña son incorrectos.';
+       }
        toast({ variant: "destructive", title, description });
        setLoading(false);
     }
   };
+  
+  const signInAsAdminDev = () => {
+    if (process.env.NODE_ENV === 'development') {
+      const adminUser: User = {
+        uid: 'dev-admin-user',
+        name: 'Admin (Dev Mode)',
+        email: 'dev@orderflow.app',
+        permissions: allPermissions,
+        role: 'Administrador',
+      };
+      setUser(adminUser);
+      setLoading(false);
+      toast({ title: "Modo Desarrollador Activado", description: "Has iniciado sesión como Administrador."});
+      router.push(getFirstAccessibleRoute(adminUser.permissions || []));
+    } else {
+       toast({ variant: "destructive", title: "Error", description: "El acceso directo solo está disponible en desarrollo." });
+    }
+  };
 
   const sendPasswordReset = async (email: string) => {
-    // ...
+     try {
+        await sendPasswordResetEmail(auth, email);
+        toast({ title: 'Correo enviado', description: 'Si el correo está registrado, recibirás un enlace para restablecer tu contraseña.' });
+    } catch (error: any) {
+        console.error("Password reset error:", error);
+        toast({ variant: 'destructive', title: 'Error', description: 'No se pudo enviar el correo de restablecimiento.' });
+    }
   }
 
   const logOut = async () => {
-    await signOut(auth);
-    setUser(null);
-    router.push('/login');
+    if (user?.uid === 'dev-admin-user') {
+      // Handle dev mode logout
+      setUser(null);
+      router.push('/login');
+    } else {
+      await signOut(auth);
+      // onAuthStateChanged will handle setting user to null
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, isDevMode, signInWithEmail, logOut, sendPasswordReset }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
       {children}
     </AuthContext.Provider>
   );
