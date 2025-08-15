@@ -16,11 +16,6 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (loading || hasRedirected.current) return;
     
-    // Si el usuario es el de desarrollo, asumimos que tiene acceso a todo.
-    if (user?.uid === 'DEV-ADMIN') {
-        return;
-    }
-
     if (!user && pathname !== '/login') {
       console.log('AuthGuard: No user, redirecting to /login');
       hasRedirected.current = true;
@@ -59,12 +54,13 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Render children if user exists (real or dev) or if it's the public login page
+  // Render children only if user is loaded and on an allowed path
+  // or if it's the public login page being accessed while not logged in.
   if (user || pathname === '/login') {
     return <>{children}</>;
   }
 
-  // Otherwise, return a loader while redirects happen
+  // Otherwise, continue showing a loader while redirects happen.
   return (
     <div className="flex h-screen w-full items-center justify-center bg-background">
         <Loader2 className="h-10 w-10 animate-spin text-primary" />

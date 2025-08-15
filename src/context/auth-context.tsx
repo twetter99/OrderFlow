@@ -13,7 +13,7 @@ import { auth, db } from '@/lib/firebase';
 import { doc, setDoc, serverTimestamp, getDoc } from 'firebase/firestore';
 import type { User } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { allPermissions, getFirstAccessibleRoute } from '@/lib/permissions';
+import { getFirstAccessibleRoute } from '@/lib/permissions';
 
 interface AuthContextType {
   user: User | null;
@@ -21,7 +21,6 @@ interface AuthContextType {
   signInWithEmail: (email: string, pass: string) => Promise<void>;
   logOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
-  signInAsAdminDev: () => void;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -30,7 +29,6 @@ const AuthContext = createContext<AuthContextType>({
   signInWithEmail: async () => {},
   logOut: async () => {},
   sendPasswordReset: async () => {},
-  signInAsAdminDev: () => {},
 });
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -59,44 +57,35 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Error fetching user profile:", error);
             await signOut(auth);
             setUser(null);
+        } finally {
+            setLoading(false);
         }
       } else {
-        // En desarrollo, si no hay usuario, simulamos uno para acceso directo.
-        if (process.env.NODE_ENV === 'development') {
-           signInAsAdminDev();
+         if (process.env.NODE_ENV === 'development') {
+            console.log("Development mode: attempting auto-login...");
+            // Usamos credenciales reales para desarrollo
+            signInWithEmailAndPassword(auth, 'juan@winfin.es', 'winfin1234')
+                .catch(err => {
+                    console.error("Dev auto-login failed. You might need to sign in manually.", err.message);
+                    // Si el login automático falla, nos aseguramos de que no quede en estado de carga.
+                    setLoading(false);
+                });
         } else {
-           setUser(null);
+            setUser(null);
+            setLoading(false);
         }
       }
-      setLoading(false);
     });
 
     return () => unsubscribe();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toast]);
   
-  const signInAsAdminDev = () => {
-    console.log("Entering developer mode.");
-    toast({
-        title: "Modo Desarrollador Activado",
-        description: "Has accedido como Administrador.",
-        variant: "default"
-    });
-    setUser({
-        uid: 'DEV-ADMIN',
-        name: 'Admin (Dev)',
-        email: 'dev@orderflow.com',
-        permissions: allPermissions,
-        role: 'Administrador',
-    });
-    router.push('/dashboard');
-  }
 
   const signInWithEmail = async (email: string, pass: string) => {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, pass);
-      // onAuthStateChanged will handle setting the user and loading state
+      // onAuthStateChanged se encargará del resto
     } catch (error: any) {
        let title = "Error de autenticación";
        let description = "No se pudo iniciar sesión. Por favor, inténtalo de nuevo.";
@@ -119,16 +108,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   const logOut = async () => {
-    if (user?.uid === 'DEV-ADMIN') {
-        setUser(null);
-        router.push('/login');
-    } else {
-        await signOut(auth);
-    }
+    await signOut(auth);
+    setUser(null);
+    router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset, signInAsAdminDev }}>
+    <AuthContext.Provider value={{ user, loading, signInWithEmail, logOut, sendPasswordReset }}>
       {children}
     </AuthContext.Provider>
   );

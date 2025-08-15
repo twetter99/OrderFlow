@@ -21,7 +21,7 @@ const formSchema = z.object({
 type LoginFormValues = z.infer<typeof formSchema>;
 
 export function LoginForm() {
-  const { signInWithEmail, sendPasswordReset, loading, signInAsAdminDev } = useAuth();
+  const { signInWithEmail, sendPasswordReset, loading } = useAuth();
 
   const form = useForm<LoginFormValues>({
     resolver: zodResolver(formSchema),
@@ -101,16 +101,6 @@ export function LoginForm() {
               {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
               {loading ? "Verificando..." : "Acceder"}
             </Button>
-            {process.env.NODE_ENV === 'development' && (
-                <Button 
-                    type="button" 
-                    variant="outline" 
-                    className="w-full bg-transparent text-white/60 border-white/30 hover:bg-white/10 hover:text-white"
-                    onClick={signInAsAdminDev}
-                >
-                    Acceso directo (modo desarrollador)
-                </Button>
-            )}
           </CardFooter>
         </form>
       </Form>
