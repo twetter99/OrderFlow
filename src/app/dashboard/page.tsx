@@ -10,10 +10,10 @@ import { Package, FolderKanban, AlertTriangle, BadgeDollarSign, Loader2 } from '
 
 export default function DashboardPage() {
     const { 
-        projects: liveProjects, 
-        purchaseOrders: livePurchaseOrders, 
-        inventory: liveInventory, 
-        inventoryLocations: liveInventoryLocations,
+        projects, 
+        purchaseOrders, 
+        inventory, 
+        inventoryLocations,
         loading 
     } = useData();
 
@@ -25,25 +25,25 @@ export default function DashboardPage() {
             pendingPOsValue: 0,
         };
 
-        const totalInventoryValue = liveInventory.reduce((acc, item) => {
+        const totalInventoryValue = inventory.reduce((acc, item) => {
             if (item.type === 'service') return acc;
-            const totalStock = liveInventoryLocations
+            const totalStock = inventoryLocations
                 .filter(loc => loc.itemId === item.id)
                 .reduce((sum, loc) => sum + loc.quantity, 0);
             return acc + (totalStock * (item.unitCost || 0));
         }, 0);
 
-        const activeProjectsCount = liveProjects.filter(p => p.status === 'En Progreso').length;
+        const activeProjectsCount = projects.filter(p => p.status === 'En Progreso').length;
         
-        const lowStockCount = liveInventory.filter(item => {
+        const lowStockCount = inventory.filter(item => {
              if (item.type !== 'simple') return false;
-             const totalStock = liveInventoryLocations
+             const totalStock = inventoryLocations
                 .filter(loc => loc.itemId === item.id)
                 .reduce((sum, loc) => sum + loc.quantity, 0);
-            return item.minThreshold && totalStock < item.minThreshold;
+            return totalStock < (item.minThreshold || 0);
         }).length;
 
-        const pendingValue = livePurchaseOrders
+        const pendingValue = purchaseOrders
             .filter(p => p.status === 'Pendiente de Aprobación')
             .reduce((acc, p) => acc + p.total, 0);
 
@@ -53,7 +53,7 @@ export default function DashboardPage() {
             lowStockAlerts: lowStockCount,
             pendingPOsValue: pendingValue,
         };
-    }, [liveProjects, livePurchaseOrders, liveInventory, liveInventoryLocations, loading]);
+    }, [projects, purchaseOrders, inventory, inventoryLocations, loading]);
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
@@ -105,8 +105,8 @@ export default function DashboardPage() {
             </div>
 
             <div className="grid gap-8 lg:grid-cols-2">
-                <ActiveProjectsList projects={liveProjects} />
-                <RecentOrdersTable purchaseOrders={livePurchaseOrders} />
+                <ActiveProjectsList projects={projects} />
+                <RecentOrdersTable purchaseOrders={purchaseOrders} />
             </div>
         </div>
     )

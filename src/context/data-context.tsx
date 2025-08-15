@@ -5,7 +5,7 @@ import React, { createContext, useContext, useEffect, useState, ReactNode } from
 import { useAuth } from './auth-context';
 import { db } from '@/lib/firebase';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { convertPurchaseOrderTimestamps, convertTimestampsToISO } from '@/lib/utils';
+import { convertTimestampsToISO } from '@/lib/utils';
 import * as mockData from '@/lib/data';
 import type { 
     Project, InventoryItem, PurchaseOrder, Supplier, User, Client, Location, 
@@ -58,7 +58,7 @@ const DataContext = createContext<DataContextType>({
 export const useData = () => useContext(DataContext);
 
 export const DataProvider = ({ children }: { children: ReactNode }) => {
-    const { user, isDevMode } = useAuth();
+    const { isDevMode } = useAuth();
     const [data, setData] = useState<Omit<DataContextType, 'loading'>>({
         projects: [], inventory: [], purchaseOrders: [], suppliers: [], users: [],
         clients: [], locations: [], deliveryNotes: [], inventoryLocations: [],
@@ -68,11 +68,6 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        if (!user) {
-            if (!isDevMode) setLoading(false);
-            return;
-        }
-
         if (isDevMode) {
             setData({
                 projects: mockData.projects,
@@ -110,8 +105,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
               (snapshot) => {
                 const docs = snapshot.docs.map(doc => {
                     const docData = { id: doc.id, ...doc.data() };
-                    // Handle specific timestamp conversions if needed
-                    if (name === 'purchaseOrders' || name === 'supplierInvoices') {
+                    if (name === 'purchaseOrders' || name === 'supplierInvoices' || name === 'payments' || name === 'projects') {
                         return convertTimestampsToISO(docData);
                     }
                     return docData;
@@ -130,7 +124,7 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
             );
         });
 
-        // Set notifications separately as it's a derived state
+        // Set notifications separately
         setData(prevData => ({
             ...prevData,
             notifications: mockData.getNotifications()
@@ -138,11 +132,11 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
 
         return () => unsubscribes.forEach(unsub => unsub());
 
-    }, [user, isDevMode]);
+    }, [isDevMode]);
     
     // Recalculate notifications if dependencies change
     useEffect(() => {
-        if (!isDevMode) {
+        if (isDevMode) {
             setData(prev => ({
                 ...prev,
                 notifications: mockData.getNotifications()
@@ -157,4 +151,3 @@ export const DataProvider = ({ children }: { children: ReactNode }) => {
         </DataContext.Provider>
     );
 };
-
