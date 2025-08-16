@@ -1,192 +1,196 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc, arrayUnion } from 'firebase/firestore';
-import { db } from '@/lib/firebase';
-import type { PurchaseOrder, StatusHistoryEntry, Project } from '@/lib/types';
-import { ApprovalActions } from './approval-actions';
-import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { db, admin } from '@/lib/firebase-admin';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { AlertCircle, CheckCircle, Clock, FileText, Package, Euro, Calendar, Landmark, Info, User, Building, FolderKanban } from 'lucide-react';
+import type { PurchaseOrder, Project } from '@/lib/types';
 import { cn, convertPurchaseOrderTimestamps } from '@/lib/utils';
-import { AlertCircle, CheckCircle, Clock } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
 
-async function getOrderDetails(id: string): Promise<{ order: PurchaseOrder | null, project: Project | null }> {
-  try {
-    const orderRef = doc(db, 'purchaseOrders', id);
-    const orderSnap = await getDoc(orderRef);
+async function getOrderDetails(id: string) {
+    try {
+        const orderRef = db.collection('purchaseOrders').doc(id);
+        const orderSnap = await orderRef.get();
+        
+        if (!orderSnap.exists) {
+            return { order: null, project: null, error: "No se encontró la orden de compra." };
+        }
 
-    if (!orderSnap.exists()) {
-      return { order: null, project: null };
+        const orderData = orderSnap.data() as PurchaseOrder;
+        let project: Project | null = null;
+        
+        if (orderData.project) {
+            const projectRef = db.collection('projects').doc(orderData.project);
+            const projectSnap = await projectRef.get();
+            if (projectSnap.exists) {
+                project = { id: projectSnap.id, ...projectSnap.data() } as Project;
+            }
+        }
+        
+        const order = convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderData });
+
+        return { order, project, error: null };
+
+    } catch (e) {
+        console.error("Error fetching order details:", e);
+        return { order: null, project: null, error: "Error al cargar los detalles del pedido." };
     }
+}
+
+async function approveOrder(id: string) {
+    try {
+        const orderRef = db.collection('purchaseOrders').doc(id);
+        const orderSnap = await orderRef.get();
+        if (!orderSnap.exists) return { success: false, message: "La orden no existe."};
+        if (orderSnap.data()?.status !== 'Pendiente de Aprobación') return { success: false, message: "Esta orden ya ha sido procesada."}
+        
+        const newHistoryEntry = {
+            status: 'Aprobada',
+            date: admin.firestore.Timestamp.now(),
+            comment: 'Aprobado a través de enlace por email.'
+        };
+
+        await orderRef.update({
+            status: 'Aprobada',
+            statusHistory: admin.firestore.FieldValue.arrayUnion(newHistoryEntry)
+        });
+
+        return { success: true };
+    } catch (e) {
+        console.error("Error approving order:", e);
+        return { success: false, message: "Ocurrió un error al intentar aprobar la orden." };
+    }
+}
+
+export default async function ApprovePurchaseOrderPage({ params, searchParams }: { params: { id: string }, searchParams: { action?: string }}) {
     
-    const order = convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderSnap.data() });
-    
-    let project: Project | null = null;
-    if (order.project) {
-        const projectRef = doc(db, "projects", order.project);
-        const projectSnap = await getDoc(projectRef);
-        if (projectSnap.exists()) {
-            project = { id: projectSnap.id, ...projectSnap.data() } as Project;
+    if (searchParams.action === 'approve') {
+        const result = await approveOrder(params.id);
+        if (!result.success) {
+            return (
+                <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-center p-4">
+                    <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                    <h1 className="text-2xl font-bold">Error al Aprobar</h1>
+                    <p className="text-muted-foreground">{result.message}</p>
+                </div>
+            )
         }
     }
-    
-    // Si la orden no tiene el nombre del proyecto desnormalizado, lo añadimos
-    if (!order.projectName && project) {
-      order.projectName = project.name;
-    }
 
-    return { order, project };
+    const { order, project, error } = await getOrderDetails(params.id);
 
-  } catch (error) {
-    console.error("Error fetching order details:", error);
-    return { order: null, project: null };
-  }
-}
-
-async function updateOrderStatus(id: string, status: 'Aprobada' | 'Rechazado', rejectionReason?: string) {
-    'use server';
-    try {
-      const orderRef = doc(db, "purchaseOrders", id);
-      const newStatus: PurchaseOrder['status'] = status;
-      const comment = status === 'Rechazado' 
-        ? `Pedido rechazado. Motivo: ${rejectionReason || 'No especificado'}` 
-        : 'Pedido aprobado';
-
-      const newHistoryEntry: Omit<StatusHistoryEntry, 'date'> = {
-        status: newStatus,
-        comment: comment,
-      };
-
-      await updateDoc(orderRef, {
-        status: newStatus,
-        rejectionReason: status === 'Rechazado' ? rejectionReason : "",
-        statusHistory: arrayUnion({ ...newHistoryEntry, date: new Date() }),
-      });
-      return { success: true };
-    } catch (error) {
-      console.error('Error updating order status:', error);
-      return { success: false, error: (error as Error).message };
-    }
-}
-
-const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
-
-const OrderStatusPill = ({ status }: { status: PurchaseOrder['status'] }) => {
-    const statusInfo = {
-        'Aprobada': { icon: <CheckCircle className="h-5 w-5"/>, text: 'Esta orden ya ha sido aprobada.', color: 'bg-green-100 text-green-800' },
-        'Rechazado': { icon: <AlertCircle className="h-5 w-5"/>, text: 'Esta orden fue rechazada.', color: 'bg-red-100 text-red-800' },
-        'Enviada al Proveedor': { icon: <Clock className="h-5 w-5"/>, text: 'Esta orden ya fue procesada y enviada al proveedor.', color: 'bg-blue-100 text-blue-800' },
-        'Recibida': { icon: <CheckCircle className="h-5 w-5"/>, text: 'Esta orden ya fue recibida.', color: 'bg-purple-100 text-purple-800' },
-        'Recibida Parcialmente': { icon: <Clock className="h-5 w-5"/>, text: 'Esta orden fue recibida parcialmente.', color: 'bg-yellow-100 text-yellow-800' },
-    };
-
-    if (status === 'Pendiente de Aprobación') {
-        return null;
-    }
-
-    const { icon, text, color } = statusInfo[status] || { icon: <AlertCircle className="h-5 w-5"/>, text: `El estado actual es "${status}".`, color: 'bg-gray-100 text-gray-800' };
-    
-    return (
-        <div className={cn("rounded-lg p-4 flex items-center gap-4", color)}>
-            {icon}
-            <p className="font-semibold">{text}</p>
-        </div>
-    );
-};
-
-
-export default async function ApprovalPage({ params }: { params: { id: string } }) {
-  const { order, project } = await getOrderDetails(params.id);
-
-  if (!order) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-gray-100">
-        <Card className="w-full max-w-2xl">
-          <CardHeader>
-            <CardTitle className="text-destructive">Error</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>La orden de compra no existe o no se pudo cargar.</p>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-50 p-4 sm:p-6 md:p-8">
-      <div className="w-full max-w-4xl space-y-6">
-        <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Revisión de Orden de Compra</h1>
-          <p className="mt-2 text-lg text-gray-600">Por favor, revisa los detalles y aprueba o rechaza la solicitud.</p>
-        </div>
-        
-        <OrderStatusPill status={order.status} />
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Orden de Compra: {order.orderNumber}</CardTitle>
-            <CardDescription>
-              Creada el {new Date(order.date as string).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
-                <div className="space-y-1">
-                    <p className="text-gray-500">Proveedor</p>
-                    <p className="font-medium">{order.supplier}</p>
-                </div>
-                <div className="space-y-1">
-                    <p className="text-gray-500">Proyecto</p>
-                    <p className="font-medium">{order.projectName || 'Proyecto no especificado'}</p>
-                </div>
+    if (error || !order) {
+        return (
+            <div className="flex flex-col items-center justify-center min-h-screen bg-gray-50 text-center p-4">
+                <AlertCircle className="h-12 w-12 text-destructive mb-4" />
+                <h1 className="text-2xl font-bold">Error al Cargar la Orden</h1>
+                <p className="text-muted-foreground">{error}</p>
             </div>
-            
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Descripción</TableHead>
-                  <TableHead className="text-right">Cantidad</TableHead>
-                  <TableHead className="text-right">Precio Unitario</TableHead>
-                  <TableHead className="text-right">Subtotal</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {order.items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.itemName}</TableCell>
-                    <TableCell className="text-right">{item.quantity}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.price)}</TableCell>
-                    <TableCell className="text-right">{formatCurrency(item.quantity * item.price)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+        )
+    }
+    
+    const isProcessed = order.status !== 'Pendiente de Aprobación';
+    const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
-            <div className="flex justify-end pt-4">
-                <div className="w-full max-w-xs space-y-2">
-                     <div className="flex justify-between">
-                        <span className="text-gray-600">Subtotal</span>
-                        <span>{formatCurrency(order.total)}</span>
+    return (
+        <div className="bg-gray-50 min-h-screen flex items-center justify-center p-4">
+            <Card className="w-full max-w-4xl shadow-lg">
+                <CardHeader className="text-center">
+                    <div className="w-16 h-16 mx-auto rounded-full flex items-center justify-center bg-blue-100 text-blue-600 mb-4">
+                        <FileText className="h-8 w-8" />
                     </div>
-                     <div className="flex justify-between">
-                        <span className="text-gray-600">IVA (21%)</span>
-                        <span>{formatCurrency(order.total * 0.21)}</span>
+                    <CardTitle className="text-2xl">Revisión de Orden de Compra</CardTitle>
+                    <CardDescription>Por favor, revisa los detalles de la orden de compra antes de aprobar.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-sm p-4 border rounded-lg bg-white">
+                        <div className="space-y-1">
+                            <p className="text-gray-500 flex items-center gap-1"><Info className="h-4 w-4"/>Estado</p>
+                            <p className={cn(
+                                "font-bold text-lg",
+                                isProcessed ? (order.status === 'Aprobada' ? 'text-green-600' : 'text-red-600') : 'text-orange-500'
+                            )}>
+                                {order.status}
+                            </p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-gray-500">ID de Orden</p>
+                            <p className="font-medium font-mono">{order.orderNumber}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-gray-500">Fecha de Orden</p>
+                            <p className="font-medium">{new Date(order.date as string).toLocaleDateString('es-ES')}</p>
+                        </div>
+                        <div className="space-y-1">
+                            <p className="text-gray-500">Importe Total</p>
+                            <p className="font-bold text-lg">{formatCurrency(order.total)}</p>
+                        </div>
                     </div>
-                    <div className="flex justify-between font-bold text-lg border-t pt-2">
-                        <span>Total</span>
-                        <span>{formatCurrency(order.total * 1.21)}</span>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                         <div className="space-y-4 p-4 border rounded-lg bg-white">
+                             <h3 className="font-semibold flex items-center gap-2"><User className="h-5 w-5 text-gray-400"/>Proveedor</h3>
+                             <p className="text-lg font-medium">{order.supplier}</p>
+                        </div>
+                         <div className="space-y-4 p-4 border rounded-lg bg-white">
+                            <h3 className="font-semibold flex items-center gap-2"><FolderKanban className="h-5 w-5 text-gray-400"/>Datos del Proyecto</h3>
+                            <div className="space-y-1">
+                                <p className="text-gray-500">Proyecto</p>
+                                <p className="font-medium">{project?.name || 'Proyecto no especificado'}</p>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
-          </CardContent>
-        </Card>
-        
-        {order.status === 'Pendiente de Aprobación' && (
-          <ApprovalActions orderId={params.id} updateOrderStatus={updateOrderStatus} />
-        )}
-      </div>
-    </main>
-  );
+                    
+                    <div>
+                        <h3 className="font-semibold mb-2 flex items-center gap-2"><Package className="h-5 w-5 text-gray-400"/>Artículos Solicitados</h3>
+                        <div className="border rounded-lg overflow-hidden bg-white">
+                            <table className="w-full text-sm">
+                                <thead className="bg-gray-50">
+                                    <tr>
+                                        <th className="text-left p-3 font-medium">Descripción</th>
+                                        <th className="text-center p-3 font-medium">Cant.</th>
+                                        <th className="text-right p-3 font-medium">Precio Unit.</th>
+                                        <th className="text-right p-3 font-medium">Subtotal</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {order.items.map((item, index) => (
+                                        <tr key={index} className="border-t">
+                                            <td className="p-3">{item.itemName}</td>
+                                            <td className="text-center p-3">{item.quantity}</td>
+                                            <td className="text-right p-3">{formatCurrency(item.price)}</td>
+                                            <td className="text-right p-3 font-medium">{formatCurrency(item.quantity * item.price)}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </CardContent>
+                <CardFooter className="flex-col gap-4 pt-6">
+                    {isProcessed ? (
+                         <div className={cn(
+                            "flex items-center gap-2 p-3 rounded-md w-full justify-center",
+                            order.status === 'Aprobada' ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                         )}>
+                            {order.status === 'Aprobada' ? <CheckCircle className="h-5 w-5"/> : <AlertCircle className="h-5 w-5"/>}
+                           <p className="font-semibold">Esta orden de compra ya ha sido procesada.</p>
+                        </div>
+                    ) : (
+                        <form action="?action=approve" method="POST" className="w-full">
+                            <Button size="lg" className="w-full text-lg">
+                                <CheckCircle className="mr-2"/>
+                                Aprobar Orden de Compra
+                            </Button>
+                        </form>
+                    )}
+                </CardFooter>
+            </Card>
+        </div>
+    )
 }
+
+    
