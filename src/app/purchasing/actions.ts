@@ -47,15 +47,14 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           // Fetch project name using Admin SDK
           let projectName = 'No especificado';
           if (orderData.project) {
-            const projectRef = db.collection('projects').doc(orderData.project);
-            const projectSnap = await projectRef.get();
-            if (projectSnap.exists) {
-                projectName = (projectSnap.data() as Project).name;
+            const projectDoc = await db.collection('projects').doc(orderData.project).get();
+            if (projectDoc.exists) {
+                projectName = (projectDoc.data() as Project).name;
             }
           }
 
           // Force production URL for approval links.
-          const baseUrl = process.env.BASE_URL || 'https://orderflow-pxtw9.web.app';
+          const baseUrl = process.env.BASE_URL || 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
@@ -81,7 +80,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
           
           console.log(`Successfully sent approval email for order ${docRef.id}.`);
           revalidatePath("/purchasing");
-          return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id };
+          return { success: true, message: `Pedido ${newOrderNumber} creado y email de aprobación enviado.`, id: docRef.id, warning: emailResult.success === false };
       
       } catch (emailError: any) {
           console.error(`CRITICAL: The entire email process failed for order ${docRef.id}. Rolling back... Full error:`, emailError);
