@@ -200,7 +200,7 @@ export function PurchasingClientPage() {
         .filter(order => order.status !== 'Recibida')
         .map(order => ({
             ...order,
-            projectName: order.projectName || projectMap.get(order.project) || order.project,
+            projectName: order.projectName || projectMap.get(order.project),
         }))
         .filter(order => {
             return (
