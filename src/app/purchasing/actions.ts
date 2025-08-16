@@ -108,7 +108,8 @@ export async function createPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     const newOrderNumber = await getNextOrderNumber();
     const docRef = await db.collection("purchaseOrders").add({
         ...orderData,
-        orderNumber: newOrderNumber
+        orderNumber: newOrderNumber,
+        projectName: orderData.projectName || 'No especificado'
     });
     return { success: true, id: docRef.id };
   } catch(e) {
