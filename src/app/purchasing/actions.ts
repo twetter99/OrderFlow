@@ -121,6 +121,19 @@ export async function createPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 export async function updatePurchaseOrder(id: string, orderData: Partial<PurchaseOrder>) {
   try {
     const orderRef = db.collection("purchaseOrders").doc(id);
+
+    // If projectName is missing but project ID is present, fetch the name
+    if (orderData.project && !orderData.projectName) {
+      try {
+        const projectDoc = await db.collection('projects').doc(orderData.project).get();
+        if (projectDoc.exists) {
+          orderData.projectName = (projectDoc.data() as Project).name;
+        }
+      } catch(e) {
+        console.error("Could not fetch project name during update", e);
+      }
+    }
+
     await orderRef.update({
         ...orderData,
         // Convert date strings back to Timestamps if they exist
