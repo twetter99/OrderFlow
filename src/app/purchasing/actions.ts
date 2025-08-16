@@ -21,6 +21,20 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   const newOrderNumber = await getNextOrderNumber();
   const orderDate = new Date();
   
+  // Fetch project name using Admin SDK
+  let projectName = 'No especificado';
+  if (orderData.project) {
+    try {
+        const projectDoc = await db.collection('projects').doc(orderData.project).get();
+        if (projectDoc.exists) {
+            projectName = (projectDoc.data() as Project).name;
+        }
+    } catch (e) {
+        console.error("Could not fetch project name for email.", e);
+        // Continue without project name if it fails
+    }
+  }
+  
   try {
     const historyEntry: StatusHistoryEntry = {
         status: orderData.status || 'Pendiente de Aprobación',
@@ -32,6 +46,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
     docRef = await db.collection("purchaseOrders").add({
       ...orderData,
       orderNumber: newOrderNumber,
+      projectName: projectName, // Guardar el nombre del proyecto
       date: admin.firestore.Timestamp.fromDate(orderDate),
       estimatedDeliveryDate: admin.firestore.Timestamp.fromDate(new Date(orderData.estimatedDeliveryDate as string)), // Convert date string/object to Timestamp
       statusHistory: [historyEntry]
@@ -44,15 +59,6 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
-          // Fetch project name using Admin SDK
-          let projectName = 'No especificado';
-          if (orderData.project) {
-            const projectDoc = await db.collection('projects').doc(orderData.project).get();
-            if (projectDoc.exists) {
-                projectName = (projectDoc.data() as Project).name;
-            }
-          }
-
           // Force production URL for approval links.
           const baseUrl = process.env.BASE_URL || 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
