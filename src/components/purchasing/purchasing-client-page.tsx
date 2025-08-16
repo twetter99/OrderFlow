@@ -203,7 +203,7 @@ export function PurchasingClientPage() {
             if (!order.projectName && order.project) {
               return {
                 ...order,
-                projectName: projectMap.get(order.project) || `Proyecto: ${order.project}` // Use ID as fallback label
+                projectName: projectMap.get(order.project) || `Proyecto: ${order.project}`
               };
             }
             return order;

@@ -1,16 +1,17 @@
 
 import { doc, getDoc } from 'firebase/firestore';
-import { db, admin } from '@/lib/firebase-admin'; // Usar Admin SDK
+import { db } from '@/lib/firebase-admin'; // Usar Admin SDK para acceso desde servidor
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { PurchaseOrder, StatusHistoryEntry } from '@/lib/types';
+import { PurchaseOrder } from '@/lib/types';
 import { CheckCircle, ShieldAlert, XCircle, Clock } from 'lucide-react';
 import { ApprovalActions } from './approval-actions';
 import Image from 'next/image';
 import { convertTimestampsToISO } from '@/lib/utils';
 import { OrderStatusHistory } from '@/components/purchasing/order-status-history';
 
+// Esta función se ejecuta en el servidor y puede usar el Admin SDK
 async function getOrderDetails(id: string): Promise<{ order: PurchaseOrder | null }> {
     try {
         const orderRef = doc(db, 'purchaseOrders', id);
@@ -22,7 +23,7 @@ async function getOrderDetails(id: string): Promise<{ order: PurchaseOrder | nul
         }
         
         // El documento existe, se convierte y se devuelve.
-        // projectName ya está en orderSnap.data() gracias a la acción de creación.
+        // `projectName` ya está en los datos de la orden gracias a la acción de creación.
         const order = convertTimestampsToISO({ id: orderSnap.id, ...orderSnap.data() }) as PurchaseOrder;
         
         return { order };
