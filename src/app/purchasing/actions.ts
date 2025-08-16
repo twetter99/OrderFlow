@@ -2,10 +2,19 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp, query, where, getDocs } from "firebase/firestore";
-import { db } from "@/lib/firebase-admin"; // Use admin SDK for backend actions
+import { db, admin } from "@/lib/firebase-admin"; // Use admin SDK for backend actions
 import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment, Project } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
+
+// Helper to generate the next order number
+const getNextOrderNumber = async (): Promise<string> => {
+    const today = new Date();
+    const year = today.getFullYear();
+    // In a real app, we would read a counter from Firestore and increment it atomically.
+    // For this prototype, we'll use a random number to simulate it.
+    const sequentialNumber = Math.floor(Math.random() * 900) + 100; // Simulates a counter
+    return `WF-PO-${year}-${String(sequentialNumber).padStart(4, '0')}`;
+};
 
 export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   let docRef;
@@ -15,15 +24,16 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   try {
     const historyEntry: StatusHistoryEntry = {
         status: orderData.status || 'Pendiente de Aprobación',
-        date: orderDate,
+        date: admin.firestore.Timestamp.fromDate(orderDate),
         comment: 'Pedido creado'
     };
     
-    docRef = await addDoc(collection(db, "purchaseOrders"), {
+    // Admin SDK: add document
+    docRef = await db.collection("purchaseOrders").add({
       ...orderData,
       orderNumber: newOrderNumber,
-      date: orderDate,
-      estimatedDeliveryDate: orderData.estimatedDeliveryDate, // Firestore will convert to Timestamp
+      date: admin.firestore.Timestamp.fromDate(orderDate),
+      estimatedDeliveryDate: admin.firestore.Timestamp.fromDate(new Date(orderData.estimatedDeliveryDate as string)), // Convert date string/object to Timestamp
       statusHistory: [historyEntry]
     });
     
@@ -34,18 +44,18 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
-          // Fetch project name
+          // Fetch project name using Admin SDK
           let projectName = 'No especificado';
           if (orderData.project) {
-            const projectRef = doc(db, 'projects', orderData.project);
-            const projectSnap = await getDoc(projectRef);
-            if (projectSnap.exists()) {
+            const projectRef = db.collection('projects').doc(orderData.project);
+            const projectSnap = await projectRef.get();
+            if (projectSnap.exists) {
                 projectName = (projectSnap.data() as Project).name;
             }
           }
 
-          // Forza el uso de la URL de producción para los enlaces de aprobación.
-          const baseUrl = 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
+          // Force production URL for approval links.
+          const baseUrl = process.env.BASE_URL || 'https://orderflow-pxtw9.web.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
           
           console.log(`Triggering approval email for order ${docRef.id} to juan@winfin.es`);
@@ -59,13 +69,10 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               projectName: projectName
           });
 
-          console.log("Received result from sendApprovalEmail flow:", emailResult);
-
           if (!emailResult.success) {
-               // The error from the flow is now more reliable.
                const errorMessage = emailResult.error || "El flujo de email falló sin un mensaje específico.";
                console.error(`CRITICAL: Email failed for order ${docRef.id}. Rolling back... Error details:`, errorMessage);
-               await deleteDoc(doc(db, "purchaseOrders", docRef.id));
+               await db.collection("purchaseOrders").doc(docRef.id).delete();
                return { 
                   success: false,
                   message: `No se pudo enviar el email de aprobación. La orden de compra no ha sido creada. Error: ${errorMessage}`,
@@ -78,7 +85,7 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
       
       } catch (emailError: any) {
           console.error(`CRITICAL: The entire email process failed for order ${docRef.id}. Rolling back... Full error:`, emailError);
-          await deleteDoc(doc(db, "purchaseOrders", docRef.id));
+          await db.collection("purchaseOrders").doc(docRef.id).delete();
           return { 
               success: false, 
               message: `Falló el proceso de envío de email. La orden no ha sido creada. Error: ${emailError.message}`,
@@ -91,21 +98,10 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 }
 
 
-// Helper para generar el siguiente número de pedido
-const getNextOrderNumber = async (): Promise<string> => {
-    const today = new Date();
-    const year = today.getFullYear();
-    // En una app real, leeríamos un contador desde Firestore y lo incrementaríamos atómicamente.
-    // Para este prototipo, usaremos un número aleatorio para simularlo.
-    const sequentialNumber = Math.floor(Math.random() * 900) + 100; // Simula un contador
-    return `WF-PO-${year}-${String(sequentialNumber).padStart(4, '0')}`;
-};
-
-
 export async function createPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   try {
     const newOrderNumber = await getNextOrderNumber();
-    const docRef = await addDoc(collection(db, "purchaseOrders"), {
+    const docRef = await db.collection("purchaseOrders").add({
         ...orderData,
         orderNumber: newOrderNumber
     });
@@ -118,8 +114,13 @@ export async function createPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
 export async function updatePurchaseOrder(id: string, orderData: Partial<PurchaseOrder>) {
   try {
-    const orderRef = doc(db, "purchaseOrders", id);
-    await updateDoc(orderRef, orderData);
+    const orderRef = db.collection("purchaseOrders").doc(id);
+    await orderRef.update({
+        ...orderData,
+        // Convert date strings back to Timestamps if they exist
+        ...(orderData.date && { date: admin.firestore.Timestamp.fromDate(new Date(orderData.date as any)) }),
+        ...(orderData.estimatedDeliveryDate && { estimatedDeliveryDate: admin.firestore.Timestamp.fromDate(new Date(orderData.estimatedDeliveryDate as any)) }),
+    });
     revalidatePath("/purchasing");
     return { success: true, message: "Pedido actualizado exitosamente." };
   } catch (error) {
@@ -130,15 +131,15 @@ export async function updatePurchaseOrder(id: string, orderData: Partial<Purchas
 
 export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrder['status'], comment?: string) {
   try {
-    const orderRef = doc(db, "purchaseOrders", id);
+    const orderRef = db.collection("purchaseOrders").doc(id);
     const newHistoryEntry: StatusHistoryEntry = {
       status,
-      date: new Date(),
+      date: admin.firestore.Timestamp.now(),
       comment: comment || `Estado cambiado a ${status}`
     };
-    await updateDoc(orderRef, { 
+    await orderRef.update({ 
       status: status,
-      statusHistory: arrayUnion(newHistoryEntry)
+      statusHistory: admin.firestore.FieldValue.arrayUnion(newHistoryEntry)
     });
 
     revalidatePath("/purchasing");
@@ -152,7 +153,7 @@ export async function updatePurchaseOrderStatus(id: string, status: PurchaseOrde
 
 export async function deletePurchaseOrder(id: string) {
   try {
-    await deleteDoc(doc(db, "purchaseOrders", id));
+    await db.collection("purchaseOrders").doc(id).delete();
     revalidatePath("/purchasing");
     return { success: true, message: "Pedido eliminado." };
   } catch (error) {
@@ -163,9 +164,9 @@ export async function deletePurchaseOrder(id: string) {
 
 export async function deleteMultiplePurchaseOrders(ids: string[]) {
     try {
-        const batch = writeBatch(db);
+        const batch = db.batch();
         ids.forEach(id => {
-            const docRef = doc(db, "purchaseOrders", id);
+            const docRef = db.collection("purchaseOrders").doc(id);
             batch.delete(docRef);
         });
         await batch.commit();
@@ -180,11 +181,16 @@ export async function deleteMultiplePurchaseOrders(ids: string[]) {
 
 export async function linkDeliveryNoteToPurchaseOrder(orderId: string, notes: DeliveryNoteAttachment[]) {
     try {
-        const orderRef = doc(db, "purchaseOrders", orderId);
-        await updateDoc(orderRef, {
-            deliveryNotes: arrayUnion(...notes),
+        const orderRef = db.collection("purchaseOrders").doc(orderId);
+        const notesToStore = notes.map(note => ({
+            ...note,
+            uploadedAt: admin.firestore.Timestamp.now()
+        }));
+
+        await orderRef.update({
+            deliveryNotes: admin.firestore.FieldValue.arrayUnion(...notesToStore),
             hasDeliveryNotes: true,
-            lastDeliveryNoteUpload: new Date(),
+            lastDeliveryNoteUpload: admin.firestore.Timestamp.now(),
         });
         revalidatePath(`/purchasing`);
         return { success: true, message: 'Albarán adjuntado con éxito.' };
