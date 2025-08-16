@@ -198,10 +198,16 @@ export function PurchasingClientPage() {
     
     let filteredOrders = purchaseOrders
         .filter(order => order.status !== 'Recibida')
-        .map(order => ({
-            ...order,
-            projectName: order.projectName || projectMap.get(order.project),
-        }))
+        .map(order => {
+            // Only look up the project name if it doesn't already exist on the order.
+            if (!order.projectName && order.project) {
+              return {
+                ...order,
+                projectName: projectMap.get(order.project) || `Proyecto: ${order.project}` // Use ID as fallback label
+              };
+            }
+            return order;
+        })
         .filter(order => {
             return (
                 (order.orderNumber || order.id).toLowerCase().includes(filters.orderNumber.toLowerCase()) &&
