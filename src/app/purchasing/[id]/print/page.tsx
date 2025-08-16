@@ -198,7 +198,7 @@ export default function PurchaseOrderPrintPage() {
           </main>
 
           <footer className="mt-16 text-sm text-gray-600">
-            <p><span className="font-bold">Proyecto asociado:</span> {order.projectDetails?.name || order.project}</p>
+            <p><span className="font-bold">Proyecto asociado:</span> {order.projectDetails?.name || 'No especificado'}</p>
             <p className="mt-4">Por favor, incluir el número de orden de compra en todas las facturas y comunicaciones. La entrega debe realizarse antes del <span className="font-bold">{new Date(order.estimatedDeliveryDate as string).toLocaleDateString('es-ES')}</span>.</p>
             <p className="text-center text-xs text-gray-500 mt-8">Gracias por su colaboración.</p>
           </footer>

@@ -3,12 +3,9 @@
 
 import { revalidatePath } from "next/cache";
 import { collection, addDoc, doc, updateDoc, writeBatch, getDoc, arrayUnion, deleteDoc, Timestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
-import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment } from "@/lib/types";
+import { db } from "@/lib/firebase-admin"; // Use admin SDK for backend actions
+import type { PurchaseOrder, StatusHistoryEntry, DeliveryNoteAttachment, Project } from "@/lib/types";
 import { sendApprovalEmail } from "@/ai/flows/send-approval-email";
-
-// The Input type is now defined and used locally within the `send-approval-email.ts` flow.
-// We only need to match the object structure when calling the function.
 
 export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   let docRef;
@@ -37,6 +34,16 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
 
   if (orderData.status === 'Pendiente de Aprobación') {
       try {
+          // Fetch project name
+          let projectName = 'No especificado';
+          if (orderData.project) {
+            const projectRef = doc(db, 'projects', orderData.project);
+            const projectSnap = await getDoc(projectRef);
+            if (projectSnap.exists()) {
+                projectName = (projectSnap.data() as Project).name;
+            }
+          }
+
           // Forza el uso de la URL de producción para los enlaces de aprobación.
           const baseUrl = 'https://studio--orderflow-pxtw9.us-central1.hosted.app';
           const approvalUrl = `${baseUrl}/public/approve/${docRef.id}`;
@@ -48,7 +55,8 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
               orderNumber: newOrderNumber,
               orderAmount: orderData.total || 0,
               approvalUrl: approvalUrl,
-              orderDate: orderDate.toISOString(), 
+              orderDate: orderDate.toISOString(),
+              projectName: projectName
           });
 
           console.log("Received result from sendApprovalEmail flow:", emailResult);
@@ -185,5 +193,3 @@ export async function linkDeliveryNoteToPurchaseOrder(orderId: string, notes: De
         return { success: false, message: "No se pudo adjuntar el albarán en la base de datos." };
     }
 }
-
-    
