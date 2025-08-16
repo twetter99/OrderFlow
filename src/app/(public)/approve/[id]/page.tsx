@@ -1,39 +1,30 @@
 
 'use server';
 
-import { doc, getDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase-admin';
-import { Button } from '@/components/ui/button';
-import type { PurchaseOrder, StatusHistoryEntry, Project } from '@/lib/types';
+import type { PurchaseOrder } from '@/lib/types';
 import { cn, convertPurchaseOrderTimestamps } from '@/lib/utils';
 import { CheckCircle, XCircle, Clock, Building, Calendar, Package, FileText, User, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
 import { ApproveButton } from './_components/approve-button';
 import { RejectButton } from './_components/reject-button';
 
-async function getOrderDetails(id: string): Promise<{ order: PurchaseOrder | null, project: Project | null }> {
+async function getOrderDetails(id: string): Promise<PurchaseOrder | null> {
   try {
     const orderRef = doc(db, 'purchaseOrders', id);
     const orderSnap = await getDoc(orderRef);
 
     if (!orderSnap.exists()) {
-      return { order: null, project: null };
+      return null;
     }
 
-    const order = convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderSnap.data() }) as PurchaseOrder;
-    
-    // No necesitamos una consulta adicional si el nombre ya está en la orden
-    const project: Project | null = order.projectName ? {
-        id: order.project,
-        name: order.projectName,
-        // Rellenar otros campos si fueran necesarios, pero para mostrar el nombre es suficiente
-    } as any : null;
-
-    return { order, project };
+    // El projectName ya está en el documento, no se necesita una consulta adicional
+    return convertPurchaseOrderTimestamps({ id: orderSnap.id, ...orderSnap.data() }) as PurchaseOrder;
 
   } catch (error) {
     console.error("Error fetching order details:", error);
-    return { order: null, project: null };
+    return null;
   }
 }
 
@@ -59,7 +50,7 @@ function StatusBadge({ status }: { status: PurchaseOrder['status'] }) {
 }
 
 export default async function PublicApprovalPage({ params }: { params: { id: string } }) {
-  const { order, project } = await getOrderDetails(params.id);
+  const order = await getOrderDetails(params.id);
 
   if (!order) {
     return (
