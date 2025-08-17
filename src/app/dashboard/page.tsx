@@ -78,7 +78,7 @@ export default function DashboardPage() {
 
     const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
-    if (loading) {
+    if (loading || authLoading) {
         return (
             <div className="flex h-[80vh] w-full items-center justify-center">
               <Loader2 className="h-8 w-8 animate-spin text-primary" />

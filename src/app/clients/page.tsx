@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { MoreHorizontal, PlusCircle, Trash2, Edit } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -193,6 +193,14 @@ export default function ClientsPage() {
     );
   };
 
+  if (authLoading || loading) {
+    return (
+      <div className="flex h-[80vh] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -252,9 +260,7 @@ export default function ClientsPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading || authLoading ? (
-                <TableRow><TableCell colSpan={6} className="text-center">Cargando...</TableCell></TableRow>
-              ) : filteredClients.map((client) => (
+              {filteredClients.map((client) => (
                 <TableRow key={client.id} data-state={selectedRowIds.includes(client.id) && "selected"}>
                   <TableCell>
                      <Checkbox
@@ -294,7 +300,7 @@ export default function ClientsPage() {
                   </TableCell>
                 </TableRow>
               ))}
-              {!loading && !authLoading && filteredClients.length === 0 && (
+              {filteredClients.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={6} className="text-center text-muted-foreground py-8">
                         No se encontraron clientes.

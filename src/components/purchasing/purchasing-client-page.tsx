@@ -546,6 +546,14 @@ export function PurchasingClientPage() {
     return "Crear Nuevo Pedido de Compra";
   }
 
+  if (loading || authLoading) {
+      return (
+        <div className="flex h-[80vh] w-full items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      );
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -821,9 +829,6 @@ export function PurchasingClientPage() {
                     </TableCell>
                 </TableRow>
               )})}
-              {loading && (
-                 <TableRow><TableCell colSpan={9} className="text-center">Cargando...</TableCell></TableRow>
-              )}
               {!loading && activePurchaseOrders.length === 0 && (
                 <TableRow>
                     <TableCell colSpan={9} className="text-center text-muted-foreground py-8">

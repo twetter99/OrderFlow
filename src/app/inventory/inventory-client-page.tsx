@@ -20,7 +20,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { MoreHorizontal, PlusCircle, Trash2, Edit, Boxes, PackagePlus, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { MoreHorizontal, PlusCircle, Trash2, Edit, Boxes, PackagePlus, ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -337,6 +337,14 @@ export function InventoryClientPage() {
 
   const formatCurrency = (value: number) => new Intl.NumberFormat('es-ES', { style: 'currency', currency: 'EUR' }).format(value);
 
+  if (authLoading || loading) {
+    return (
+      <div className="flex h-[80vh] w-full items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -418,9 +426,7 @@ export function InventoryClientPage() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {loading || authLoading ? (
-                <TableRow><TableCell colSpan={8} className="text-center">Cargando...</TableCell></TableRow>
-              ) : sortedInventory.map((item) => {
+              {sortedInventory.map((item) => {
                 const itemSuppliers = item.suppliers
                     ?.map(supplierId => suppliers.find(s => s.id === supplierId)?.name)
                     .filter(Boolean) as string[] || [];
