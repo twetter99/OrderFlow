@@ -1,0 +1,12 @@
+
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Para desarrollo local, permite leer y escribir en todas las colecciones
+    // si el usuario está autenticado. NO USAR ESTO EN PRODUCCIÓN.
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}
