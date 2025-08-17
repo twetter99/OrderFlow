@@ -5,9 +5,6 @@
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack -p 9002",
-    "dev:local": "npm run emulators:start & npm run dev",
-    "emulators:start": "firebase emulators:start --import=./firestore-data --export-on-exit",
-    "emulators:stop": "firebase emulators:exec \"echo 'Stopping emulators'\"",
     "genkit:dev": "genkit start -- tsx src/ai/dev.ts",
     "genkit:watch": "genkit start -- tsx --watch src/ai/dev.ts",
     "build": "next build",
