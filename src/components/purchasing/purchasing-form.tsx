@@ -233,7 +233,7 @@ export function PurchasingForm({ order, onSave, onCancel, canApprove = false, su
                     </SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                    {projects.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                    {projects.map(p => <SelectItem key={p.id} value={p.name}>{p.name}</SelectItem>)}
                     </SelectContent>
                 </Select>
                 <FormMessage />

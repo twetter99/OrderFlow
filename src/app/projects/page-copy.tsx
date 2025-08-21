@@ -1,3 +1,4 @@
+
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
@@ -69,16 +70,7 @@ export default function ProjectsPage() {
 
   useEffect(() => {
     const unsubProjects = onSnapshot(collection(db, "projects"), (snapshot) => {
-      const projectsData = snapshot.docs.map(doc => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          // Convertir Firebase Timestamps a Date objects
-          startDate: data.startDate?.toDate ? data.startDate.toDate() : data.startDate,
-          endDate: data.endDate?.toDate ? data.endDate.toDate() : data.endDate
-        } as Project;
-      });
+      const projectsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Project));
       setProjects(projectsData);
       setLoading(false);
     });
@@ -177,31 +169,6 @@ export default function ProjectsPage() {
     }
   };
 
-  // Función helper para formatear fechas de forma segura
-  const formatDate = (date: any): string => {
-    if (!date) return 'Sin fecha';
-    
-    try {
-      // Si es un Firebase Timestamp
-      if (date?.toDate) {
-        return date.toDate().toLocaleDateString('es-ES');
-      }
-      // Si es un Date object válido
-      if (date instanceof Date && !isNaN(date.getTime())) {
-        return date.toLocaleDateString('es-ES');
-      }
-      // Intentar crear un Date object
-      const parsedDate = new Date(date);
-      if (!isNaN(parsedDate.getTime())) {
-        return parsedDate.toLocaleDateString('es-ES');
-      }
-    } catch (error) {
-      console.error('Error formatting date:', error);
-    }
-    
-    return 'Fecha inválida';
-  };
-
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
@@ -254,7 +221,7 @@ export default function ProjectsPage() {
                       {project.status}
                     </Badge>
                   </TableCell>
-                  <TableCell>{formatDate(project.endDate)}</TableCell>
+                  <TableCell>{new Date(project.endDate).toLocaleDateString()}</TableCell>
                   <TableCell className="text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
