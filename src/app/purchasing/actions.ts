@@ -25,8 +25,10 @@ export async function addPurchaseOrder(orderData: Partial<PurchaseOrder>) {
   let projectName = 'No especificado';
   if (orderData.project) {
     try {
-        const projectDoc = await db.collection('projects').doc(orderData.project).get();
-        if (projectDoc.exists) {
+        // Buscar proyecto por nombre en lugar de por ID
+        const projectsSnapshot = await db.collection('projects').where('name', '==', orderData.project).limit(1).get();
+        if (!projectsSnapshot.empty) {
+            const projectDoc = projectsSnapshot.docs[0];
             projectName = (projectDoc.data() as Project).name;
         }
     } catch (e) {

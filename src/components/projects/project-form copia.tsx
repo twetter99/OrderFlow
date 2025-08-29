@@ -1,3 +1,5 @@
+
+
 "use client";
 
 import { z } from "zod";
@@ -29,7 +31,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { CalendarIcon, Check, Users, UserSquare, Building2 } from "lucide-react";
+import { CalendarIcon, Check, Users, UserSquare } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import {
@@ -156,71 +158,22 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
             <FormField
                 control={form.control}
                 name="clientId"
-                render={({ field }) => {
-                    const [open, setOpen] = React.useState(false);
-                    
-                    return (
-                        <FormItem>
-                            <FormLabel>Cliente</FormLabel>
-                            <Popover open={open} onOpenChange={setOpen}>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button
-                                            variant="outline"
-                                            role="combobox"
-                                            aria-expanded={open}
-                                            className={cn(
-                                                "w-full justify-between",
-                                                !field.value && "text-muted-foreground"
-                                            )}
-                                        >
-                                            {field.value
-                                                ? clients.find((client) => client.id === field.value)?.name
-                                                : "Selecciona un cliente"}
-                                            <Building2 className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput 
-                                            placeholder="Buscar cliente..." 
-                                            className="h-9"
-                                        />
-                                        <CommandList>
-                                            <CommandEmpty>No se encontraron clientes.</CommandEmpty>
-                                            <CommandGroup>
-                                                {clients
-                                                    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
-                                                    .map((client) => (
-                                                        <CommandItem
-                                                            key={client.id}
-                                                            value={client.name}
-                                                            onSelect={() => {
-                                                                field.onChange(client.id);
-                                                                setOpen(false);
-                                                            }}
-                                                        >
-                                                            <Check
-                                                                className={cn(
-                                                                    "mr-2 h-4 w-4",
-                                                                    field.value === client.id
-                                                                        ? "opacity-100"
-                                                                        : "opacity-0"
-                                                                )}
-                                                            />
-                                                            {client.name}
-                                                        </CommandItem>
-                                                    ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    );
-                }}
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Cliente</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                        <SelectTrigger>
+                            <SelectValue placeholder="Selecciona un cliente" />
+                        </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                            {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+                        </SelectContent>
+                    </Select>
+                    <FormMessage />
+                    </FormItem>
+                )}
             />
         </div>
 
@@ -253,143 +206,58 @@ export function ProjectForm({ project, clients, users, operadores, technicians, 
                     name="operador_ids"
                     render={({ field }) => (
                         <FormItem>
-                            <FormLabel>Operadores Externos</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button 
-                                            variant="outline" 
-                                            role="combobox" 
-                                            className={cn(
-                                                "w-full justify-between h-auto min-h-10", 
-                                                !field.value?.length && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <div className="flex gap-1 flex-wrap">
-                                                {field.value && field.value.length > 0 
-                                                    ? field.value.map(id => (
-                                                        <Badge variant="secondary" key={id}>
-                                                            {operadores.find(o => o.id === id)?.name}
-                                                        </Badge>
-                                                    )) 
-                                                    : "Seleccionar..."}
-                                            </div>
-                                            <UserSquare className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar operador..." />
-                                        <CommandList className="max-h-[300px] overflow-y-auto">
-                                            <CommandEmpty>No se encontraron operadores.</CommandEmpty>
-                                            <CommandGroup>
-                                                {operadores
-                                                    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
-                                                    .map(op => (
-                                                        <CommandItem 
-                                                            key={op.id}
-                                                            value={op.name}
-                                                            onSelect={() => { 
-                                                                const s = field.value || []; 
-                                                                field.onChange(
-                                                                    s.includes(op.id) 
-                                                                        ? s.filter(id => id !== op.id) 
-                                                                        : [...s, op.id]
-                                                                );
-                                                            }}
-                                                        >
-                                                            <div className={cn(
-                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", 
-                                                                (field.value || []).includes(op.id) 
-                                                                    ? "bg-primary text-primary-foreground" 
-                                                                    : "opacity-50 [&_svg]:invisible"
-                                                            )}>
-                                                                <Check className="h-4 w-4" />
-                                                            </div>
-                                                            <span>{op.name}</span>
-                                                        </CommandItem>
-                                                    ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
+                        <FormLabel>Operadores Externos</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                            <FormControl>
+                                <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto min-h-10", !field.value?.length && "text-muted-foreground")}>
+                                    <div className="flex gap-1 flex-wrap">
+                                        {field.value && field.value.length > 0 ? field.value.map(id => (<Badge variant="secondary" key={id}>{operadores.find(o => o.id === id)?.name}</Badge>)) : "Seleccionar..."}
+                                    </div>
+                                    <UserSquare className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                </Button>
+                            </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                                <Command><CommandInput placeholder="Buscar operador..." /><CommandList><CommandEmpty>No se encontraron operadores.</CommandEmpty><CommandGroup>
+                                    {operadores.map(op => (<CommandItem key={op.id} onSelect={() => { const s = field.value || []; field.onChange(s.includes(op.id) ? s.filter(id => id !== op.id) : [...s, op.id]);}}>
+                                    <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(op.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}><Check className="h-4 w-4" /></div>
+                                    <span>{op.name}</span></CommandItem>))}
+                                </CommandGroup></CommandList></Command>
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
                         </FormItem>
                     )}
                 />
-                
                 <FormField
-                    control={form.control}
-                    name="equipo_tecnico_ids"
-                    render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Equipo Técnico Interno</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                    <FormControl>
-                                        <Button 
-                                            variant="outline" 
-                                            role="combobox" 
-                                            className={cn(
-                                                "w-full justify-between h-auto min-h-10", 
-                                                !field.value?.length && "text-muted-foreground"
-                                            )}
-                                        >
-                                            <div className="flex gap-1 flex-wrap">
-                                                {field.value && field.value.length > 0 
-                                                    ? field.value.map(id => (
-                                                        <Badge variant="secondary" key={id}>
-                                                            {technicians.find(t => t.id === id)?.name}
-                                                        </Badge>
-                                                    )) 
-                                                    : "Seleccionar..."}
-                                            </div>
-                                            <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                        </Button>
-                                    </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
-                                    <Command>
-                                        <CommandInput placeholder="Buscar técnico..." />
-                                        <CommandList className="max-h-[300px] overflow-y-auto">
-                                            <CommandEmpty>No se encontraron técnicos.</CommandEmpty>
-                                            <CommandGroup>
-                                                {technicians
-                                                    .sort((a, b) => a.name.localeCompare(b.name, 'es'))
-                                                    .map(tech => (
-                                                        <CommandItem 
-                                                            key={tech.id}
-                                                            value={tech.name}
-                                                            onSelect={() => { 
-                                                                const s = field.value || []; 
-                                                                field.onChange(
-                                                                    s.includes(tech.id) 
-                                                                        ? s.filter(id => id !== tech.id) 
-                                                                        : [...s, tech.id]
-                                                                );
-                                                            }}
-                                                        >
-                                                            <div className={cn(
-                                                                "mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", 
-                                                                (field.value || []).includes(tech.id) 
-                                                                    ? "bg-primary text-primary-foreground" 
-                                                                    : "opacity-50 [&_svg]:invisible"
-                                                            )}>
-                                                                <Check className="h-4 w-4" />
-                                                            </div>
-                                                            <span>{tech.name}</span>
-                                                        </CommandItem>
-                                                    ))}
-                                            </CommandGroup>
-                                        </CommandList>
-                                    </Command>
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                    )}
+                  control={form.control}
+                  name="equipo_tecnico_ids"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Equipo Técnico Interno</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button variant="outline" role="combobox" className={cn("w-full justify-between h-auto min-h-10", !field.value?.length && "text-muted-foreground")}>
+                                <div className="flex gap-1 flex-wrap">
+                                    {field.value && field.value.length > 0 ? field.value.map(id => (<Badge variant="secondary" key={id}>{technicians.find(t => t.id === id)?.name}</Badge>)) : "Seleccionar..."}
+                                </div>
+                                <Users className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[--radix-popover-trigger-width] p-0">
+                            <Command><CommandInput placeholder="Buscar técnico..." /><CommandList><CommandEmpty>No se encontraron técnicos.</CommandEmpty><CommandGroup>
+                                {technicians.map(tech => (<CommandItem key={tech.id} onSelect={() => { const s = field.value || []; field.onChange(s.includes(tech.id) ? s.filter(id => id !== tech.id) : [...s, tech.id]);}}>
+                                <div className={cn("mr-2 flex h-4 w-4 items-center justify-center rounded-sm border border-primary", (field.value || []).includes(tech.id) ? "bg-primary text-primary-foreground" : "opacity-50 [&_svg]:invisible")}><Check className="h-4 w-4" /></div>
+                                <span>{tech.name}</span></CommandItem>))}
+                            </CommandGroup></CommandList></Command>
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
              </div>
         </div>
