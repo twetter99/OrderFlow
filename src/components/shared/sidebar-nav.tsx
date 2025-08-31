@@ -56,6 +56,8 @@ const navGroups = [
             { href: "/projects", label: "Gestión de Proyectos", icon: FolderKanban },
             { href: "/installation-templates", label: "Plantillas de Instalación", icon: Wrench },
             { href: "/replan", label: "Informes de Replanteo", icon: ClipboardList },
+            { href: "/projects/control", label: "Control de Costes", icon: BarChart3 },
+
         ]
       },
       { 
